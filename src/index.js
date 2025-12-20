@@ -2,6 +2,28 @@
 
 const MODULE_NAME = 'MazeMaster';
 
+// Dynamically detect the extension folder name from the script URL
+// This handles both 'MazeMaster' and 'SillyTavern-MazeMaster' folder names
+let EXTENSION_FOLDER_NAME = MODULE_NAME;
+try {
+    // import.meta.url gives us the current script's URL in ES modules
+    const scriptUrl = import.meta.url;
+    const match = scriptUrl.match(/\/scripts\/extensions\/third-party\/([^/]+)\//);
+    if (match && match[1]) {
+        EXTENSION_FOLDER_NAME = match[1];
+    }
+} catch (e) {
+    // Fallback: search for our script in document
+    const scripts = document.querySelectorAll('script[src*="MazeMaster"]');
+    for (const script of scripts) {
+        const match = script.src.match(/\/scripts\/extensions\/third-party\/([^/]+)\//);
+        if (match && match[1]) {
+            EXTENSION_FOLDER_NAME = match[1];
+            break;
+        }
+    }
+}
+
 const {
     saveSettingsDebounced,
     SlashCommandParser,
@@ -166,10 +188,9 @@ function getExtensionImagePath(relativePath) {
     if (relativePath.startsWith('/') || relativePath.startsWith('http')) {
         return relativePath;
     }
-    // For SillyTavern extensions, use the standard third-party extension path
-    // This works for both development (public/scripts/extensions/third-party/)
-    // and user-installed extensions (served from same path)
-    return `/scripts/extensions/third-party/${MODULE_NAME}/${relativePath}`;
+    // Use the dynamically detected folder name for the extension path
+    // This works whether the extension is installed as 'MazeMaster' or 'SillyTavern-MazeMaster'
+    return `/scripts/extensions/third-party/${EXTENSION_FOLDER_NAME}/${relativePath}`;
 }
 
 const DEFAULT_MINIONS = {
@@ -2794,9 +2815,12 @@ function showMazeModal() {
                 top: 0; left: 0; right: 0; bottom: 0;
                 background: rgba(0, 0, 0, 0.95);
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 justify-content: center;
                 z-index: 10002;
+                overflow-y: auto;
+                padding: 10px 0;
+                -webkit-overflow-scrolling: touch;
             }
 
             .mazemaster-maze-container {
@@ -2806,7 +2830,8 @@ function showMazeModal() {
                 gap: 8px;
                 padding: 15px;
                 max-width: 95vw;
-                max-height: 95vh;
+                max-height: none;
+                margin: auto;
                 background: #1a1a2e;
                 border-radius: 15px;
                 border: 2px solid #333;
@@ -4353,6 +4378,9 @@ function getPanelHtml() {
                                     <i class="fa-solid fa-upload"></i>
                                 </button>
                                 <input type="file" id="mazemaster_import_file" accept=".json" style="display: none;">
+                                <button id="mazemaster_preview_wheel_btn" class="menu_button menu_button_icon" title="Preview Wheel">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -4424,6 +4452,9 @@ function getPanelHtml() {
                                     <i class="fa-solid fa-upload"></i>
                                 </button>
                                 <input type="file" id="mazemaster_bb_import_file" accept=".json" style="display: none;">
+                                <button id="mazemaster_preview_battlebar_btn" class="menu_button menu_button_icon" title="Preview Battlebar">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -7977,6 +8008,51 @@ function setupEventHandlers() {
         });
     }
 
+    // Preview Wheel button
+    const previewWheelBtn = document.getElementById('mazemaster_preview_wheel_btn');
+    if (previewWheelBtn) {
+        previewWheelBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_profile_select')?.value;
+            if (!profileName) {
+                alert('Please select or create a wheel profile first');
+                return;
+            }
+
+            // Load the profile and show the wheel
+            const result = loadWheelFromProfile(profileName);
+            if (result.error) {
+                alert(`Error: ${result.error}`);
+                return;
+            }
+
+            const validation = validateWheelBalance();
+            if (!validation.valid) {
+                alert(`Error: ${validation.error}`);
+                return;
+            }
+
+            showWheelModal();
+        });
+    }
+
+    // Preview Battlebar button
+    const previewBattlebarBtn = document.getElementById('mazemaster_preview_battlebar_btn');
+    if (previewBattlebarBtn) {
+        previewBattlebarBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_bb_profile_select')?.value;
+            if (!profileName) {
+                alert('Please select or create a battlebar profile first');
+                return;
+            }
+
+            const result = startBattlebar(profileName);
+            if (result.error) {
+                alert(`Error: ${result.error}`);
+                return;
+            }
+        });
+    }
+
     // =========================================================================
     // GAME SELECTOR HANDLERS
     // =========================================================================
@@ -8872,5 +8948,5 @@ function registerMacroHooks() {
         registerMacroHooks();
     }
 
-    console.log(`[${MODULE_NAME}] Extension loaded`);
+    console.log(`[${MODULE_NAME}] Extension loaded (folder: ${EXTENSION_FOLDER_NAME})`);
 })();
