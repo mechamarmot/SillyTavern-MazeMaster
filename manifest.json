@@ -5,8 +5,8 @@
     "optional": [],
     "js": "dist/index.js",
     "css": "",
-    "author": "mechamarmot",
+    "author": "saintorphan",
     "version": "1.0.0",
-    "homePage": "https://github.com/mechamarmot/SillyTavern-MazeMaster",
-    "auto_update": true
+    "homePage": "",
+    "auto_update": false
 }
