@@ -4378,6 +4378,9 @@ function getPanelHtml() {
                                 <button id="mazemaster_delete_profile_btn" class="menu_button menu_button_icon" title="Delete Profile">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
+                                <button id="mazemaster_rename_profile_btn" class="menu_button menu_button_icon" title="Rename Profile">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
                                 <button id="mazemaster_export_btn" class="menu_button menu_button_icon" title="Export Profile">
                                     <i class="fa-solid fa-download"></i>
                                 </button>
@@ -4451,6 +4454,9 @@ function getPanelHtml() {
                                 </button>
                                 <button id="mazemaster_bb_delete_profile_btn" class="menu_button menu_button_icon" title="Delete Profile">
                                     <i class="fa-solid fa-trash"></i>
+                                </button>
+                                <button id="mazemaster_bb_rename_profile_btn" class="menu_button menu_button_icon" title="Rename Profile">
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button id="mazemaster_bb_export_btn" class="menu_button menu_button_icon" title="Export Profile">
                                     <i class="fa-solid fa-download"></i>
@@ -4575,6 +4581,9 @@ function getPanelHtml() {
                                 </button>
                                 <button id="mazemaster_maze_delete_profile_btn" class="menu_button menu_button_icon" title="Delete Profile">
                                     <i class="fa-solid fa-trash"></i>
+                                </button>
+                                <button id="mazemaster_maze_rename_profile_btn" class="menu_button menu_button_icon" title="Rename Profile">
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                             </div>
                         </div>
@@ -7971,6 +7980,32 @@ function setupEventHandlers() {
         });
     }
 
+    // Rename profile button
+    const renameProfileBtn = document.getElementById('mazemaster_rename_profile_btn');
+    if (renameProfileBtn) {
+        renameProfileBtn.addEventListener('click', async () => {
+            const oldName = document.getElementById('mazemaster_profile_select')?.value;
+            if (!oldName) {
+                alert('No profile selected to rename');
+                return;
+            }
+            const newName = await callGenericPopup('Enter new profile name:', POPUP_TYPE.INPUT, oldName);
+            if (newName && newName.trim() && newName.trim() !== oldName) {
+                const trimmed = newName.trim();
+                if (extensionSettings.profiles[trimmed]) {
+                    alert('A profile with that name already exists');
+                    return;
+                }
+                // Copy profile data to new name
+                extensionSettings.profiles[trimmed] = extensionSettings.profiles[oldName];
+                delete extensionSettings.profiles[oldName];
+                extensionSettings.currentProfile = trimmed;
+                saveSettingsDebounced();
+                refreshPanel();
+            }
+        });
+    }
+
     // Export profile button
     const exportBtn = document.getElementById('mazemaster_export_btn');
     if (exportBtn) {
@@ -8298,6 +8333,35 @@ function setupEventHandlers() {
         });
     }
 
+    // Battlebar rename profile
+    const bbRenameProfileBtn = document.getElementById('mazemaster_bb_rename_profile_btn');
+    if (bbRenameProfileBtn) {
+        bbRenameProfileBtn.addEventListener('click', async () => {
+            const oldName = document.getElementById('mazemaster_bb_profile_select')?.value;
+            if (!oldName) {
+                alert('No profile selected to rename');
+                return;
+            }
+            const newName = await callGenericPopup('Enter new profile name:', POPUP_TYPE.INPUT, oldName);
+            if (newName && newName.trim() && newName.trim() !== oldName) {
+                const trimmed = newName.trim();
+                if (extensionSettings.battlebarProfiles[trimmed]) {
+                    alert('A profile with that name already exists');
+                    return;
+                }
+                // Copy profile data to new name
+                extensionSettings.battlebarProfiles[trimmed] = extensionSettings.battlebarProfiles[oldName];
+                delete extensionSettings.battlebarProfiles[oldName];
+                extensionSettings.currentBattlebarProfile = trimmed;
+                saveSettingsDebounced();
+                refreshPanel();
+                setTimeout(() => {
+                    document.getElementById('mazemaster_show_battlebar')?.click();
+                }, 100);
+            }
+        });
+    }
+
     // Battlebar export
     const bbExportBtn = document.getElementById('mazemaster_bb_export_btn');
     if (bbExportBtn) {
@@ -8457,6 +8521,35 @@ function setupEventHandlers() {
                         document.getElementById('mazemaster_show_maze')?.click();
                     }, 100);
                 }
+            }
+        });
+    }
+
+    // Maze rename profile
+    const mazeRenameProfileBtn = document.getElementById('mazemaster_maze_rename_profile_btn');
+    if (mazeRenameProfileBtn) {
+        mazeRenameProfileBtn.addEventListener('click', async () => {
+            const oldName = document.getElementById('mazemaster_maze_profile_select')?.value;
+            if (!oldName) {
+                alert('No profile selected to rename');
+                return;
+            }
+            const newName = await callGenericPopup('Enter new profile name:', POPUP_TYPE.INPUT, oldName);
+            if (newName && newName.trim() && newName.trim() !== oldName) {
+                const trimmed = newName.trim();
+                if (extensionSettings.mazeProfiles[trimmed]) {
+                    alert('A profile with that name already exists');
+                    return;
+                }
+                // Copy profile data to new name
+                extensionSettings.mazeProfiles[trimmed] = extensionSettings.mazeProfiles[oldName];
+                delete extensionSettings.mazeProfiles[oldName];
+                extensionSettings.currentMazeProfile = trimmed;
+                saveSettingsDebounced();
+                refreshPanel();
+                setTimeout(() => {
+                    document.getElementById('mazemaster_show_maze')?.click();
+                }, 100);
             }
         });
     }
