@@ -8475,8 +8475,8 @@ function setupEventHandlers() {
 
             // Validate required fields
             const errors = [];
-            if (!profileData.gridSize || profileData.gridSize < 5 || profileData.gridSize > 15) {
-                errors.push('Grid Size must be between 5 and 15');
+            if (!profileData.gridSize || profileData.gridSize < 5 || profileData.gridSize > 20) {
+                errors.push('Grid Size must be between 5 and 20');
             }
 
             // Validate encounter percentages don't exceed 100%

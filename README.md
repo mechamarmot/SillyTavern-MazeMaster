@@ -50,6 +50,11 @@ MazeMaster is a modular game system that brings interactive gameplay elements to
 <p align="center"><em>Battlebar - Time your hits in the green zone to defeat enemies</em></p>
 
 <p align="center">
+  <img src="screenshots/maze.png" alt="Maze Gameplay - Navigate the dungeon with minion encounters and inventory" width="400">
+</p>
+<p align="center"><em>Maze Gameplay - Explore procedurally generated dungeons with inventory and encounters</em></p>
+
+<p align="center">
   <img src="screenshots/config-maze.png" alt="Maze Configuration - Set up dungeon profiles with encounters and loot" width="400">
 </p>
 <p align="center"><em>Maze Configuration - Configure grid size, encounters, chests, and victory conditions</em></p>
@@ -118,7 +123,7 @@ The Maze brings everything together into a complete dungeon-crawling adventure. 
 
 ### Features
 
-- **Procedural Generation** - Every maze is unique (5x5 to 15x15 grids)
+- **Procedural Generation** - Every maze is unique (5x5 to 20x20 grids)
 - **Minion Encounters** - Configure NPCs that appear on tiles
 - **Chest System** - Regular, locked, and mimic chests with loot tables
 - **Trap Tiles** - Hazards with custom effects
