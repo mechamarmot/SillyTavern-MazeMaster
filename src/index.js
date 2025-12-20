@@ -8080,6 +8080,19 @@ function setupEventHandlers() {
             const randomize = document.getElementById('mazemaster_randomize')?.checked || false;
             const difficulty = parseInt(document.getElementById('mazemaster_difficulty')?.value) || 1;
 
+            // Validate wheel balance
+            if (segments.length === 0) {
+                alert('Error: Wheel must have at least one segment');
+                return;
+            }
+
+            const halfCount = segments.filter(s => s.size === 'halfseg').length;
+            const doubleCount = segments.filter(s => s.size === 'doubleseg').length;
+            if (halfCount !== doubleCount) {
+                alert(`Error: Wheel unbalanced!\n\n${halfCount} halfseg(s) ≠ ${doubleCount} doubleseg(s)\n\nFor every halfseg, you need a doubleseg to balance the wheel.`);
+                return;
+            }
+
             saveProfile(profileName, segments, randomize, difficulty);
             console.log(`[MazeMaster] Saved profile "${profileName}":`, { segments, randomize, difficulty });
             alert(`Profile "${profileName}" saved!`);
@@ -8334,6 +8347,24 @@ function setupEventHandlers() {
             }
 
             const profileData = collectBattlebarDataFromUI();
+
+            // Validate required fields
+            const errors = [];
+            if (!profileData.hitsToWin || profileData.hitsToWin < 1) {
+                errors.push('Hits to Win must be at least 1');
+            }
+            if (!profileData.missesToLose || profileData.missesToLose < 1) {
+                errors.push('Misses to Lose must be at least 1');
+            }
+            if (!profileData.difficulty || profileData.difficulty < 1 || profileData.difficulty > 5) {
+                errors.push('Difficulty must be between 1 and 5');
+            }
+
+            if (errors.length > 0) {
+                alert('Validation Error:\n\n' + errors.join('\n'));
+                return;
+            }
+
             saveBattlebarProfile(profileName, profileData);
             alert(`Battlebar profile "${profileName}" saved!`);
         });
@@ -8441,6 +8472,26 @@ function setupEventHandlers() {
             }
 
             const profileData = collectMazeDataFromUI();
+
+            // Validate required fields
+            const errors = [];
+            if (!profileData.gridSize || profileData.gridSize < 5 || profileData.gridSize > 15) {
+                errors.push('Grid Size must be between 5 and 15');
+            }
+
+            // Validate encounter percentages don't exceed 100%
+            if (profileData.minionEncounters && profileData.minionEncounters.length > 0) {
+                const totalPercent = profileData.minionEncounters.reduce((sum, enc) => sum + (enc.percent || 0), 0);
+                if (totalPercent > 100) {
+                    errors.push(`Encounter percentages total ${totalPercent}% (max 100%)`);
+                }
+            }
+
+            if (errors.length > 0) {
+                alert('Validation Error:\n\n' + errors.join('\n'));
+                return;
+            }
+
             saveMazeProfile(profileName, profileData);
             alert(`Maze profile "${profileName}" saved!`);
         });
