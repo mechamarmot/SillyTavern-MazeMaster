@@ -76,6 +76,8 @@ const defaultSettings = {
     currentMinionProfile: 'default',
     currentTrapProfile: 'default',
     activeGameConfig: 'wheel', // 'wheel' | 'battlebar' | 'maze' | 'minions' | 'traps'
+    llmEnabled: true,
+    llmPreset: '',
 };
 
 // =============================================================================
@@ -113,66 +115,95 @@ const DEFAULT_BATTLEBAR_PROFILES = {
         difficulty: 2,
         hitsToWin: 3,
         missesToLose: 5,
+        description: 'A minor enemy blocks your path - a quick skirmish to test your reflexes.',
         hitCommand: '/echo Hit! Keep going!',
         missCommand: '/echo Missed! Watch the timing!',
         winCommand: '/echo Victory! You defeated the enemy!',
         loseCommand: '/echo Defeated... Try again!',
-        mainTitle: 'Battle!',
+        mainTitle: 'Goblin',
         images: [
-            { imagePath: '', stageMessage: 'The enemy appears!' },
-            { imagePath: '', stageMessage: 'You land a blow!' },
-            { imagePath: '', stageMessage: 'Almost there!' },
-            { imagePath: '', stageMessage: 'Victory!' },
+            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'The enemy appears!' },
+            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'You land a blow!' },
+            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'Almost there!' },
+            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'Victory!' },
         ],
+        // Item drop chances (for maze encounters)
+        keyDropChance: 40,
+        powDropChance: 20,
+        stealthDropChance: 10,
     },
     'Boss Battle': {
         difficulty: 4,
         hitsToWin: 5,
         missesToLose: 3,
+        description: 'A fearsome boss enemy stands before you - a brutal fight for survival with no room for error.',
         hitCommand: '/echo Critical hit!',
         missCommand: '/echo The boss counters!',
         winCommand: '/echo The boss has been defeated!',
         loseCommand: '/echo The boss was too powerful...',
-        mainTitle: 'BOSS FIGHT!',
+        mainTitle: 'Death Knight',
         images: [
-            { imagePath: '', stageMessage: 'The boss towers before you!' },
-            { imagePath: '', stageMessage: 'You find an opening!' },
-            { imagePath: '', stageMessage: 'The boss staggers!' },
-            { imagePath: '', stageMessage: 'Keep attacking!' },
-            { imagePath: '', stageMessage: 'One more hit!' },
-            { imagePath: '', stageMessage: 'VICTORY!' },
+            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'The boss towers before you!' },
+            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'You find an opening!' },
+            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'The boss staggers!' },
+            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'Keep attacking!' },
+            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'One more hit!' },
+            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'VICTORY!' },
         ],
+        // Item drop chances (for maze encounters)
+        keyDropChance: 50,
+        powDropChance: 30,
+        stealthDropChance: 20,
     },
 };
+
+const EXTENSION_NAME = 'MazeMaster';
+
+// Helper to resolve extension asset paths
+function getExtensionImagePath(relativePath) {
+    if (!relativePath) return '';
+    // If it's already an absolute path or URL, return as-is
+    if (relativePath.startsWith('/') || relativePath.startsWith('http')) {
+        return relativePath;
+    }
+    // For SillyTavern extensions, use the standard third-party extension path
+    // This works for both development (public/scripts/extensions/third-party/)
+    // and user-installed extensions (served from same path)
+    return `/scripts/extensions/third-party/${MODULE_NAME}/${relativePath}`;
+}
 
 const DEFAULT_MINIONS = {
     'herald': {
         name: 'Herald',
-        imagePath: '',
+        imagePath: `images/herald.jpeg`,
         type: 'messenger',
+        description: 'A mysterious messenger cloaked in shadow who delivers cryptic warnings and hints about the maze ahead.',
         messages: ['Greetings, traveler!', 'The maze master watches...', 'Beware what lies ahead!'],
         encounterScript: '',
     },
     'guardian': {
         name: 'Guardian',
-        imagePath: '',
+        imagePath: `images/guardian.jpeg`,
         type: 'battlebar',
+        description: 'A fearsome armored warrior who blocks the path, challenging all who dare to pass.',
         battlebarProfiles: ['Easy Fight'],
         messages: ['You shall not pass!', 'Prepare to fight!', 'Only the worthy may continue!'],
         encounterScript: '',
     },
     'fortune_teller': {
         name: 'Fortune Teller',
-        imagePath: '',
+        imagePath: `images/fortune_teller.jpeg`,
         type: 'prizewheel',
+        description: 'An enigmatic mystic with glowing eyes who offers to reveal your fate through a magical spinning wheel.',
         wheelProfiles: ['Reward Wheel'],
         messages: ['Spin the wheel of fate!', 'Let destiny decide!', 'What fortune awaits you?'],
         encounterScript: '',
     },
     'trader': {
         name: 'Wandering Trader',
-        imagePath: '',
+        imagePath: `images/merchant.jpeg`,
         type: 'merchant',
+        description: 'A cunning merchant draped in exotic fabrics who trades valuable items for powerful rewards.',
         merchantItemCount: { min: 2, max: 4 },
         messages: ['Care to make a trade?', 'I have something special...', 'A fair exchange benefits us both!'],
         encounterScript: '',
@@ -182,13 +213,13 @@ const DEFAULT_MINIONS = {
 const DEFAULT_TRAPS = {
     'spike_trap': {
         name: 'Spike Trap',
-        imagePath: '',
+        imagePath: 'images/spike_trap.jpg',
         message: 'Sharp spikes shoot up from the floor!',
         script: '/echo You triggered a spike trap!',
     },
     'poison_gas': {
         name: 'Poison Gas',
-        imagePath: '',
+        imagePath: 'images/poison_trap.jpeg',
         message: 'A cloud of noxious gas fills the corridor!',
         script: '/echo Poison gas surrounds you!',
     },
@@ -199,31 +230,35 @@ const DEFAULT_MINION_PROFILES = {
     'Dungeon Crawl': {
         'herald': {
             name: 'Herald',
-            imagePath: '',
+            imagePath: 'images/herald.jpeg',
             type: 'messenger',
+            description: 'A mysterious messenger cloaked in shadow who delivers cryptic warnings and hints about the maze ahead.',
             messages: ['Greetings, traveler!', 'The maze master watches...', 'Beware what lies ahead!'],
             encounterScript: '',
         },
         'guardian': {
             name: 'Guardian',
-            imagePath: '',
+            imagePath: 'images/guardian.jpeg',
             type: 'battlebar',
+            description: 'A fearsome armored warrior who blocks the path, challenging all who dare to pass.',
             battlebarProfiles: ['Easy Fight'],
             messages: ['You shall not pass!', 'Prepare to fight!', 'Only the worthy may continue!'],
             encounterScript: '',
         },
         'fortune_teller': {
             name: 'Fortune Teller',
-            imagePath: '',
+            imagePath: 'images/fortune_teller.jpeg',
             type: 'prizewheel',
+            description: 'An enigmatic mystic with glowing eyes who offers to reveal your fate through a magical spinning wheel.',
             wheelProfiles: ['Reward Wheel'],
             messages: ['Spin the wheel of fate!', 'Let destiny decide!', 'What fortune awaits you?'],
             encounterScript: '',
         },
         'trader': {
             name: 'Wandering Trader',
-            imagePath: '',
+            imagePath: 'images/merchant.jpeg',
             type: 'merchant',
+            description: 'A cunning merchant draped in exotic fabrics who trades valuable items for powerful rewards.',
             merchantItemCount: { min: 2, max: 4 },
             messages: ['Care to make a trade?', 'I have something special...', 'A fair exchange benefits us both!'],
             encounterScript: '',
@@ -236,13 +271,13 @@ const DEFAULT_TRAP_PROFILES = {
     'Dungeon Crawl': {
         'spike_trap': {
             name: 'Spike Trap',
-            imagePath: '',
+            imagePath: 'images/spike_trap.jpg',
             message: 'Sharp spikes shoot up from the floor!',
             script: '/echo You triggered a spike trap!',
         },
         'poison_gas': {
             name: 'Poison Gas',
-            imagePath: '',
+            imagePath: 'images/poison_trap.jpeg',
             message: 'A cloud of noxious gas fills the corridor!',
             script: '/echo Poison gas surrounds you!',
         },
@@ -378,6 +413,7 @@ const processedMacroMessages = new WeakSet();
  * Generate a minion message using the LLM
  * @param {object} options - Generation options
  * @param {string} options.minionName - Name of the minion speaking
+ * @param {string} options.minionDescription - Description of the minion character
  * @param {string} options.baseMessage - Base message/template to expand
  * @param {string} options.mainStory - Main story context (optional)
  * @param {string} options.currentMilestone - Current milestone story update (optional)
@@ -385,7 +421,7 @@ const processedMacroMessages = new WeakSet();
  * @returns {Promise<string>} Generated message or fallback to baseMessage
  */
 async function generateMinionMessage(options) {
-    const { minionName, baseMessage, mainStory, currentMilestone, minionType } = options;
+    const { minionName, minionDescription, baseMessage, mainStory, currentMilestone, minionType } = options;
 
     // If no baseMessage, nothing to generate
     if (!baseMessage) return '';
@@ -413,16 +449,17 @@ async function generateMinionMessage(options) {
         contextParts.push(`Current Progress: ${currentMilestone}`);
     }
 
-    const minionRole = {
+    // Use custom description if provided, otherwise fall back to type-based role
+    const minionRole = minionDescription || {
         messenger: 'a mysterious messenger who delivers cryptic hints',
         battlebar: 'a guardian who challenges travelers to combat',
         prizewheel: 'a fortune teller who offers games of chance',
         merchant: 'a wandering trader who barters for rare items',
     }[minionType] || 'a mysterious figure';
 
-    const prompt = `You are ${minionName}, ${minionRole} in a maze game.
+    const prompt = `You are ${minionName}, ${minionRole}.
 
-${contextParts.length > 0 ? contextParts.join('\n') + '\n\n' : ''}The player has encountered you. Based on this message template: "${baseMessage}"
+${contextParts.length > 0 ? contextParts.join('\n') + '\n\n' : ''}The player has encountered you in a maze. Based on this message template: "${baseMessage}"
 
 Write a short, atmospheric response (1-2 sentences max, under 100 characters if possible). Stay in character. Be mysterious and engaging. Do not use quotation marks around your response.`;
 
@@ -448,6 +485,167 @@ Write a short, atmospheric response (1-2 sentences max, under 100 characters if 
     }
 
     // Fallback to base message
+    return baseMessage;
+}
+
+/**
+ * Generate a trap message using the LLM
+ * @param {object} options - Generation options
+ * @param {string} options.trapName - Name of the trap
+ * @param {string} options.baseMessage - Base message to expand
+ * @param {string} options.mainStory - Main story context (optional)
+ * @returns {Promise<string>} Generated message or fallback to baseMessage
+ */
+async function generateTrapMessage(options) {
+    const { trapName, baseMessage, mainStory } = options;
+
+    if (!baseMessage) return '';
+
+    if (extensionSettings.llmEnabled === false) {
+        return baseMessage;
+    }
+
+    if (typeof generateQuietPrompt !== 'function') {
+        return baseMessage;
+    }
+
+    const prompt = `The player has triggered a trap called "${trapName}" in a maze.
+
+${mainStory ? `Story Setting: ${mainStory}\n\n` : ''}Based on this trap description: "${baseMessage}"
+
+Write a short, dramatic narration of the trap being triggered (1-2 sentences, under 100 characters). Make it visceral and immediate. Do not use quotation marks.`;
+
+    try {
+        console.log('[MazeMaster] Generating LLM message for trap:', trapName);
+
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            max_length: 80,
+        });
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            console.log('[MazeMaster] Generated trap message:', cleaned);
+            return cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Trap LLM generation failed:', error);
+    }
+
+    return baseMessage;
+}
+
+/**
+ * Generate a battlebar stage message using the LLM
+ * @param {object} options - Generation options
+ * @param {string} options.battlebarName - Name of the battlebar/fight
+ * @param {string} options.description - Description of the battlebar encounter
+ * @param {string} options.stageMessage - Current stage message
+ * @param {string} options.mainStory - Main story context (optional)
+ * @param {number} options.currentHits - Current hit count
+ * @param {number} options.hitsToWin - Hits needed to win
+ * @returns {Promise<string>} Generated message or fallback to stageMessage
+ */
+async function generateBattlebarMessage(options) {
+    const { battlebarName, description, stageMessage, mainStory, currentHits, hitsToWin } = options;
+
+    if (!stageMessage) return '';
+
+    if (extensionSettings.llmEnabled === false) {
+        return stageMessage;
+    }
+
+    if (typeof generateQuietPrompt !== 'function') {
+        return stageMessage;
+    }
+
+    const progress = currentHits !== undefined && hitsToWin ? `Progress: ${currentHits}/${hitsToWin} hits` : '';
+    const battleDesc = description || 'a challenging combat encounter';
+
+    const prompt = `The player is in a battle called "${battlebarName}" - ${battleDesc}.
+
+${mainStory ? `Story Setting: ${mainStory}\n\n` : ''}${progress ? progress + '\n\n' : ''}Based on this stage message: "${stageMessage}"
+
+Write a short, intense combat narration (1-2 sentences, under 100 characters). Make it exciting and dramatic. Do not use quotation marks.`;
+
+    try {
+        console.log('[MazeMaster] Generating LLM message for battlebar:', battlebarName);
+
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            max_length: 80,
+        });
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            console.log('[MazeMaster] Generated battlebar message:', cleaned);
+            return cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Battlebar LLM generation failed:', error);
+    }
+
+    return stageMessage;
+}
+
+/**
+ * Generate a chest message using the LLM
+ * @param {object} options - Generation options
+ * @param {string} options.chestType - Type of chest ('normal' or 'locked')
+ * @param {string} options.baseMessage - Base message to expand
+ * @param {string} options.mainStory - Main story context (optional)
+ * @param {boolean} options.hasKey - Whether player has a key (for locked chests)
+ * @returns {Promise<string>} Generated message or fallback to baseMessage
+ */
+async function generateChestMessage(options) {
+    const { chestType, baseMessage, mainStory, hasKey } = options;
+
+    if (!baseMessage) return '';
+
+    if (extensionSettings.llmEnabled === false) {
+        return baseMessage;
+    }
+
+    if (typeof generateQuietPrompt !== 'function') {
+        return baseMessage;
+    }
+
+    const chestDesc = chestType === 'locked'
+        ? (hasKey ? 'a locked treasure chest - the player has a key to open it' : 'a locked treasure chest - the player lacks the key')
+        : 'a treasure chest waiting to be opened';
+
+    const prompt = `The player has discovered ${chestDesc} in a maze.
+
+${mainStory ? `Story Setting: ${mainStory}\n\n` : ''}Based on this chest discovery message: "${baseMessage}"
+
+Write a short, atmospheric description of finding the chest (1-2 sentences, under 100 characters). Make it feel rewarding and mysterious. Do not use quotation marks.`;
+
+    try {
+        console.log('[MazeMaster] Generating LLM message for chest');
+
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            max_length: 80,
+        });
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            console.log('[MazeMaster] Generated chest message:', cleaned);
+            return cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Chest LLM generation failed:', error);
+    }
+
     return baseMessage;
 }
 
@@ -561,6 +759,18 @@ function loadSettings() {
         extensionSettings.currentBattlebarProfile = 'Easy Fight';
     }
 
+    // Update existing battlebar profiles with any missing fields from defaults
+    const defaultBbTemplate = DEFAULT_BATTLEBAR_PROFILES['Easy Fight'];
+    for (const [name, savedProfile] of Object.entries(extensionSettings.battlebarProfiles)) {
+        for (const [key, defaultValue] of Object.entries(defaultBbTemplate)) {
+            if (savedProfile[key] === undefined) {
+                savedProfile[key] = JSON.parse(JSON.stringify(defaultValue));
+                needsSave = true;
+                console.log(`[MazeMaster] Added missing field "${key}" to battlebar profile: ${name}`);
+            }
+        }
+    }
+
     // Merge default minions
     for (const [id, minion] of Object.entries(DEFAULT_MINIONS)) {
         if (!extensionSettings.minions[id]) {
@@ -607,9 +817,21 @@ function loadSettings() {
             // Update existing profile with any missing or empty fields from default
             const existing = extensionSettings.mazeProfiles[name];
             for (const [key, value] of Object.entries(defaultProfile)) {
-                const isEmpty = existing[key] === undefined ||
-                    (Array.isArray(existing[key]) && existing[key].length === 0);
-                if (isEmpty && value && (Array.isArray(value) ? value.length > 0 : true)) {
+                // Check if the existing value is empty/missing
+                const isEmptyArray = Array.isArray(existing[key]) && existing[key].length === 0;
+                const isEmptyObject = typeof existing[key] === 'object' && existing[key] !== null &&
+                    !Array.isArray(existing[key]) && Object.keys(existing[key]).length === 0;
+                const isEmpty = existing[key] === undefined || isEmptyArray || isEmptyObject;
+
+                // Also check if startingInventory has all zero values (treat as empty)
+                const isZeroInventory = key === 'startingInventory' && existing[key] &&
+                    typeof existing[key] === 'object' &&
+                    (existing[key].key || 0) === 0 &&
+                    (existing[key].stealth || 0) === 0 &&
+                    (existing[key].pow || 0) === 0 &&
+                    (existing[key].grandpow || 0) === 0;
+
+                if ((isEmpty || isZeroInventory) && value && (Array.isArray(value) ? value.length > 0 : true)) {
                     existing[key] = JSON.parse(JSON.stringify(value));
                     needsSave = true;
                     console.log(`[MazeMaster] Added missing/empty field '${key}' to maze profile: ${name}`);
@@ -663,6 +885,8 @@ function getBattlebarProfile(name) {
 
 function saveBattlebarProfile(name, profileData) {
     extensionSettings.battlebarProfiles[name] = {
+        mainTitle: profileData.mainTitle || '',
+        description: profileData.description || '',
         difficulty: profileData.difficulty || 3,
         hitsToWin: profileData.hitsToWin || 5,
         missesToLose: profileData.missesToLose || 3,
@@ -767,6 +991,7 @@ function saveMinion(id, minionData) {
     extensionSettings.minions[id] = {
         name: minionData.name || 'Unknown',
         imagePath: minionData.imagePath || '',
+        description: minionData.description || '', // For LLM generation
         type: minionData.type || 'messenger', // 'messenger' | 'battlebar' | 'prizewheel' | 'merchant'
         battlebarProfiles: minionData.battlebarProfiles || [], // For battlebar type
         wheelProfiles: minionData.wheelProfiles || [], // For prizewheel type
@@ -1300,10 +1525,10 @@ function getBattlebarModalHtml() {
         <div id="mazemaster_battlebar_modal" class="mazemaster-bb-overlay">
             <div class="mazemaster-bb-container">
                 <div id="bb_main_title" class="mazemaster-bb-main-title"></div>
-                <div id="bb_stage_title" class="mazemaster-bb-stage-title"></div>
                 <div class="mazemaster-bb-image-display">
                     <img id="mazemaster_bb_img" src="" alt="">
                 </div>
+                <div id="bb_stage_title" class="mazemaster-bb-stage-title"></div>
                 <div class="mazemaster-bb-stats">
                     <span class="bb-stat bb-stat-hits">
                         Hits: <span id="bb_current_hits">0</span>/<span id="bb_needed_hits">5</span>
@@ -1364,6 +1589,8 @@ function getBattlebarStyles() {
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             max-width: 95vw;
             max-height: 95vh;
+            min-height: 500px;
+            min-width: 400px;
             overflow-y: auto;
         }
 
@@ -1609,7 +1836,7 @@ function showBattlebarModal() {
     updateGrandpowButtonVisibility();
 }
 
-function updateBattlebarTitles() {
+async function updateBattlebarTitles() {
     const profile = currentBattlebar.profile || {};
 
     // Main title
@@ -1624,7 +1851,29 @@ function updateBattlebarTitles() {
         const images = profile.images || [];
         const currentStage = currentBattlebar.hits || 0;
         const currentImage = images[currentStage];
-        stageTitleEl.textContent = currentImage?.stageMessage || '';
+        const baseMessage = currentImage?.stageMessage || '';
+
+        // Show base message first
+        stageTitleEl.textContent = baseMessage;
+
+        // Generate LLM enhanced message if enabled
+        if (baseMessage && extensionSettings.llmEnabled !== false) {
+            try {
+                const enhanced = await generateBattlebarMessage({
+                    battlebarName: profile.mainTitle || 'Battle',
+                    description: profile.description || '',
+                    stageMessage: baseMessage,
+                    mainStory: currentMaze.profile?.storyConfig?.mainStory || '',
+                    currentHits: currentBattlebar.hits,
+                    hitsToWin: profile.hitsToWin,
+                });
+                if (enhanced && enhanced !== baseMessage) {
+                    stageTitleEl.textContent = enhanced;
+                }
+            } catch (error) {
+                console.error('[MazeMaster] Battlebar LLM generation failed:', error);
+            }
+        }
     }
 }
 
@@ -1864,8 +2113,15 @@ function updateBattlebarImageDisplay() {
 
     // Show image based on current hit count
     const imageIndex = Math.min(currentBattlebar.hits, images.length - 1);
-    imgEl.src = '/' + images[imageIndex].path;
-    imgEl.style.display = 'block';
+    const currentImage = images[imageIndex];
+    // Support both 'imagePath' and 'path' field names
+    const imagePath = currentImage.imagePath || currentImage.path || '';
+    if (imagePath) {
+        imgEl.src = getExtensionImagePath(imagePath);
+        imgEl.style.display = 'block';
+    } else {
+        imgEl.style.display = 'none';
+    }
 }
 
 function startBattlebarAnimation() {
@@ -1935,7 +2191,7 @@ async function handleBattlebarHit() {
 
     updateBattlebarStatsDisplay();
     updateBattlebarImageDisplay();
-    updateBattlebarTitles();
+    await updateBattlebarTitles();
 
     // Execute hit command
     if (currentBattlebar.profile.hitCommand) {
@@ -2366,14 +2622,13 @@ function delay(ms) {
 }
 
 function getCellSize(gridSize) {
-    // Larger cells for smaller grids to fill the space better
-    // Target grid size: ~350-400px for most screens
-    if (gridSize <= 5) return 60;
-    if (gridSize <= 7) return 48;
-    if (gridSize <= 10) return 38;
-    if (gridSize <= 12) return 32;
-    if (gridSize <= 15) return 26;
-    return 20;
+    // Balance between visibility and fitting on screen
+    if (gridSize <= 5) return 40;
+    if (gridSize <= 7) return 35;
+    if (gridSize <= 10) return 30;
+    if (gridSize <= 12) return 26;
+    if (gridSize <= 15) return 22;
+    return 18;
 }
 
 function startMaze(profileName) {
@@ -2444,8 +2699,9 @@ function startMaze(profileName) {
     showMazeModal();
     renderMazeGrid();
     updateMazeHero();
+    updateInventoryDisplay();
 
-    document.addEventListener('keydown', handleMazeKeydown);
+    document.addEventListener('keydown', handleMazeKeydown, { capture: true });
 
     console.log(`[MazeMaster] Maze "${profileName}" started (${size}x${size})`);
     return { success: true };
@@ -2463,69 +2719,66 @@ function showMazeModal() {
     modal.innerHTML = `
         <div class="mazemaster-maze-overlay">
             <div class="mazemaster-maze-container">
-                <!-- Hero Section -->
+                <!-- Hero Section (Minion Area) -->
                 <div class="mazemaster-maze-hero">
-                    <div class="mazemaster-maze-hero-avatar">
-                        <img id="maze_minion_img" src="" alt="" style="display: none;">
-                    </div>
-                    <div class="mazemaster-maze-hero-message">
-                        <div id="maze_minion_name" class="maze-minion-name"></div>
+                    <div id="maze_minion_name" class="maze-minion-name"></div>
+                    <div class="mazemaster-maze-hero-content">
+                        <div class="mazemaster-maze-hero-avatar">
+                            <img id="maze_minion_img" src="" alt="" style="display: none;">
+                            <div id="maze_generating_indicator" class="maze-generating-indicator">
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </div>
+                        </div>
                         <div id="maze_minion_message" class="maze-minion-message"></div>
-                        <div id="maze_encounter_confirm" class="maze-encounter-confirm" style="display: none;"></div>
                     </div>
                 </div>
 
-                <!-- Inventory Display -->
-                <div class="mazemaster-maze-inventory">
-                    <div class="inventory-item" title="Keys">
-                        <i class="fa-solid fa-key"></i>
-                        <span id="maze_inv_key">0</span>
+                <!-- Control Bar: Inventory | Actions | Save/Exit -->
+                <div class="mazemaster-maze-control-bar">
+                    <div class="mazemaster-maze-inventory">
+                        <div class="inventory-item" title="Keys">
+                            <i class="fa-solid fa-key"></i>
+                            <span id="maze_inv_key">${currentMaze.inventory.key}</span>
+                        </div>
+                        <div class="inventory-item" title="Stealth">
+                            <i class="fa-solid fa-user-ninja"></i>
+                            <span id="maze_inv_stealth">${currentMaze.inventory.stealth}</span>
+                        </div>
+                        <div class="inventory-item" title="POW">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span id="maze_inv_pow">${currentMaze.inventory.pow}</span>
+                        </div>
+                        <div class="inventory-item grandpow" title="GRANDPOW - Instant Win!">
+                            <i class="fa-solid fa-star"></i>
+                            <span id="maze_inv_grandpow">${currentMaze.inventory.grandpow}</span>
+                        </div>
                     </div>
-                    <div class="inventory-item" title="Stealth">
-                        <i class="fa-solid fa-user-ninja"></i>
-                        <span id="maze_inv_stealth">0</span>
+                    <div id="maze_encounter_confirm" class="maze-action-buttons">
+                        <!-- Populated dynamically when encounter happens -->
                     </div>
-                    <div class="inventory-item" title="POW">
-                        <i class="fa-solid fa-bolt"></i>
-                        <span id="maze_inv_pow">0</span>
-                    </div>
-                    <div class="inventory-item grandpow" title="GRANDPOW - Instant Win!">
-                        <i class="fa-solid fa-star"></i>
-                        <span id="maze_inv_grandpow">0</span>
-                    </div>
-                </div>
-
-                <!-- Maze Grid -->
-                <div id="maze_grid" class="mazemaster-maze-grid" style="grid-template-columns: repeat(${currentMaze.size}, ${cellSize}px);">
-                    <!-- Grid cells rendered dynamically -->
-                </div>
-
-                <!-- Mobile Controls -->
-                <div class="mazemaster-maze-controls">
-                    <button class="maze-arrow-btn menu_button" data-dir="up">
-                        <i class="fa-solid fa-arrow-up"></i>
-                    </button>
-                    <div class="maze-arrow-row">
-                        <button class="maze-arrow-btn menu_button" data-dir="left">
-                            <i class="fa-solid fa-arrow-left"></i>
+                    <div class="mazemaster-maze-save-exit">
+                        <button id="maze_save_exit_btn" class="menu_button maze-action-btn">
+                            <i class="fa-solid fa-floppy-disk"></i> Save
                         </button>
-                        <button class="maze-arrow-btn menu_button" data-dir="down">
-                            <i class="fa-solid fa-arrow-down"></i>
-                        </button>
-                        <button class="maze-arrow-btn menu_button" data-dir="right">
-                            <i class="fa-solid fa-arrow-right"></i>
+                        <button id="maze_exit_btn" class="menu_button maze-action-btn maze-exit-btn">
+                            <i class="fa-solid fa-door-open"></i> Exit
                         </button>
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="mazemaster-maze-action-bar">
-                    <button id="maze_save_exit_btn" class="menu_button maze-action-btn">
-                        <i class="fa-solid fa-floppy-disk"></i> Save & Exit
-                    </button>
-                    <button id="maze_exit_btn" class="menu_button maze-action-btn maze-exit-btn">
-                        <i class="fa-solid fa-door-open"></i> Exit
-                    </button>
+                <!-- Maze Area: Full width container with arrows left, grid centered -->
+                <div class="mazemaster-maze-area">
+                    <div class="mazemaster-maze-arrows-left">
+                        <button class="maze-arrow-btn menu_button" data-dir="up">UP</button>
+                        <button class="maze-arrow-btn menu_button" data-dir="down">DOWN</button>
+                        <button class="maze-arrow-btn menu_button" data-dir="left">LEFT</button>
+                        <button class="maze-arrow-btn menu_button" data-dir="right">RIGHT</button>
+                    </div>
+                    <div class="mazemaster-maze-grid-wrapper">
+                        <div id="maze_grid" class="mazemaster-maze-grid" style="grid-template-columns: repeat(${currentMaze.size}, ${cellSize}px);">
+                            <!-- Grid cells rendered dynamically -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Close Button (shown on victory) -->
@@ -2550,8 +2803,8 @@ function showMazeModal() {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 15px;
-                padding: 20px;
+                gap: 8px;
+                padding: 15px;
                 max-width: 95vw;
                 max-height: 95vh;
                 background: #1a1a2e;
@@ -2560,27 +2813,49 @@ function showMazeModal() {
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             }
 
+            /* Hero Section - Minion Area */
             .mazemaster-maze-hero {
                 display: flex;
-                width: 100%;
-                max-width: 500px;
+                flex-direction: column;
+                width: 550px;
+                max-width: 95vw;
+                height: 180px;
                 background: rgba(0, 0, 0, 0.3);
                 border-radius: 10px;
-                padding: 12px;
-                gap: 12px;
+                padding: 10px;
                 border: 1px solid #444;
             }
 
+            .maze-minion-name {
+                font-weight: bold;
+                font-size: 1.1em;
+                color: #e94560;
+                text-align: center;
+                padding-bottom: 6px;
+                margin-bottom: 8px;
+                border-bottom: 1px solid #333;
+                flex-shrink: 0;
+            }
+
+            .mazemaster-maze-hero-content {
+                display: flex;
+                gap: 12px;
+                flex: 1;
+                min-height: 0;
+            }
+
             .mazemaster-maze-hero-avatar {
-                width: 80px;
-                height: 80px;
-                min-width: 80px;
-                border-radius: 8px;
+                width: 60px;
+                height: 60px;
+                min-width: 60px;
+                flex-shrink: 0;
+                border-radius: 6px;
                 overflow: hidden;
                 background: #16213e;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                position: relative;
             }
 
             .mazemaster-maze-hero-avatar img {
@@ -2589,24 +2864,115 @@ function showMazeModal() {
                 object-fit: cover;
             }
 
-            .mazemaster-maze-hero-message {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
+            /* LLM Generating Indicator - overlays the entire image */
+            .maze-generating-indicator {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(52, 152, 219, 0.7);
+                border-radius: 8px;
+                display: none;
+                align-items: center;
                 justify-content: center;
+                z-index: 10;
             }
 
-            .maze-minion-name {
-                font-weight: bold;
-                font-size: 1.2em;
-                color: #e94560;
-                margin-bottom: 8px;
+            .maze-generating-indicator.active {
+                display: flex;
+            }
+
+            .maze-generating-indicator i {
+                color: #fff;
+                font-size: 32px;
+                animation: maze-pulse 1s ease-in-out infinite;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            }
+
+            @keyframes maze-pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.2); opacity: 0.7; }
             }
 
             .maze-minion-message {
+                flex: 1;
                 color: #eee;
                 font-style: italic;
                 line-height: 1.4;
+                font-size: 0.95em;
+                overflow-y: auto;
+                padding-right: 8px;
+                max-height: 100%;
+            }
+
+            /* Control Bar */
+            .mazemaster-maze-control-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 550px;
+                max-width: 95vw;
+                padding: 6px 10px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 8px;
+                gap: 10px;
+            }
+
+            .maze-action-buttons {
+                display: flex;
+                gap: 6px;
+                min-width: 120px;
+            }
+
+            .mazemaster-maze-inventory {
+                display: flex;
+                gap: 12px;
+                background: rgba(0, 0, 0, 0.3);
+                padding: 6px 12px;
+                border-radius: 6px;
+            }
+
+            .inventory-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.9em;
+            }
+
+            .inventory-item i { color: #f1c40f; }
+            .inventory-item.grandpow i { color: #e74c3c; }
+
+            .mazemaster-maze-save-exit {
+                display: flex;
+                gap: 6px;
+            }
+
+            /* Maze Area */
+            .mazemaster-maze-area {
+                display: flex;
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .mazemaster-maze-arrows-left {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            .mazemaster-maze-arrows-left .maze-arrow-btn {
+                width: 80px;
+                padding: 12px 8px;
+                font-size: 0.85em;
+                font-weight: bold;
+            }
+
+            .mazemaster-maze-grid-wrapper {
+                flex: 1;
+                display: flex;
+                justify-content: center;
             }
 
             .mazemaster-maze-grid {
@@ -2660,73 +3026,35 @@ function showMazeModal() {
                 background: #1e2a4a;
             }
 
-            .mazemaster-maze-controls {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
-            }
-
-            .maze-arrow-row {
-                display: flex;
-                gap: 5px;
-            }
-
+            /* Arrow buttons */
             .maze-arrow-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 1.5em;
+                width: 36px;
+                height: 36px;
+                font-size: 0.85em;
+                padding: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
             }
 
-            .mazemaster-maze-action-bar {
-                display: flex;
-                gap: 8px;
-                margin-top: 10px;
-                width: 100%;
-                max-width: min(400px, 90vw);
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-
+            /* Action buttons */
             .maze-action-btn {
-                flex: 1 1 auto;
-                min-width: 100px;
-                max-width: 180px;
-                padding: 10px 16px;
-                font-size: 0.9em;
-                border-radius: 8px;
-                display: flex;
+                padding: 8px 14px;
+                font-size: 0.85em;
+                border-radius: 5px;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 gap: 6px;
-                transition: transform 0.1s, box-shadow 0.1s;
-                white-space: nowrap;
-            }
-
-            .maze-action-btn i {
-                font-size: 0.9em;
-            }
-
-            .maze-action-btn:hover {
-                transform: scale(1.02);
             }
 
             .maze-exit-btn {
                 background: linear-gradient(to bottom, #555, #444) !important;
-                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-            }
-
-            .maze-exit-btn:hover {
-                background: linear-gradient(to bottom, #666, #555) !important;
             }
 
             .maze-close-btn {
-                padding: 12px 30px;
+                padding: 10px 28px;
                 font-size: 1em;
-                max-width: min(300px, 80vw);
             }
 
             .maze-cell.victory-glow {
@@ -2759,31 +3087,27 @@ function showMazeModal() {
         closeBtn.addEventListener('click', closeMaze);
     }
 
-    // Save & Exit button handler
-    const saveExitBtn = document.getElementById('maze_save_exit_btn');
-    if (saveExitBtn) {
-        saveExitBtn.addEventListener('click', async () => {
-            saveMazeProgress();
-            closeMaze();
-            renderSavedGamesList();
-        });
-    }
+    // Save & Exit button handlers (both top bar and bottom bar)
+    const saveHandler = async () => {
+        saveMazeProgress();
+        closeMaze();
+        renderSavedGamesList();
+    };
+    document.getElementById('maze_save_exit_btn')?.addEventListener('click', saveHandler);
 
     // Exit button handler
-    const exitBtn = document.getElementById('maze_exit_btn');
-    if (exitBtn) {
-        exitBtn.addEventListener('click', async () => {
-            const confirmed = await callGenericPopup('Exit without saving? Progress will be lost.', POPUP_TYPE.CONFIRM);
-            if (confirmed) {
-                closeMaze();
-            }
-        });
-    }
+    const exitHandler = async () => {
+        const confirmed = await callGenericPopup('Exit without saving? Progress will be lost.', POPUP_TYPE.CONFIRM);
+        if (confirmed) {
+            closeMaze();
+        }
+    };
+    document.getElementById('maze_exit_btn')?.addEventListener('click', exitHandler);
 }
 
 function closeMaze() {
     currentMaze.isOpen = false;
-    document.removeEventListener('keydown', handleMazeKeydown);
+    document.removeEventListener('keydown', handleMazeKeydown, { capture: true });
 
     const modal = document.getElementById('mazemaster_maze_modal');
     if (modal) modal.remove();
@@ -2870,7 +3194,7 @@ function updateMazeHero() {
     if (isVictory) {
         // Victory state
         if (profile.winImage && imgEl) {
-            imgEl.src = profile.winImage;
+            imgEl.src = getExtensionImagePath(profile.winImage);
             imgEl.style.display = '';
         }
         if (nameEl) nameEl.textContent = 'Victory!';
@@ -2878,13 +3202,23 @@ function updateMazeHero() {
     } else if (currentMinion) {
         // Normal minion display
         if (currentMinion.imagePath && imgEl) {
-            imgEl.src = currentMinion.imagePath;
+            imgEl.src = getExtensionImagePath(currentMinion.imagePath);
             imgEl.style.display = '';
         } else if (imgEl) {
             imgEl.style.display = 'none';
         }
         if (nameEl) nameEl.textContent = currentMinion.name || '';
         if (messageEl) messageEl.textContent = currentMinion.message || '';
+    }
+}
+
+/**
+ * Show or hide the LLM generating indicator
+ */
+function showGeneratingIndicator(show) {
+    const indicator = document.getElementById('maze_generating_indicator');
+    if (indicator) {
+        indicator.classList.toggle('active', show);
     }
 }
 
@@ -3045,20 +3379,55 @@ async function triggerMinionEncounter(minionId, x, y) {
         return;
     }
 
-    // Mark as triggered
-    currentMaze.grid[y][x].minion.triggered = true;
-    renderMazeGrid();
+    // Double-check not already triggered (safety check)
+    const cell = currentMaze.grid[y][x];
+    if (cell.minion?.triggered) {
+        console.log(`[MazeMaster] Minion at ${x},${y} already triggered, skipping`);
+        return;
+    }
+
+    // Mark as triggered FIRST
+    cell.minion.triggered = true;
+    console.log(`[MazeMaster] Marked minion at ${x},${y} as triggered`);
 
     // Pause maze
     currentMaze.isPaused = true;
 
-    // Show minion in hero section
-    const message = getRandomFromArray(minion.messages) || `You encountered ${minion.name}!`;
+    // Show minion with placeholder immediately
     currentMaze.currentMinion = {
         name: minion.name,
         imagePath: minion.imagePath,
-        message: message,
+        message: '...',
     };
+    updateMazeHero();
+    renderMazeGrid();
+
+    // Get base message
+    const baseMessage = getRandomFromArray(minion.messages) || `You encountered ${minion.name}!`;
+
+    // Show generating indicator
+    showGeneratingIndicator(true);
+
+    // Generate LLM message if enabled
+    let message = baseMessage;
+    try {
+        message = await generateMinionMessage({
+            minionName: minion.name,
+            minionDescription: minion.description,
+            baseMessage: baseMessage,
+            mainStory: getMainStory(),
+            currentMilestone: getCurrentMilestone(),
+            minionType: minion.type || 'messenger',
+        });
+    } catch (error) {
+        console.error('[MazeMaster] LLM generation error:', error);
+    }
+
+    // Hide generating indicator
+    showGeneratingIndicator(false);
+
+    // Update with actual message
+    currentMaze.currentMinion.message = message;
     updateMazeHero();
 
     // Execute encounter script if present
@@ -3096,12 +3465,35 @@ async function triggerTrapEncounter(trapId, x, y) {
     // Pause maze
     currentMaze.isPaused = true;
 
-    // Show trap in hero section
+    // Show trap in hero section with placeholder
     currentMaze.currentMinion = {
         name: trap.name,
         imagePath: trap.imagePath,
-        message: trap.message || 'You triggered a trap!',
+        message: '...',
     };
+    updateMazeHero();
+
+    // Show generating indicator
+    showGeneratingIndicator(true);
+
+    // Generate LLM message for trap
+    const baseMessage = trap.message || 'You triggered a trap!';
+    let message = baseMessage;
+    try {
+        message = await generateTrapMessage({
+            trapName: trap.name,
+            baseMessage: baseMessage,
+            mainStory: getMainStory(),
+        });
+    } catch (error) {
+        console.error('[MazeMaster] Trap LLM generation error:', error);
+    }
+
+    // Hide generating indicator
+    showGeneratingIndicator(false);
+
+    // Update with actual message
+    currentMaze.currentMinion.message = message;
     updateMazeHero();
 
     // Execute trap script if present
@@ -3146,6 +3538,13 @@ function showTrapContinueButton(x, y) {
 function resumeMaze() {
     currentMaze.isPaused = false;
     currentMaze.pendingEncounter = null;
+
+    // Clear action buttons
+    const confirmEl = document.getElementById('maze_encounter_confirm');
+    if (confirmEl) {
+        confirmEl.innerHTML = '';
+        confirmEl.style.display = 'none';
+    }
 
     // Restore main minion display if configured
     const profile = currentMaze.profile;
@@ -3205,7 +3604,7 @@ function removeFromInventory(item, amount = 1) {
 /**
  * Trigger a chest encounter - show Open/Ignore buttons
  */
-function triggerChestEncounter(chestData, x, y) {
+async function triggerChestEncounter(chestData, x, y) {
     currentMaze.isPaused = true;
 
     // Store pending chest for button handlers
@@ -3215,14 +3614,38 @@ function triggerChestEncounter(chestData, x, y) {
     const isLocked = chestData.type === 'locked';
     const hasKey = currentMaze.inventory.key > 0;
 
+    // Get base message
+    const baseMessage = isLocked
+        ? (hasKey ? 'A locked chest! Use a key to open it?' : 'A locked chest! You need a Key to open it.')
+        : 'You found a chest!';
+
+    // Set initial display with base message
     currentMaze.currentMinion = {
         name: isLocked ? 'Locked Chest' : 'Chest',
         imagePath: '',
-        message: isLocked
-            ? (hasKey ? 'A locked chest! Use a key to open it?' : 'A locked chest! You need a Key to open it.')
-            : 'You found a chest!',
+        message: baseMessage,
     };
     updateMazeHero();
+
+    // Generate LLM message
+    const mainStory = currentMaze.profile?.storyConfig?.mainStory || '';
+    showGeneratingIndicator(true);
+
+    try {
+        const generatedMessage = await generateChestMessage({
+            chestType: isLocked ? 'locked' : 'normal',
+            baseMessage,
+            mainStory,
+            hasKey,
+        });
+
+        currentMaze.currentMinion.message = generatedMessage;
+        updateMazeHero();
+    } catch (error) {
+        console.error('[MazeMaster] Chest message generation failed:', error);
+    } finally {
+        showGeneratingIndicator(false);
+    }
 
     // Show buttons
     showChestConfirmation(isLocked, hasKey);
@@ -3475,9 +3898,9 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
 
     currentMaze.pendingConfirmation = { type: encounterType, minionId, x, y, canSlipAway };
 
-    // Show confirmation buttons in hero message area
-    const messageEl = document.getElementById('maze_minion_message');
-    if (!messageEl) return;
+    // Show confirmation buttons in dedicated confirm area
+    const confirmEl = document.getElementById('maze_encounter_confirm');
+    if (!confirmEl) return;
 
     let buttons = '';
     if (encounterType === 'messenger') {
@@ -3494,7 +3917,7 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
         updateMazeHero();
 
         buttons = `
-            <button id="maze_confirm_accept" class="menu_button maze-confirm-btn maze-accept-btn">Accept Trade</button>
+            <button id="maze_confirm_accept" class="menu_button maze-confirm-btn maze-accept-btn">Accept</button>
             <button id="maze_confirm_decline" class="menu_button maze-confirm-btn">Decline</button>
         `;
     } else {
@@ -3505,9 +3928,9 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
         }
     }
 
-    // Append buttons after current message
-    const existingMessage = messageEl.innerHTML;
-    messageEl.innerHTML = existingMessage + `<div class="maze-confirm-buttons">${buttons}</div>`;
+    // Show buttons in confirm area
+    confirmEl.innerHTML = buttons;
+    confirmEl.style.display = 'flex';
 
     // Attach handlers
     document.getElementById('maze_confirm_ok')?.addEventListener('click', handleConfirmOk);
@@ -3586,13 +4009,11 @@ function handleMerchantAccept() {
         currentMaze.currentMinion.message = `You don't have enough items! You need ${itemsNeeded} but only have ${totalItems}.`;
         updateMazeHero();
 
-        // Show decline button only
-        const messageEl = document.getElementById('maze_minion_message');
-        if (messageEl) {
-            const existingMessage = messageEl.innerHTML.split('<div class="maze-confirm-buttons">')[0];
-            messageEl.innerHTML = existingMessage + `<div class="maze-confirm-buttons">
-                <button id="maze_confirm_decline" class="menu_button maze-confirm-btn">OK</button>
-            </div>`;
+        // Show decline button in control bar
+        const confirmEl = document.getElementById('maze_encounter_confirm');
+        if (confirmEl) {
+            confirmEl.innerHTML = `<button id="maze_confirm_decline" class="menu_button maze-confirm-btn">OK</button>`;
+            confirmEl.style.display = 'flex';
             document.getElementById('maze_confirm_decline')?.addEventListener('click', handleMerchantDecline);
         }
         return;
@@ -3642,7 +4063,7 @@ function handleMerchantDecline() {
 /**
  * Maybe show a random message from the main minion
  */
-function maybeShowMainMinionMessage() {
+async function maybeShowMainMinionMessage() {
     const profile = currentMaze.profile;
     if (!profile.mainMinion) return;
     if (!profile.mainMinionRandomChance) return;
@@ -3654,14 +4075,40 @@ function maybeShowMainMinionMessage() {
     const mainMinion = getMinion(profile.mainMinion);
     if (!mainMinion) return;
 
-    const message = getRandomFromArray(profile.mainMinionRandomMessages);
-    if (!message) return;
+    const baseMessage = getRandomFromArray(profile.mainMinionRandomMessages);
+    if (!baseMessage) return;
 
+    // Show placeholder immediately
     currentMaze.currentMinion = {
         name: mainMinion.name,
         imagePath: mainMinion.imagePath,
-        message: message,
+        message: '...',
     };
+    updateMazeHero();
+
+    // Show generating indicator
+    showGeneratingIndicator(true);
+
+    // Generate LLM message
+    let message = baseMessage;
+    try {
+        message = await generateMinionMessage({
+            minionName: mainMinion.name,
+            minionDescription: mainMinion.description,
+            baseMessage: baseMessage,
+            mainStory: getMainStory(),
+            currentMilestone: getCurrentMilestone(),
+            minionType: mainMinion.type || 'messenger',
+        });
+    } catch (error) {
+        console.error('[MazeMaster] Random message LLM generation error:', error);
+    }
+
+    // Hide generating indicator
+    showGeneratingIndicator(false);
+
+    // Update with actual message
+    currentMaze.currentMinion.message = message;
     updateMazeHero();
 }
 
@@ -3728,7 +4175,7 @@ function handleMazeLoss() {
         executeSlashCommandsWithOptions(currentMaze.profile.loseCommand);
     }
 
-    document.removeEventListener('keydown', handleMazeKeydown);
+    document.removeEventListener('keydown', handleMazeKeydown, { capture: true });
 }
 
 /**
@@ -3783,7 +4230,7 @@ async function handleMazeWin() {
     if (controls) controls.style.display = 'none';
 
     // Remove keyboard listener
-    document.removeEventListener('keydown', handleMazeKeydown);
+    document.removeEventListener('keydown', handleMazeKeydown, { capture: true });
 
     // Execute win command
     if (currentMaze.profile.winCommand) {
@@ -5102,63 +5549,74 @@ function getPanelHtml() {
             .mazemaster-maze-inventory {
                 display: flex;
                 justify-content: center;
-                gap: 20px;
-                padding: 10px 15px;
+                gap: 12px;
+                padding: 6px 12px;
                 background: rgba(0, 0, 0, 0.4);
-                border-radius: 8px;
-                margin-bottom: 10px;
+                border-radius: 6px;
+                margin-bottom: 8px;
             }
 
             .inventory-item {
                 display: flex;
                 align-items: center;
-                gap: 5px;
-                font-size: 1.1em;
+                gap: 4px;
+                font-size: 0.85em;
                 color: #fff;
             }
 
+            .inventory-item i { font-size: 0.9em; }
             .inventory-item i.fa-key { color: #f1c40f; }
             .inventory-item i.fa-user-ninja { color: #9b59b6; }
             .inventory-item i.fa-bolt { color: #e74c3c; }
-            .inventory-item.grandpow i.fa-star { color: #ffd700; text-shadow: 0 0 8px #ffd700; }
+            .inventory-item.grandpow i.fa-star { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
             .inventory-item.grandpow { font-weight: bold; }
 
             /* Encounter Confirmation Buttons */
             .maze-confirm-buttons {
-                margin-top: 10px;
+                margin-top: 8px;
                 display: flex;
-                gap: 10px;
+                gap: 8px;
                 justify-content: center;
             }
 
             .maze-confirm-btn {
                 padding: 8px 16px;
-                font-size: 1em;
+                font-size: 0.9em;
+                font-weight: bold;
+                border-radius: 6px;
+                background: linear-gradient(to bottom, #3498db, #2980b9);
+                color: #fff;
+                border: 2px solid #5dade2;
+                box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
+                transition: all 0.2s;
+            }
+
+            .maze-confirm-btn:hover {
+                background: linear-gradient(to bottom, #5dade2, #3498db);
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(52, 152, 219, 0.6);
             }
 
             .maze-slip-btn {
                 background: linear-gradient(to bottom, #9b59b6, #8e44ad);
+                border-color: #bb8fce;
+                box-shadow: 0 2px 8px rgba(155, 89, 182, 0.4);
             }
 
             .maze-slip-btn:hover {
-                background: linear-gradient(to bottom, #8e44ad, #7d3c98);
+                background: linear-gradient(to bottom, #bb8fce, #9b59b6);
+                box-shadow: 0 4px 12px rgba(155, 89, 182, 0.6);
             }
 
             .maze-accept-btn {
                 background: linear-gradient(to bottom, #27ae60, #1e8449);
+                border-color: #58d68d;
+                box-shadow: 0 2px 8px rgba(39, 174, 96, 0.4);
             }
 
             .maze-accept-btn:hover {
-                background: linear-gradient(to bottom, #1e8449, #196f3d);
-            }
-
-            /* Chest Encounter Confirmation */
-            .maze-encounter-confirm {
-                display: flex;
-                gap: 10px;
-                justify-content: center;
-                margin-top: 15px;
-                padding: 10px;
+                background: linear-gradient(to bottom, #58d68d, #27ae60);
+                box-shadow: 0 4px 12px rgba(39, 174, 96, 0.6);
             }
 
             /* Battlebar Action Buttons */
@@ -6275,23 +6733,49 @@ function updateMazeSettings() {
     const lockedGrandpow = document.getElementById('mazemaster_maze_locked_grandpow');
     if (lockedGrandpow) lockedGrandpow.value = profile.lockedChestGrandpowChance || 5;
 
-    // Starting inventory
-    const startInv = profile.startingInventory || {};
-    const startKey = document.getElementById('mazemaster_maze_start_key');
+    // Starting inventory - use defaults if empty/zero
+    let startInv = profile.startingInventory || {};
+
+    // If startingInventory is empty/zero and we have defaults, use them
+    const isEmptyInventory = !startInv.key && !startInv.stealth && !startInv.pow && !startInv.grandpow;
+    if (isEmptyInventory && DEFAULT_MAZE_PROFILE[profileName]?.startingInventory) {
+        startInv = DEFAULT_MAZE_PROFILE[profileName].startingInventory;
+        profile.startingInventory = JSON.parse(JSON.stringify(startInv));
+        saveSettingsDebounced();
+    }
+
+    const startKey = document.getElementById('mazemaster_start_key');
     if (startKey) startKey.value = startInv.key || 0;
 
-    const startStealth = document.getElementById('mazemaster_maze_start_stealth');
+    const startStealth = document.getElementById('mazemaster_start_stealth');
     if (startStealth) startStealth.value = startInv.stealth || 0;
 
-    const startPow = document.getElementById('mazemaster_maze_start_pow');
+    const startPow = document.getElementById('mazemaster_start_pow');
     if (startPow) startPow.value = startInv.pow || 0;
 
-    const startGrandpow = document.getElementById('mazemaster_maze_start_grandpow');
+    const startGrandpow = document.getElementById('mazemaster_start_grandpow');
     if (startGrandpow) startGrandpow.value = startInv.grandpow || 0;
 
-    // Render encounters list
-    renderMazeEncountersList(profile.minionEncounters || []);
-    renderMazeTrapEncountersList(profile.trapEncounters || []);
+    // Render encounters list - use defaults from DEFAULT_MAZE_PROFILE if empty
+    let minionEncounters = profile.minionEncounters || [];
+    let trapEncounters = profile.trapEncounters || [];
+
+    // If encounters are empty and we have defaults for this profile, use them
+    if (minionEncounters.length === 0 && DEFAULT_MAZE_PROFILE[profileName]?.minionEncounters) {
+        minionEncounters = DEFAULT_MAZE_PROFILE[profileName].minionEncounters;
+        // Also update the profile so it persists
+        profile.minionEncounters = JSON.parse(JSON.stringify(minionEncounters));
+        saveSettingsDebounced();
+    }
+    if (trapEncounters.length === 0 && DEFAULT_MAZE_PROFILE[profileName]?.trapEncounters) {
+        trapEncounters = DEFAULT_MAZE_PROFILE[profileName].trapEncounters;
+        // Also update the profile so it persists
+        profile.trapEncounters = JSON.parse(JSON.stringify(trapEncounters));
+        saveSettingsDebounced();
+    }
+
+    renderMazeEncountersList(minionEncounters);
+    renderMazeTrapEncountersList(trapEncounters);
 }
 
 function updateExitProfileDropdown(exitType, selectedProfile) {
@@ -6307,12 +6791,20 @@ function updateExitProfileDropdown(exitType, selectedProfile) {
 
     profileSection.style.display = 'block';
 
-    // Populate with appropriate profiles
+    // Populate with appropriate profiles - use defaults if empty
     let profiles = [];
     if (exitType === 'battlebar') {
         profiles = getBattlebarProfileNames();
+        // Fallback to defaults if empty
+        if (profiles.length === 0) {
+            profiles = Object.keys(DEFAULT_BATTLEBAR_PROFILES);
+        }
     } else if (exitType === 'prizewheel') {
         profiles = getProfileNames();
+        // Fallback to defaults if empty
+        if (profiles.length === 0) {
+            profiles = Object.keys(DEFAULT_WHEEL_PROFILES);
+        }
     }
 
     profileSelect.innerHTML = '<option value="">Select...</option>' +
@@ -6547,7 +7039,7 @@ function renderMinionsList() {
         return `
             <div class="mazemaster-minion-card" data-id="${escapeHtml(id)}">
                 <div class="minion-image">
-                    ${minion.imagePath ? `<img src="${escapeHtml(minion.imagePath)}" alt="${escapeHtml(minion.name)}">` : ''}
+                    ${minion.imagePath ? `<img src="${escapeHtml(getExtensionImagePath(minion.imagePath))}" alt="${escapeHtml(minion.name)}">` : ''}
                 </div>
                 <div class="minion-info">
                     <div class="minion-row">
@@ -6742,7 +7234,7 @@ function renderTrapsList() {
         return `
             <div class="mazemaster-trap-card" data-id="${escapeHtml(id)}">
                 <div class="trap-image">
-                    ${trap.imagePath ? `<img src="${escapeHtml(trap.imagePath)}" alt="${escapeHtml(trap.name)}">` : '<div class="trap-no-image"><i class="fa-solid fa-dungeon"></i></div>'}
+                    ${trap.imagePath ? `<img src="${escapeHtml(getExtensionImagePath(trap.imagePath))}" alt="${escapeHtml(trap.name)}">` : '<div class="trap-no-image"><i class="fa-solid fa-dungeon"></i></div>'}
                 </div>
                 <div class="trap-info">
                     <div class="trap-row">
@@ -6874,6 +7366,9 @@ function initUI() {
 
     setupEventHandlers();
     renderSegmentsList();
+    renderMinionsList();
+    renderTrapsList();
+    updateMazeSettings();
 
     // If battlebar config is active, render images
     if (extensionSettings.activeGameConfig === 'battlebar') {
@@ -6949,6 +7444,14 @@ function handleIntelligentDistribute() {
                 percentInput.value = trapPercent || 1;
             }
         });
+    }
+
+    // Save the profile with new values and refresh UI
+    const profileName = document.getElementById('mazemaster_maze_profile_select')?.value;
+    if (profileName) {
+        const profileData = collectMazeDataFromUI();
+        saveMazeProfile(profileName, profileData);
+        loadMazeProfileSettings(); // Refresh the UI to show saved values
     }
 
     console.log('[MazeMaster] Intelligent Distribute applied: Chests 15%, Traps 5%, Minions distributed');
@@ -7057,7 +7560,7 @@ function loadMazeProgress(profileName) {
     updateMazeHero();
     updateInventoryDisplay();
 
-    document.addEventListener('keydown', handleMazeKeydown);
+    document.addEventListener('keydown', handleMazeKeydown, { capture: true });
 
     console.log(`[MazeMaster] Loaded saved maze "${profileName}"`);
     return true;
