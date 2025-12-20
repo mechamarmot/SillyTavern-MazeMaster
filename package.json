@@ -1,6 +1,6 @@
 {
   "name": "mazemaster",
-  "version": "1.0.4",
+  "version": "1.2.0",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
