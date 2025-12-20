@@ -67,6 +67,42 @@ const BATTLEBAR_DIFFICULTY = {
     5: { zoneWidth: 0.15, traverseTime: 1600 }, // Very Hard (~240ms in zone)
 };
 
+// Default timeout for STScript execution (10 seconds)
+const STSCRIPT_TIMEOUT_MS = 10000;
+
+/**
+ * Execute STScript command with timeout protection
+ * Prevents hanging if a script takes too long or gets stuck
+ * @param {string} command - The STScript command to execute
+ * @param {number} timeoutMs - Timeout in milliseconds (default: 10000)
+ * @returns {Promise<any>} - Result of the command or null if timed out
+ */
+async function executeWithTimeout(command, timeoutMs = STSCRIPT_TIMEOUT_MS) {
+    if (!command || typeof command !== 'string' || command.trim() === '') {
+        return null;
+    }
+
+    try {
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`STScript timed out after ${timeoutMs}ms`)), timeoutMs);
+        });
+
+        const result = await Promise.race([
+            executeSlashCommandsWithOptions(command),
+            timeoutPromise
+        ]);
+
+        return result;
+    } catch (err) {
+        if (err.message?.includes('timed out')) {
+            console.warn(`[MazeMaster] STScript timed out: ${command.substring(0, 50)}...`);
+        } else {
+            console.error('[MazeMaster] STScript error:', err);
+        }
+        return null;
+    }
+}
+
 // =============================================================================
 // STATE
 // =============================================================================
@@ -1151,11 +1187,14 @@ function getWheelStyles() {
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.95);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             z-index: 10002;
+            overflow-y: auto;
+            padding: 10px 0;
+            -webkit-overflow-scrolling: touch;
         }
 
         .mazemaster-wheel-container {
@@ -1164,6 +1203,12 @@ function getWheelStyles() {
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            padding: 25px;
+            margin: auto;
+            background: #1a1a2e;
+            border-radius: 15px;
+            border: 2px solid #333;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         .mazemaster-wheel-pointer {
@@ -1377,11 +1422,7 @@ async function handleSpinClick() {
 
     if (wheelCmd && wheelCmd.command) {
         console.log(`[MazeMaster] Executing command for "${winner.text}": ${wheelCmd.command}`);
-        try {
-            await executeSlashCommandsWithOptions(wheelCmd.command);
-        } catch (err) {
-            console.error('[MazeMaster] Error executing command:', err);
-        }
+        await executeWithTimeout(wheelCmd.command);
     }
 
     // Store result for macros
@@ -1608,10 +1649,8 @@ function getBattlebarStyles() {
             border-radius: 15px;
             border: 2px solid #333;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            width: 450px;
             max-width: 95vw;
-            max-height: 95vh;
-            min-height: 500px;
-            min-width: 400px;
             overflow-y: auto;
         }
 
@@ -1624,10 +1663,13 @@ function getBattlebarStyles() {
         }
 
         .mazemaster-bb-stage-title {
-            font-size: 20px;
+            font-size: 18px;
             color: #aaa;
             text-align: center;
             min-height: 24px;
+            max-width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .mazemaster-bb-image-display {
@@ -1857,7 +1899,7 @@ function showBattlebarModal() {
     updateGrandpowButtonVisibility();
 }
 
-async function updateBattlebarTitles() {
+function updateBattlebarTitles() {
     const profile = currentBattlebar.profile || {};
 
     // Main title
@@ -1872,29 +1914,7 @@ async function updateBattlebarTitles() {
         const images = profile.images || [];
         const currentStage = currentBattlebar.hits || 0;
         const currentImage = images[currentStage];
-        const baseMessage = currentImage?.stageMessage || '';
-
-        // Show base message first
-        stageTitleEl.textContent = baseMessage;
-
-        // Generate LLM enhanced message if enabled
-        if (baseMessage && extensionSettings.llmEnabled !== false) {
-            try {
-                const enhanced = await generateBattlebarMessage({
-                    battlebarName: profile.mainTitle || 'Battle',
-                    description: profile.description || '',
-                    stageMessage: baseMessage,
-                    mainStory: currentMaze.profile?.storyConfig?.mainStory || '',
-                    currentHits: currentBattlebar.hits,
-                    hitsToWin: profile.hitsToWin,
-                });
-                if (enhanced && enhanced !== baseMessage) {
-                    stageTitleEl.textContent = enhanced;
-                }
-            } catch (error) {
-                console.error('[MazeMaster] Battlebar LLM generation failed:', error);
-            }
-        }
+        stageTitleEl.textContent = currentImage?.stageMessage || '';
     }
 }
 
@@ -2212,15 +2232,11 @@ async function handleBattlebarHit() {
 
     updateBattlebarStatsDisplay();
     updateBattlebarImageDisplay();
-    await updateBattlebarTitles();
+    updateBattlebarTitles();
 
     // Execute hit command
     if (currentBattlebar.profile.hitCommand) {
-        try {
-            await executeSlashCommandsWithOptions(currentBattlebar.profile.hitCommand);
-        } catch (err) {
-            console.error('[MazeMaster] Hit command error:', err);
-        }
+        await executeWithTimeout(currentBattlebar.profile.hitCommand);
     }
 
     // Check for win
@@ -2249,11 +2265,7 @@ async function handleBattlebarMiss() {
 
     // Execute miss command
     if (currentBattlebar.profile.missCommand) {
-        try {
-            await executeSlashCommandsWithOptions(currentBattlebar.profile.missCommand);
-        } catch (err) {
-            console.error('[MazeMaster] Miss command error:', err);
-        }
+        await executeWithTimeout(currentBattlebar.profile.missCommand);
     }
 
     // Check for loss
@@ -2332,11 +2344,7 @@ async function handleBattlebarWin() {
 
     // Execute win command
     if (currentBattlebar.profile.winCommand) {
-        try {
-            await executeSlashCommandsWithOptions(currentBattlebar.profile.winCommand);
-        } catch (err) {
-            console.error('[MazeMaster] Win command error:', err);
-        }
+        await executeWithTimeout(currentBattlebar.profile.winCommand);
     }
 }
 
@@ -2381,11 +2389,7 @@ async function handleBattlebarLoss() {
 
     // Execute lose command
     if (currentBattlebar.profile.loseCommand) {
-        try {
-            await executeSlashCommandsWithOptions(currentBattlebar.profile.loseCommand);
-        } catch (err) {
-            console.error('[MazeMaster] Lose command error:', err);
-        }
+        await executeWithTimeout(currentBattlebar.profile.loseCommand);
     }
 }
 
@@ -2815,11 +2819,10 @@ function showMazeModal() {
                 top: 0; left: 0; right: 0; bottom: 0;
                 background: rgba(0, 0, 0, 0.95);
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 justify-content: center;
                 z-index: 10002;
                 overflow-y: auto;
-                padding: 10px 0;
                 -webkit-overflow-scrolling: touch;
             }
 
@@ -2830,12 +2833,13 @@ function showMazeModal() {
                 gap: 8px;
                 padding: 15px;
                 max-width: 95vw;
-                max-height: none;
-                margin: auto;
+                max-height: 95vh;
+                margin: 10px;
                 background: #1a1a2e;
                 border-radius: 15px;
                 border: 2px solid #333;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                overflow-y: auto;
             }
 
             /* Hero Section - Minion Area */
@@ -3457,15 +3461,8 @@ async function triggerMinionEncounter(minionId, x, y) {
 
     // Execute encounter script if present
     if (minion.encounterScript && minion.encounterScript.trim()) {
-        try {
-            const { executeSlashCommandsWithOptions } = SillyTavern.getContext();
-            if (executeSlashCommandsWithOptions) {
-                console.log(`[MazeMaster] Executing encounter script for ${minion.name}`);
-                await executeSlashCommandsWithOptions(minion.encounterScript);
-            }
-        } catch (error) {
-            console.error('[MazeMaster] Error executing encounter script:', error);
-        }
+        console.log(`[MazeMaster] Executing encounter script for ${minion.name}`);
+        await executeWithTimeout(minion.encounterScript);
     }
 
     // Show confirmation buttons instead of auto-triggering
@@ -3523,15 +3520,8 @@ async function triggerTrapEncounter(trapId, x, y) {
 
     // Execute trap script if present
     if (trap.script && trap.script.trim()) {
-        try {
-            const { executeSlashCommandsWithOptions } = SillyTavern.getContext();
-            if (executeSlashCommandsWithOptions) {
-                console.log(`[MazeMaster] Executing trap script for ${trap.name}`);
-                await executeSlashCommandsWithOptions(trap.script);
-            }
-        } catch (error) {
-            console.error('[MazeMaster] Error executing trap script:', error);
-        }
+        console.log(`[MazeMaster] Executing trap script for ${trap.name}`);
+        await executeWithTimeout(trap.script);
     }
 
     // Show a continue button
@@ -4197,7 +4187,7 @@ function handleMazeLoss() {
 
     // Execute loss command if exists
     if (currentMaze.profile.loseCommand) {
-        executeSlashCommandsWithOptions(currentMaze.profile.loseCommand);
+        executeWithTimeout(currentMaze.profile.loseCommand);
     }
 
     document.removeEventListener('keydown', handleMazeKeydown, { capture: true });
@@ -4259,11 +4249,7 @@ async function handleMazeWin() {
 
     // Execute win command
     if (currentMaze.profile.winCommand) {
-        try {
-            await executeSlashCommandsWithOptions(currentMaze.profile.winCommand);
-        } catch (err) {
-            console.error('[MazeMaster] Win command error:', err);
-        }
+        await executeWithTimeout(currentMaze.profile.winCommand);
     }
 
     console.log(`[MazeMaster] Maze "${currentMaze.profileName}" completed!`);
