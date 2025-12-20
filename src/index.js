@@ -1169,7 +1169,7 @@ function clearWheel() {
 
 function getWheelModalHtml() {
     return `
-        <div id="mazemaster_wheel_modal" class="mazemaster-wheel-overlay">
+        <div id="mazemaster_wheel_modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);">
             <div class="mazemaster-wheel-container">
                 <div class="mazemaster-wheel-pointer"></div>
                 <canvas id="mazemaster_wheel_canvas" width="400" height="400"></canvas>
@@ -1586,7 +1586,7 @@ function registerSlashCommands() {
 
 function getBattlebarModalHtml() {
     return `
-        <div id="mazemaster_battlebar_modal" class="mazemaster-bb-overlay">
+        <div id="mazemaster_battlebar_modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);">
             <div class="mazemaster-bb-container">
                 <div id="bb_main_title" class="mazemaster-bb-main-title"></div>
                 <div class="mazemaster-bb-image-display">
