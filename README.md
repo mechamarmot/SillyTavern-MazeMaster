@@ -37,6 +37,35 @@ MazeMaster is a modular game system that brings interactive gameplay elements to
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/wheel.png" alt="Prize Wheel - Spin-to-win wheel with colorful segments" width="400">
+</p>
+<p align="center"><em>Prize Wheel - Spin for randomized rewards or events</em></p>
+
+<p align="center">
+  <img src="screenshots/battlebar.png" alt="Battlebar - Timing-based combat with hit zones" width="400">
+</p>
+<p align="center"><em>Battlebar - Time your hits in the green zone to defeat enemies</em></p>
+
+<p align="center">
+  <img src="screenshots/config-maze.png" alt="Maze Configuration - Set up dungeon profiles with encounters and loot" width="400">
+</p>
+<p align="center"><em>Maze Configuration - Configure grid size, encounters, chests, and victory conditions</em></p>
+
+<p align="center">
+  <img src="screenshots/config-minions.png" alt="Minions Configuration - Create reusable NPC encounters" width="400">
+</p>
+<p align="center"><em>Minions Configuration - Define messenger, battlebar, wheel, and merchant NPCs</em></p>
+
+<p align="center">
+  <img src="screenshots/config-wheel.png" alt="Wheel Configuration - Customize wheel segments and commands" width="400">
+</p>
+<p align="center"><em>Wheel Configuration - Set up segments with custom sizes and STScript commands</em></p>
+
+---
+
 ## STScript Integration
 
 **MazeMaster is built for STScript integration.** Almost every feature supports STScript callbacks, making it easy to incorporate into character cards, world info, Quick Replies, or other extensions.
