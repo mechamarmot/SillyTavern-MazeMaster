@@ -2743,6 +2743,7 @@ function showMazeModal() {
 
     const modal = document.createElement('div');
     modal.id = 'mazemaster_maze_modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);';
     modal.innerHTML = `
         <div class="mazemaster-maze-overlay">
             <div class="mazemaster-maze-container">
