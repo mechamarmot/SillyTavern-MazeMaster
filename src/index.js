@@ -1882,6 +1882,10 @@ function showBattlebarModal() {
     const hitBtn = document.getElementById('mazemaster_bb_hit_btn');
     if (hitBtn) {
         hitBtn.addEventListener('click', handleBattlebarHitButton);
+        hitBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handleBattlebarHitButton(e);
+        });
     }
 
     // Attach POW button handler
@@ -3115,6 +3119,10 @@ function showMazeModal() {
     const closeBtn = document.getElementById('maze_close_btn');
     if (closeBtn) {
         closeBtn.addEventListener('click', closeMaze);
+        closeBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            closeMaze();
+        });
     }
 
     // Save & Exit button handlers (both top bar and bottom bar)
