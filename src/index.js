@@ -370,6 +370,7 @@ const DEFAULT_MAZE_PROFILE = {
             { trapId: 'poison_gas', percent: 3 },
         ],
         onBattlebarLoss: 'respawn',
+        chestImage: '',
         chestTilePercent: 15,
         chestLockedPercent: 30,
         chestLockedBonusPercent: 50,
@@ -997,6 +998,7 @@ function saveMazeProfile(name, profileData) {
         onBattlebarLoss: profileData.onBattlebarLoss || 'continue',
         loseCommand: profileData.loseCommand || '',
         // Chest tile settings
+        chestImage: profileData.chestImage || '',
         chestTilePercent: profileData.chestTilePercent || 10,
         chestLockedPercent: profileData.chestLockedPercent || 30,
         chestLockedBonusPercent: profileData.chestLockedBonusPercent || 50,
@@ -3198,6 +3200,18 @@ function renderMazeGrid() {
                 if (cell.chest.opened) {
                     cellEl.classList.add('chest-opened');
                 }
+                // Custom chest image
+                if (currentMaze.profile?.chestImage && !cell.chest.opened) {
+                    cellEl.classList.add('has-custom-chest');
+                    const chestImg = document.createElement('img');
+                    chestImg.src = getExtensionImagePath(currentMaze.profile.chestImage);
+                    chestImg.className = 'maze-chest-img';
+                    chestImg.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; object-fit: cover; border-radius: 3px; z-index: 1;';
+                    if (cell.chest.type === 'locked') {
+                        chestImg.style.filter = 'grayscale(50%)';
+                    }
+                    cellEl.appendChild(chestImg);
+                }
             }
 
             // Trap tile indicators
@@ -4690,6 +4704,20 @@ function getPanelHtml() {
                             </button>
                             <div id="chests_section" class="mazemaster-collapsible-content" style="display: none;">
                                 <div class="mazemaster-section">
+                                    <label class="mazemaster-label">Chest Image</label>
+                                    <div class="mazemaster-row" style="gap: 10px; align-items: center;">
+                                        <div class="mazemaster-chest-preview" style="width: 50px; height: 50px; border-radius: 5px; overflow: hidden; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                                            ${currentMazeData.chestImage ? `<img id="mazemaster_chest_preview_img" src="${getExtensionImagePath(currentMazeData.chestImage)}" style="width: 100%; height: 100%; object-fit: cover;">` : '<i id="mazemaster_chest_preview_icon" class="fa-solid fa-box" style="color: #888;"></i>'}
+                                        </div>
+                                        <button id="mazemaster_chest_image_btn" class="menu_button menu_button_icon" title="Upload Chest Image">
+                                            <i class="fa-solid fa-upload"></i>
+                                        </button>
+                                        <input type="file" id="mazemaster_chest_image_file" accept="image/*" style="display: none;">
+                                        <small style="color: #888;">Custom chest appearance</small>
+                                    </div>
+                                </div>
+
+                                <div class="mazemaster-section">
                                     <label class="mazemaster-label">Chest Distribution</label>
                                     <div class="mazemaster-grid-2col">
                                         <div class="mazemaster-row">
@@ -5541,6 +5569,11 @@ function getPanelHtml() {
             .maze-cell.chest-opened:not(.hidden)::before {
                 color: #666;
                 opacity: 0.5;
+            }
+
+            /* Hide default icon when custom chest image is used */
+            .maze-cell.has-custom-chest::before {
+                display: none !important;
             }
 
             /* Maze Cell Trap Indicators */
@@ -6950,6 +6983,7 @@ function collectMazeDataFromUI() {
         loseCommand: document.getElementById('mazemaster_maze_lose_cmd')?.value || '',
         winMessage: document.getElementById('mazemaster_maze_win_message')?.value || '',
         winImage: existingProfile.winImage || '',
+        chestImage: existingProfile.chestImage || '',
         // Main minion settings
         mainMinion: document.getElementById('mazemaster_maze_main_minion')?.value || '',
         mainMinionIntroMessage: document.getElementById('mazemaster_maze_intro_message')?.value || '',
@@ -6989,7 +7023,58 @@ function collectMazeDataFromUI() {
     };
 }
 
+/**
+ * Crop an image file to a square (center crop)
+ * @param {File} file - The image file to crop
+ * @returns {Promise<Blob>} - The cropped image as a Blob
+ */
+async function cropToSquare(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+
+            const size = Math.min(img.width, img.height);
+            const offsetX = (img.width - size) / 2;
+            const offsetY = (img.height - size) / 2;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Failed to create cropped image'));
+                }
+            }, file.type || 'image/png');
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Failed to load image'));
+        };
+
+        img.src = url;
+    });
+}
+
 async function uploadImage(file, filenamePrefix) {
+    // First crop the image to square
+    let imageBlob;
+    try {
+        imageBlob = await cropToSquare(file);
+    } catch (err) {
+        console.warn('[MazeMaster] Could not crop image, using original:', err);
+        imageBlob = file;
+    }
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = async (e) => {
@@ -7021,7 +7106,7 @@ async function uploadImage(file, filenamePrefix) {
             }
         };
         reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(imageBlob);
     });
 }
 
@@ -8421,6 +8506,46 @@ function setupEventHandlers() {
             }
 
             mazeWinImageFile.value = '';
+        });
+    }
+
+    // Chest image upload
+    const chestImageBtn = document.getElementById('mazemaster_chest_image_btn');
+    const chestImageFile = document.getElementById('mazemaster_chest_image_file');
+    if (chestImageBtn && chestImageFile) {
+        chestImageBtn.addEventListener('click', () => {
+            chestImageFile.click();
+        });
+
+        chestImageFile.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            const profileName = document.getElementById('mazemaster_maze_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a profile first');
+                chestImageFile.value = '';
+                return;
+            }
+
+            try {
+                const imagePath = await uploadImage(file, `chest_${profileName}`);
+                const profile = getMazeProfile(profileName);
+                if (profile) {
+                    profile.chestImage = imagePath;
+                    saveMazeProfile(profileName, profile);
+
+                    // Update preview
+                    const previewContainer = document.querySelector('.mazemaster-chest-preview');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = `<img id="mazemaster_chest_preview_img" src="${imagePath}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    }
+                }
+            } catch (err) {
+                alert(`Image upload failed: ${err.message}`);
+            }
+
+            chestImageFile.value = '';
         });
     }
 

@@ -1,6 +1,6 @@
 # MazeMaster
 
-A comprehensive game system extension for SillyTavern featuring procedurally generated mazes, prize wheels, and battle challenges. Create immersive dungeon-crawling experiences with LLM-enhanced narration.
+A modular adventure toolkit for SillyTavern featuring procedurally generated mazes, prize wheels, and battle challenges. Create immersive dungeon-crawling experiences with LLM-enhanced narration.
 
 **Author:** mechamarmot
 
@@ -31,31 +31,24 @@ MazeMaster is a modular game system that brings interactive gameplay elements to
 
 | Component | Description |
 |-----------|-------------|
+| **Maze** | Full dungeon-crawling experience with procedural generation |
 | **Prize Wheel** | Spin-to-win wheel with configurable segments and callbacks |
 | **Battlebar** | Timing-based combat minigame with hit zones and progression |
-| **Maze** | Full dungeon-crawling experience combining all components |
 
 ---
 
 ## STScript Integration
 
-**MazeMaster is built from the ground up for STScript integration.** Almost every feature supports STScript callbacks, making it easy to incorporate into character cards, world info, Quick Replies, or other extensions.
+**MazeMaster is built for STScript integration.** Almost every feature supports STScript callbacks, making it easy to incorporate into character cards, world info, Quick Replies, or other extensions.
 
 ### Every Action Can Run Scripts
 
-- **Wheel segments** - execute commands when landed on
-- **Battlebar events** - hit, miss, win, and lose each have command slots
+- **Maze completion** - win/lose runs configurable commands
 - **Minion encounters** - run scripts when triggered
 - **Trap triggers** - execute scripts when stepped on
-- **Maze completion** - win/lose runs configurable commands
 - **Chest events** - trigger custom behaviors
-
-### Example Use Cases
-- Update character stats or variables
-- Trigger chat messages or narration
-- Modify world state
-- Chain into other extensions
-- Create complex branching gameplay
+- **Wheel segments** - execute commands when landed on
+- **Battlebar events** - hit, miss, win, and lose each have command slots
 
 ---
 
@@ -65,28 +58,24 @@ All components can be triggered via slash commands from anywhere:
 
 | Command | Description |
 |---------|-------------|
+| `/maze profile="Name"` | Starts the specified maze |
 | `/wheel profile="Name"` | Opens the specified wheel profile |
 | `/battlebar profile="Name"` | Starts the specified battlebar challenge |
-| `/maze profile="Name"` | Starts the specified maze |
 | `/mazeminion name="Name" message="Text"` | Sets minion display in active maze |
 
 ---
 
 ## Message Macros
 
-MazeMaster also supports **message macros** that automatically trigger when they appear in chat (from characters or users):
+MazeMaster supports **message macros** that automatically trigger when they appear in chat:
 
 | Macro | Effect |
 |-------|--------|
+| `{{maze:ProfileName}}` | Automatically starts the maze |
 | `{{wheel:ProfileName}}` | Automatically opens the wheel |
 | `{{battlebar:ProfileName}}` | Automatically starts the battlebar |
-| `{{maze:ProfileName}}` | Automatically starts the maze |
 
-This allows characters to trigger game events naturally through their dialogue:
-
-```
-"Step right up and spin the wheel of fortune! {{wheel:Fortune Wheel}}"
-```
+This allows characters to trigger game events naturally through dialogue:
 
 ```
 "You dare challenge me? Then face my blade! {{battlebar:Boss Fight}}"
@@ -94,127 +83,11 @@ This allows characters to trigger game events naturally through their dialogue:
 
 ---
 
-## Prize Wheel (In-Depth)
-
-The Prize Wheel is a fully customizable spin-to-win game that can be used for rewards, random events, decision making, or any scenario where you want randomized outcomes.
-
-### Features
-- Unlimited segments per wheel
-- Variable segment sizes (weighted probability)
-- Respin capability on specific segments
-- Segment randomization option
-- Adjustable difficulty (spin speed)
-- STScript command per segment
-
-### Segment Configuration
-
-Each segment has:
-- **Trigger Name** - Identifier for callbacks
-- **Display Text** - What shows on the wheel
-- **Command** - STScript executed when landed on
-- **Size** - `fraction` (1x), `halfseg` (0.5x), or `doubleseg` (2x)
-- **Respin** - Whether landing triggers another spin
-
-### Segment Size Rules
-Sizes affect probability. A `doubleseg` is twice as likely as a `fraction`. Note: `halfseg` count must equal `doubleseg` count for wheel balance.
-
-### Example Commands
-
-**Give gold:**
-```
-/setvar key=gold {{getvar::gold}}+100 | /echo You won 100 gold!
-```
-
-**Trigger an event:**
-```
-/trigger Jackpot Celebration | /sendas name=Dealer Great spin!
-```
-
-**Chain multiple actions:**
-```
-/setvar key=luck {{getvar::luck}}+1 | /echo Lucky! | /wheel profile="Bonus Wheel"
-```
-
-### Standalone Usage
-
-Use the wheel anywhere in SillyTavern:
-- Gacha/loot systems
-- Random event triggers
-- Fortune telling mechanics
-- Reward distribution
-- Decision making tools
-- Slot machine games
-
----
-
-## Battlebar (In-Depth)
-
-The Battlebar is a timing-based combat minigame where players must hit a button when an arrow passes through a target zone. It supports multiple stages, visual progression, and full STScript integration.
-
-### Features
-- Adjustable difficulty (arrow speed)
-- Configurable hits to win / misses to lose
-- Stage images with LLM-enhanced messages
-- Four command hooks (hit, miss, win, lose)
-- POW items for guaranteed hits
-- GRANDPOW for instant victory
-- Item drop chances after battles
-
-### Profile Configuration
-
-- **Main Title** - Enemy/boss name displayed
-- **Description** - Context for LLM narration
-- **Difficulty** - Arrow speed (1=slowest, 5=fastest)
-- **Hits to Win** - Successful hits required
-- **Misses to Lose** - Failed attempts before defeat
-
-### Stage Images
-
-Add images for each hit stage to show progression:
-- Stage 0: "The enemy appears!"
-- Stage 1: "You land a blow!"
-- Stage 2: "The enemy staggers!"
-- Stage 3: "Victory!"
-
-### STScript Commands
-
-| Event | When it fires |
-|-------|---------------|
-| Hit Command | Each successful hit |
-| Miss Command | Each missed attempt |
-| Win Command | When player wins |
-| Lose Command | When player loses |
-
-### Example Commands
-
-**Track damage:**
-```
-Hit: /setvar key=damage {{getvar::damage}}+10
-Win: /echo You dealt {{getvar::damage}} total damage!
-```
-
-**Consequences for losing:**
-```
-Lose: /setvar key=hp {{getvar::hp}}-20 | /echo You lost 20 HP!
-```
-
-### Standalone Usage
-
-Use battlebars anywhere:
-- Combat encounters
-- Skill checks
-- Reaction tests
-- Boss fights
-- Quick-time events
-- Any timing-based challenge
-
----
-
 ## Maze (The Complete Experience)
 
 The Maze brings everything together into a complete dungeon-crawling adventure. Players navigate procedurally generated mazes, encountering minions, opening chests, avoiding traps, and reaching the exit.
 
-### Maze Features
+### Features
 
 - **Procedural Generation** - Every maze is unique (5x5 to 15x15 grids)
 - **Minion Encounters** - Configure NPCs that appear on tiles
@@ -233,24 +106,11 @@ The Maze brings everything together into a complete dungeon-crawling adventure. 
 | Prize Wheel | Triggers a wheel spin |
 | Merchant | Offers item trades |
 
-Each minion has:
-- Custom image
-- Message pool
-- Encounter script (STScript)
-- Type-specific settings
-
 ### Chest System
 
-**Regular Chests:**
-- Configurable loot tables
-- Item drop chances (keys, POW, stealth, GRANDPOW)
-
-**Locked Chests:**
-- Require keys to open
-- Bonus loot percentage
-
-**Mimics:**
-- Trap chests that trigger consequences
+- **Regular Chests** - Configurable loot tables with item drop chances
+- **Locked Chests** - Require keys, bonus loot percentage
+- **Mimics** - Trap chests that trigger consequences
 
 ### Items
 
@@ -260,13 +120,6 @@ Each minion has:
 | POW | Guarantees next battlebar hit |
 | Stealth | Skips next encounter |
 | GRANDPOW | Instantly wins any battlebar |
-
-### Traps
-
-Traps are hazard tiles with:
-- Custom image
-- Message (LLM-enhanced)
-- Script (STScript executed on trigger)
 
 ### Story Milestones
 
@@ -284,9 +137,74 @@ Choose what happens at the maze exit:
 
 ---
 
+## Prize Wheel
+
+A fully customizable spin-to-win game for rewards, random events, or any randomized outcome.
+
+### Features
+- Unlimited segments per wheel
+- Variable segment sizes (weighted probability)
+- Respin capability on specific segments
+- STScript command per segment
+
+### Segment Configuration
+
+- **Trigger Name** - Identifier for callbacks
+- **Display Text** - What shows on the wheel
+- **Command** - STScript executed when landed on
+- **Size** - `fraction` (1x), `halfseg` (0.5x), or `doubleseg` (2x)
+- **Respin** - Whether landing triggers another spin
+
+### Standalone Uses
+- Gacha/loot systems
+- Random event triggers
+- Fortune telling
+- Decision making
+
+---
+
+## Battlebar
+
+A timing-based combat minigame where players hit a button when an arrow passes through a target zone.
+
+### Features
+- Adjustable difficulty (arrow speed)
+- Configurable hits to win / misses to lose
+- Stage images with progression
+- POW items for guaranteed hits
+- GRANDPOW for instant victory
+
+### Event Hooks
+
+Each event can trigger your own STScript:
+
+| Event | When it fires |
+|-------|---------------|
+| Hit Command | Each successful hit |
+| Miss Command | Each missed attempt |
+| Win Command | When player wins |
+| Lose Command | When player loses |
+
+### Standalone Uses
+- Combat encounters
+- Skill checks
+- Quick-time events
+- Boss fights
+
+---
+
 ## Configuration Tabs
 
 The MazeMaster settings panel has five tabs:
+
+### Maze Tab
+- Create/manage maze profiles
+- Set grid size and win/lose conditions
+- Configure main minion (narrator)
+- Add minion and trap encounters
+- Configure chest distribution and loot
+- Set starting inventory
+- Add story milestones
 
 ### Wheel Tab
 - Create/manage wheel profiles
@@ -301,36 +219,25 @@ The MazeMaster settings panel has five tabs:
 - Set STScript commands
 - Preview button to test
 
-### Maze Tab
-- Create/manage maze profiles
-- Set grid size and win/lose conditions
-- Configure main minion (narrator)
-- Add minion and trap encounters
-- Configure chest distribution and loot
-- Set starting inventory
-- Add story milestones
-
 ### Minions Tab
 - Create reusable minion configurations
 - Set type, images, messages
 - Configure encounter scripts
-- Save/load minion profiles
 
 ### Traps Tab
 - Create trap configurations
 - Set images, messages, scripts
-- Save/load trap profiles
 
 ---
 
 ## LLM Integration
 
-MazeMaster can enhance all messages through your connected LLM:
+MazeMaster can enhance messages through your connected LLM:
 
 - **Enable LLM** - Toggle AI narration enhancement
 - **LLM Preset** - Select which preset to use
 
-When enabled, messages are sent to the LLM with context (story setting, progress, character descriptions) to generate atmospheric, in-character narration.
+When enabled, messages are sent to the LLM with context to generate atmospheric, in-character narration.
 
 ---
 
@@ -356,7 +263,6 @@ Or use components standalone:
 - Chain STScript commands with `|` for complex behaviors
 - Use the **Preview buttons** to test Wheel and Battlebar
 - **POW** and **Stealth** are valuable - use strategically!
-- **GRANDPOW** is rare but instantly wins any battlebar
 
 ---
 
@@ -369,7 +275,3 @@ AGPL-3.0 - See LICENSE file
 ## Support
 
 For issues, feature requests, or contributions, visit the GitHub repository.
-
----
-
-*MazeMaster - Bringing dungeon-crawling adventures to your SillyTavern experience.*
