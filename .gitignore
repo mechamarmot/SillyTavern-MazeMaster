@@ -22,5 +22,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Large asset packs (download separately)
-/assets
+# Large asset source packs (not the optimized sprites we ship)
+# /assets/isometric/Kenney*

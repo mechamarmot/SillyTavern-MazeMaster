@@ -70,6 +70,21 @@ MazeMaster is a modular game system that brings interactive gameplay elements to
 <p align="center"><em>Maze Gameplay - Explore procedurally generated dungeons with inventory and encounters</em></p>
 
 <p align="center">
+  <img src="screenshots/isometric-dungeon.png" alt="Isometric View - Beautiful 2.5D dungeon rendering" width="400">
+</p>
+<p align="center"><em>Isometric View - Beautiful 2.5D rendering with Kenney sprites</em></p>
+
+<p align="center">
+  <img src="screenshots/isometric-gameplay.png" alt="Isometric Gameplay - Multi-floor dungeon exploration" width="400">
+</p>
+<p align="center"><em>Isometric Gameplay - Multi-floor dungeons with themed environments</em></p>
+
+<p align="center">
+  <img src="screenshots/isometric-fog.png" alt="Fog of War - Progressive visibility as you explore" width="400">
+</p>
+<p align="center"><em>Fog of War - Tiles reveal as you explore the dungeon</em></p>
+
+<p align="center">
   <img src="screenshots/config-maze.png" alt="Maze Configuration - Set up dungeon profiles with encounters and loot" width="400">
 </p>
 <p align="center"><em>Maze Configuration - Configure grid size, encounters, chests, and victory conditions</em></p>
