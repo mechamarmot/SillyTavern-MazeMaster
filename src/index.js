@@ -75,7 +75,7 @@ const DIFFICULTY_TIERS = {
     easy: {
         name: 'Easy',
         gridSizeRange: { min: 5, max: 10 },
-        encounterDensityMult: 0.7,
+        encounterDensityMult: 1.0,
         trapFrequencyMult: 0.5,
         battlebarZoneMult: 1.3,
         battlebarSpeedMult: 0.8,
@@ -86,7 +86,7 @@ const DIFFICULTY_TIERS = {
     normal: {
         name: 'Normal',
         gridSizeRange: { min: 5, max: 20 },
-        encounterDensityMult: 1.0,
+        encounterDensityMult: 1.2,
         trapFrequencyMult: 1.0,
         battlebarZoneMult: 1.0,
         battlebarSpeedMult: 1.0,
@@ -97,7 +97,7 @@ const DIFFICULTY_TIERS = {
     hard: {
         name: 'Hard',
         gridSizeRange: { min: 8, max: 20 },
-        encounterDensityMult: 1.3,
+        encounterDensityMult: 1.5,
         trapFrequencyMult: 1.5,
         battlebarZoneMult: 0.8,
         battlebarSpeedMult: 1.2,
@@ -108,7 +108,7 @@ const DIFFICULTY_TIERS = {
     nightmare: {
         name: 'Nightmare',
         gridSizeRange: { min: 10, max: 20 },
-        encounterDensityMult: 1.6,
+        encounterDensityMult: 1.8,
         trapFrequencyMult: 2.0,
         battlebarZoneMult: 0.6,
         battlebarSpeedMult: 1.4,
@@ -136,8 +136,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Iron Key',
             stealth: 'Cloak of Shadows',
-            pow: 'Battle Fury',
-            grandpow: 'Divine Wrath',
+            strike: 'Battle Fury',
+            execute: 'Divine Wrath',
             floorKey: 'Stairway Key',
             portalStone: 'Portal Stone',
             minionBane: 'Monster Bane',
@@ -176,8 +176,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Rusty Key',
             stealth: 'Shadow Shroud',
-            pow: 'Adrenaline Rush',
-            grandpow: 'Survival Instinct',
+            strike: 'Adrenaline Rush',
+            execute: 'Survival Instinct',
             floorKey: 'Cellar Key',
             portalStone: 'Dark Crystal',
             minionBane: 'Banishment Charm',
@@ -216,8 +216,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Access Card',
             stealth: 'Cloaking Device',
-            pow: 'Combat Stim',
-            grandpow: 'Overdrive Module',
+            strike: 'Combat Stim',
+            execute: 'Overdrive Module',
             floorKey: 'Deck Keycard',
             portalStone: 'Teleport Beacon',
             minionBane: 'EMP Grenade',
@@ -256,8 +256,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Master Key',
             stealth: 'Smoke Grenade',
-            pow: 'Adrenaline Shot',
-            grandpow: 'Air Strike',
+            strike: 'Adrenaline Shot',
+            execute: 'Air Strike',
             floorKey: 'Building Key',
             portalStone: 'Zip Line',
             minionBane: 'Flashbang',
@@ -296,8 +296,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Access Chip',
             stealth: 'Optical Camo',
-            pow: 'Combat Stims',
-            grandpow: 'Berserker Mode',
+            strike: 'Combat Stims',
+            execute: 'Berserker Mode',
             floorKey: 'Elevator Override',
             portalStone: 'Fast Travel Chip',
             minionBane: 'System Crash',
@@ -336,8 +336,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Skeleton Key',
             stealth: 'Trench Coat',
-            pow: 'Brass Knuckles',
-            grandpow: 'Tommy Gun',
+            strike: 'Brass Knuckles',
+            execute: 'Tommy Gun',
             floorKey: 'Service Key',
             portalStone: 'Secret Map',
             minionBane: 'Blackmail File',
@@ -376,8 +376,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Vault Keycard',
             stealth: 'Ghillie Wrap',
-            pow: 'Rad-X Boost',
-            grandpow: 'Mini Nuke',
+            strike: 'Rad-X Boost',
+            execute: 'Mini Nuke',
             floorKey: 'Bunker Code',
             portalStone: 'Signal Flare',
             minionBane: 'Purifier',
@@ -416,8 +416,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Comically Large Key',
             stealth: 'Cardboard Box',
-            pow: 'Energy Drink',
-            grandpow: 'Power of Friendship',
+            strike: 'Energy Drink',
+            execute: 'Power of Friendship',
             floorKey: 'Janitor\'s Master Key',
             portalStone: 'Plot Device',
             minionBane: 'Bad Pun',
@@ -456,8 +456,8 @@ const SCENARIO_THEMES = {
         itemAliases: {
             key: 'Skeleton Key',
             stealth: 'Poncho',
-            pow: 'Whiskey Courage',
-            grandpow: 'Dynamite Bundle',
+            strike: 'Whiskey Courage',
+            execute: 'Dynamite Bundle',
             floorKey: 'Mine Key',
             portalStone: 'Treasure Map',
             minionBane: 'Silver Bullet',
@@ -1277,6 +1277,27 @@ class CSSGridRenderer extends MazeRenderer {
         return 'css-grid';
     }
 
+    /**
+     * Get CSS filter and color for map style differentiation
+     */
+    getStyleCSS(mapStyle) {
+        const styles = {
+            dungeon: { filter: 'saturate(0.7)', bg: '#1a1520', accent: '#6b5b7a' },
+            maze: { filter: 'hue-rotate(20deg)', bg: '#1a1828', accent: '#7866a0' },
+            forest: { filter: 'saturate(1.4) hue-rotate(-15deg)', bg: '#0d1a0d', accent: '#4a7a4a' },
+            city: { filter: 'saturate(0.6) contrast(1.1)', bg: '#161820', accent: '#6a7080' },
+            spacestation: { filter: 'saturate(1.2) hue-rotate(200deg)', bg: '#0d1525', accent: '#4080b0' },
+            college: { filter: 'sepia(0.3)', bg: '#1a1510', accent: '#9a8060' },
+            apartment: { filter: 'sepia(0.2)', bg: '#1a1612', accent: '#8a7660' },
+            neotokyo: { filter: 'saturate(1.5) hue-rotate(300deg)', bg: '#1a0d18', accent: '#b040a0' },
+            arena: { filter: 'hue-rotate(25deg) saturate(1.2)', bg: '#1a1408', accent: '#b07040' },
+            hospital: { filter: 'saturate(0.5) brightness(1.1)', bg: '#141a1a', accent: '#60a0a0' },
+            highrise: { filter: 'saturate(0.4) contrast(1.2)', bg: '#12121a', accent: '#606080' },
+            outpost: { filter: 'sepia(0.4) hue-rotate(15deg)', bg: '#1a1508', accent: '#a08040' },
+        };
+        return styles[mapStyle] || styles.dungeon;
+    }
+
     getGridHTML(size) {
         const cellSize = this.getCellSize(size);
         return `
@@ -1307,8 +1328,14 @@ class CSSGridRenderer extends MazeRenderer {
         gridEl.style.gridTemplateColumns = `repeat(${size}, ${cellSize}px)`;
         gridEl.innerHTML = '';
 
-        // Build visited key prefix for multi-floor support
-        const floorPrefix = (totalFloors > 1) ? `${currentFloor}:` : '';
+        // Apply aggressive map style coloring
+        const styleCSS = this.getStyleCSS(profile?.mapStyle);
+        gridEl.style.filter = styleCSS.filter;
+        gridEl.style.backgroundColor = styleCSS.bg;
+        gridEl.style.setProperty('--map-accent', styleCSS.accent);
+
+        // Build visited key - always use floor prefix for consistency
+        const floorPrefix = `${currentFloor}:`;
 
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
@@ -1340,7 +1367,8 @@ class CSSGridRenderer extends MazeRenderer {
                 }
 
                 if (isPlayer) cellEl.classList.add('player');
-                if (isExit && showAsVisited) {
+                const isFinalFloor = currentFloor === totalFloors - 1;
+                if (isExit && showAsVisited && isFinalFloor) {
                     cellEl.classList.add('exit');
                     if (isVictory) cellEl.classList.add('victory-glow');
                 }
@@ -1506,7 +1534,7 @@ class CanvasRenderer extends MazeRenderer {
     render(mazeState) {
         if (!this.ctx) return;
 
-        const { grid, size, playerX, playerY, visited, exitX, exitY, profile } = mazeState;
+        const { grid, size, playerX, playerY, visited, exitX, exitY, profile, currentFloor, totalFloors } = mazeState;
         const ts = this.tileSize;
         const fogOfWarEnabled = profile?.fogOfWar ?? false;
 
@@ -1514,11 +1542,15 @@ class CanvasRenderer extends MazeRenderer {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw tiles
+        // Build visited key - always use floor prefix for consistency
+        const floorPrefix = `${currentFloor}:`;
+
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
                 const cell = grid[y][x];
-                const key = `${x},${y}`;
-                const isVisited = visited.has(key);
+                const keyNew = `${floorPrefix}${x},${y}`;
+                const keyOld = `${x},${y}`;
+                const isVisited = visited.has(keyNew) || visited.has(keyOld);
                 const showAsVisited = !fogOfWarEnabled || isVisited;
 
                 if (!showAsVisited) {
@@ -1562,8 +1594,9 @@ class CanvasRenderer extends MazeRenderer {
                         this.ctx.stroke();
                     }
 
-                    // Draw exit
-                    if (x === exitX && y === exitY) {
+                    // Draw exit (only on final floor)
+                    const isFinalFloor = currentFloor === totalFloors - 1;
+                    if (x === exitX && y === exitY && isFinalFloor) {
                         if (this.sprites.exit) {
                             this.ctx.drawImage(this.sprites.exit, x * ts, y * ts, ts, ts);
                         } else {
@@ -1630,29 +1663,16 @@ class IsometricRenderer extends CanvasRenderer {
         this.spriteCache = {};
         this.spritesLoaded = false;
         this.spritesLoading = false;
+        this.currentMapStyle = 'dungeon';
 
-        // Sprite asset paths (relative to extension root)
-        this.spritePaths = {
-            floor: 'assets/isometric/dungeon/floor.png',
-            wall: 'assets/isometric/dungeon/wall.png',
-            wallCorner: 'assets/isometric/dungeon/wall_corner.png',
-            fog: 'assets/isometric/dungeon/fog.png',
-            exit: 'assets/isometric/dungeon/exit.png',
-            chest: 'assets/isometric/dungeon/chest_closed.png',
-            chestOpen: 'assets/isometric/dungeon/chest_open.png',
-            portal: 'assets/isometric/dungeon/portal.png',
-            trap: 'assets/isometric/dungeon/trap.png',
-            minion: 'assets/isometric/dungeon/minion.png',
-            player: 'assets/isometric/dungeon/player.png',
-            stairsUp: 'assets/isometric/dungeon/stairs_up.png',
-            stairsDown: 'assets/isometric/dungeon/stairs_down.png',
-        };
+        // Generate sprite paths based on mapStyle
+        this.spritePaths = this.getSpritePathsForStyle(this.currentMapStyle);
 
         // Fallback color palette for procedural sprites (used if sprites not loaded)
         this.palette = {
             floor: { top: '#3d3d5c', light: '#4a4a6a', dark: '#2d2d44' },
             wall: { top: '#6b5b95', light: '#8b7bb5', dark: '#4b3b75' },
-            fog: { top: '#1a1a2e', light: '#222244', dark: '#111122' },
+            fog: { top: '#2a2a4e', light: '#3a3a6a', dark: '#1a1a3a' },
             exit: { top: '#22c55e', light: '#4ade80', dark: '#16a34a' },
             chest: { top: '#f59e0b', light: '#fbbf24', dark: '#d97706' },
             chestOpen: { top: '#78716c', light: '#a8a29e', dark: '#57534e' },
@@ -1667,6 +1687,107 @@ class IsometricRenderer extends CanvasRenderer {
 
     getType() {
         return 'isometric';
+    }
+
+    /**
+     * Generate sprite paths for a given map style
+     */
+    getSpritePathsForStyle(mapStyle) {
+        const style = mapStyle || 'dungeon';
+        return {
+            floor: `assets/isometric/${style}/floor.png`,
+            wall: `assets/isometric/${style}/wall.png`,
+            wallCorner: `assets/isometric/${style}/wall_corner.png`,
+            fog: `assets/isometric/${style}/fog.png`,
+            exit: `assets/isometric/${style}/exit.png`,
+            chest: `assets/isometric/${style}/chest_closed.png`,
+            chestOpen: `assets/isometric/${style}/chest_open.png`,
+            portal: `assets/isometric/${style}/portal.png`,
+            trap: `assets/isometric/${style}/trap.png`,
+            minion: `assets/isometric/${style}/minion.png`,
+            player: `assets/isometric/${style}/player.png`,
+            stairsUp: `assets/isometric/${style}/stairs_up.png`,
+            stairsDown: `assets/isometric/${style}/stairs_down.png`,
+        };
+    }
+
+    /**
+     * Set map style and reload sprites if changed
+     */
+    setMapStyle(mapStyle) {
+        const newStyle = mapStyle || 'dungeon';
+        if (newStyle !== this.currentMapStyle) {
+            this.currentMapStyle = newStyle;
+            this.spritePaths = this.getSpritePathsForStyle(newStyle);
+            this.spriteCache = {};
+            this.spritesLoaded = false;
+            this.spritesLoading = false;
+            this.loadSprites();
+        }
+    }
+
+    /**
+     * Get ambient color tint for map style (applied as overlay)
+     */
+    getStyleTint(mapStyle) {
+        // Aggressive color tints for strong visual differentiation
+        const tints = {
+            dungeon: { r: 40, g: 30, b: 50, a: 0.25 },       // Deep purple dungeon
+            maze: { r: 60, g: 50, b: 80, a: 0.3 },           // Mystical purple
+            forest: { r: 20, g: 100, b: 40, a: 0.35 },       // Vibrant green
+            city: { r: 80, g: 90, b: 100, a: 0.3 },          // Cool gray-blue urban
+            spacestation: { r: 30, g: 60, b: 120, a: 0.4 },  // Strong sci-fi blue
+            college: { r: 100, g: 80, b: 50, a: 0.25 },      // Warm sepia academic
+            apartment: { r: 90, g: 70, b: 50, a: 0.3 },      // Warm cozy indoor
+            neotokyo: { r: 140, g: 40, b: 100, a: 0.4 },     // Intense neon pink
+            arena: { r: 120, g: 60, b: 30, a: 0.35 },        // Hot sandy/orange
+            hospital: { r: 60, g: 100, b: 100, a: 0.35 },    // Cold teal sterile
+            highrise: { r: 50, g: 50, b: 70, a: 0.4 },       // Dark slate concrete
+            outpost: { r: 100, g: 80, b: 40, a: 0.35 },      // Dusty desert tan
+        };
+        return tints[mapStyle] || tints.dungeon;
+    }
+
+    /**
+     * Get CSS filter string for aggressive style differentiation
+     */
+    getStyleFilter(mapStyle) {
+        const filters = {
+            dungeon: 'saturate(0.7) contrast(1.1)',
+            maze: 'saturate(0.8) hue-rotate(20deg)',
+            forest: 'saturate(1.4) hue-rotate(-20deg) brightness(1.1)',
+            city: 'saturate(0.6) contrast(1.2) brightness(0.9)',
+            spacestation: 'saturate(1.2) hue-rotate(200deg) brightness(1.1)',
+            college: 'saturate(0.9) sepia(0.3) brightness(1.1)',
+            apartment: 'saturate(0.8) sepia(0.2) contrast(1.05)',
+            neotokyo: 'saturate(1.5) hue-rotate(300deg) contrast(1.2) brightness(1.1)',
+            arena: 'saturate(1.3) hue-rotate(30deg) contrast(1.15)',
+            hospital: 'saturate(0.5) brightness(1.2) contrast(0.9)',
+            highrise: 'saturate(0.4) contrast(1.3) brightness(0.7)',
+            outpost: 'saturate(1.1) sepia(0.4) hue-rotate(15deg)',
+        };
+        return filters[mapStyle] || filters.dungeon;
+    }
+
+    /**
+     * Get background color for each map style
+     */
+    getStyleBackground(mapStyle) {
+        const backgrounds = {
+            dungeon: '#0a0815',      // Deep purple-black
+            maze: '#0d0a18',         // Mystical dark
+            forest: '#050d05',       // Forest night
+            city: '#0a0c10',         // Urban dark
+            spacestation: '#050812', // Space blue-black
+            college: '#0f0c08',      // Warm dark
+            apartment: '#0c0a08',    // Cozy dark
+            neotokyo: '#0f050a',     // Neon dark
+            arena: '#100a05',        // Sandy dark
+            hospital: '#080c0c',     // Sterile dark
+            highrise: '#080810',     // Concrete dark
+            outpost: '#0d0a06',      // Desert dark
+        };
+        return backgrounds[mapStyle] || backgrounds.dungeon;
     }
 
     /**
@@ -1753,6 +1874,10 @@ class IsometricRenderer extends CanvasRenderer {
             this.tileHeight = newSize / 2;
             this.wallHeight = newSize * 0.375;
         }
+        // Set map style from profile (triggers sprite reload if changed)
+        if (mazeState?.profile?.mapStyle) {
+            this.setMapStyle(mazeState.profile.mapStyle);
+        }
         super.init(container, mazeState);
         // Start loading sprites (async, will be ready for next render)
         this.loadSprites();
@@ -1781,6 +1906,36 @@ class IsometricRenderer extends CanvasRenderer {
         return true;
     }
 
+    drawSpriteDirectional(spriteName, x, y, scale = 1, direction = 'south') {
+        const sprite = this.spriteCache[spriteName];
+        if (!sprite) return false;
+
+        // Kenney sprites are 256x512, we scale to fit tile width
+        const spriteAspect = sprite.height / sprite.width;
+        const w = this.tileWidth * scale;
+        const h = w * spriteAspect;
+
+        const drawX = x - w / 2;
+        const drawY = y + this.tileHeight / 2 - h;
+
+        // In isometric view, flip horizontally for west/north directions
+        // Default sprite faces down-right (south/east), flipped faces down-left (north/west)
+        const shouldFlip = direction === 'west' || direction === 'north';
+
+        if (shouldFlip) {
+            this.ctx.save();
+            // Flip around the sprite's center
+            this.ctx.translate(x, drawY + h / 2);
+            this.ctx.scale(-1, 1);
+            this.ctx.translate(-x, -(drawY + h / 2));
+            this.ctx.drawImage(sprite, drawX, drawY, w, h);
+            this.ctx.restore();
+        } else {
+            this.ctx.drawImage(sprite, drawX, drawY, w, h);
+        }
+        return true;
+    }
+
     render(mazeState) {
         if (!this.ctx) {
             this.canvas = document.getElementById('maze_canvas');
@@ -1791,7 +1946,7 @@ class IsometricRenderer extends CanvasRenderer {
         // Store for re-rendering after sprites load
         this.lastMazeState = mazeState;
 
-        const { grid, size, playerX, playerY, visited, exitX, exitY, isVictory, currentFloor, totalFloors, profile } = mazeState;
+        const { grid, size, playerX, playerY, visited, exitX, exitY, isVictory, currentFloor, totalFloors, profile, playerDirection } = mazeState;
         const fogOfWarEnabled = profile?.fogOfWar ?? false;
 
         // Kenney sprites are 256x512 (2:1 aspect), so sprite height = tileWidth * 2
@@ -1805,16 +1960,25 @@ class IsometricRenderer extends CanvasRenderer {
             this.canvas.height = canvasHeight;
         }
 
-        // Clear with dark background
-        this.ctx.fillStyle = '#0a0a1a';
+        // Clear with style-specific background color
+        const bgColor = this.getStyleBackground(profile?.mapStyle);
+        this.ctx.fillStyle = bgColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Match container background to canvas (no visible edges when zooming)
+        const mazeArea = document.querySelector('.mazemaster-maze-area');
+        if (mazeArea) mazeArea.style.backgroundColor = bgColor;
+
+        // Apply aggressive style filter for visual differentiation
+        const styleFilter = this.getStyleFilter(profile?.mapStyle);
+        this.ctx.filter = styleFilter;
 
         const offsetX = this.canvas.width / 2;
         // Offset Y needs room for tall sprites at the top
         const offsetY = spriteHeight;
 
-        // Build visited key prefix for multi-floor
-        const floorPrefix = (totalFloors > 1) ? `${currentFloor}:` : '';
+        // Build visited key - always use floor prefix for consistency
+        const floorPrefix = `${currentFloor}:`;
 
         // Draw in isometric order (back to front)
         for (let y = 0; y < size; y++) {
@@ -1831,38 +1995,66 @@ class IsometricRenderer extends CanvasRenderer {
                 const showAsVisited = !fogOfWarEnabled || isVisited;
 
                 if (!showAsVisited) {
-                    // Fog of war - always use procedural dark block (sprite is same as floor)
-                    this.drawIsoBlock(drawX, drawY, this.palette.fog, 0);
+                    // Fog of war - draw a raised fog block with question mark
+                    this.drawIsoBlock(drawX, drawY, this.palette.fog, 4);
+                    // Draw question mark on fog
+                    this.ctx.fillStyle = '#5a5a8a';
+                    this.ctx.font = `bold ${Math.floor(this.tileWidth / 3)}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText('?', drawX, drawY - 2);
                 } else {
                     // Draw floor
                     if (!this.drawSprite('floor', drawX, drawY)) {
                         this.drawIsoDiamond(drawX, drawY, this.palette.floor);
                     }
 
-                    // Draw walls (use wall sprite for cells with walls)
-                    if (cell.walls.left || cell.walls.top) {
-                        const hasCorner = cell.walls.left && cell.walls.top;
-                        if (hasCorner) {
-                            if (!this.drawSprite('wallCorner', drawX, drawY)) {
-                                this.drawWallLeft(drawX, drawY, this.palette.wall);
-                                this.drawWallTop(drawX, drawY, this.palette.wall);
-                            }
-                        } else if (cell.walls.left) {
-                            if (!this.drawSprite('wall', drawX, drawY)) {
-                                this.drawWallLeft(drawX, drawY, this.palette.wall);
-                            }
-                        } else if (cell.walls.top) {
-                            if (!this.drawSprite('wall', drawX, drawY)) {
-                                this.drawWallTop(drawX, drawY, this.palette.wall);
-                            }
-                        }
+                    // Draw walls - ISOMETRIC MAPPING (based on gridToIso transform):
+                    // walls.left (West/x-1) blocks UP-LEFT → TOP-LEFT edge (drawWallLeft)
+                    // walls.top (North/y-1) blocks UP-RIGHT → TOP-RIGHT edge (drawWallTop)
+                    // walls.right (East/x+1) blocks DOWN-RIGHT → BOTTOM-RIGHT edge (drawWallRight)
+                    // walls.bottom (South/y+1) blocks DOWN-LEFT → BOTTOM-LEFT edge (drawWallBottom)
+
+                    // Draw "back" walls (left and top in grid)
+                    if (cell.walls.left) {
+                        this.drawWallLeft(drawX, drawY, this.palette.wall);
+                    }
+                    if (cell.walls.top) {
+                        this.drawWallTop(drawX, drawY, this.palette.wall);
+                    }
+
+                    // Draw "front" walls only when adjacent cell won't draw them
+                    // Check if right cell (East/x+1) will draw its own left wall
+                    const isRightEdge = x >= size - 1;
+                    const rightCellKeyNew = `${floorPrefix}${x + 1},${y}`;
+                    const rightCellKeyOld = `${x + 1},${y}`;
+                    const rightCellVisited = visited.has(rightCellKeyNew) || visited.has(rightCellKeyOld);
+                    const rightCellWillDraw = !isRightEdge && (!fogOfWarEnabled || rightCellVisited);
+
+                    // Check if bottom cell (South/y+1) will draw its own top wall
+                    const isBottomEdge = y >= size - 1;
+                    const bottomCellKeyNew = `${floorPrefix}${x},${y + 1}`;
+                    const bottomCellKeyOld = `${x},${y + 1}`;
+                    const bottomCellVisited = visited.has(bottomCellKeyNew) || visited.has(bottomCellKeyOld);
+                    const bottomCellWillDraw = !isBottomEdge && (!fogOfWarEnabled || bottomCellVisited);
+
+                    // Draw right wall if we have one AND the right cell won't draw its left
+                    if (cell.walls.right && !rightCellWillDraw) {
+                        this.drawWallRight(drawX, drawY, this.palette.wall);
+                    }
+
+                    // Draw bottom wall if we have one AND the bottom cell won't draw its top
+                    if (cell.walls.bottom && !bottomCellWillDraw) {
+                        this.drawWallBottom(drawX, drawY, this.palette.wall);
                     }
 
                     // Draw entities on top of floor
                     const isExit = x === exitX && y === exitY;
                     const isPlayer = x === playerX && y === playerY;
+                    const isFinalFloor = currentFloor === totalFloors - 1;
 
-                    if (isExit) {
+                    // Only render exit on final floor
+                    if (isExit && isFinalFloor) {
                         if (!this.drawSprite('exit', drawX, drawY, 1.0)) {
                             this.drawIsoBlock(drawX, drawY - 2, isVictory ? this.palette.stairUp : this.palette.exit, 4);
                         }
@@ -1904,12 +2096,36 @@ class IsometricRenderer extends CanvasRenderer {
                     }
 
                     if (isPlayer) {
-                        if (!this.drawSprite('player', drawX, drawY, 1.0)) {
-                            this.drawPlayer(drawX, drawY);
+                        // Draw player sprite slightly larger for visibility, facing movement direction
+                        const facing = playerDirection || 'south';
+                        if (!this.drawSpriteDirectional('player', drawX, drawY, 1.15, facing)) {
+                            this.drawPlayerDirectional(drawX, drawY, facing);
                         }
+                        // Draw floating indicator above player
+                        this.drawPlayerIndicator(drawX, drawY);
                     }
                 }
             }
+        }
+
+        // Reset filter before tint overlay
+        this.ctx.filter = 'none';
+
+        // Apply map style color tint overlay with screen blend for atmospheric effect
+        const tint = this.getStyleTint(profile?.mapStyle);
+        if (tint.a > 0) {
+            // Use multiply blend for richer color grading
+            this.ctx.globalCompositeOperation = 'multiply';
+            this.ctx.fillStyle = `rgba(${tint.r + 100}, ${tint.g + 100}, ${tint.b + 100}, ${tint.a * 0.6})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // Add color overlay for stronger tint
+            this.ctx.globalCompositeOperation = 'overlay';
+            this.ctx.fillStyle = `rgba(${tint.r}, ${tint.g}, ${tint.b}, ${tint.a * 0.4})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // Reset blend mode
+            this.ctx.globalCompositeOperation = 'source-over';
         }
     }
 
@@ -1993,6 +2209,48 @@ class IsometricRenderer extends CanvasRenderer {
         this.ctx.fillRect(x + hw - 2, y - h - 2, 4, 4);
     }
 
+    // Draw wall on right edge (for edge cells only - normally this is drawn by the adjacent cell's left wall)
+    drawWallRight(x, y, palette) {
+        const hw = this.tileWidth / 2;
+        const hh = this.tileHeight / 2;
+        const h = this.wallHeight;
+
+        // Right wall faces the "front" of isometric view, use light color
+        this.ctx.fillStyle = palette.light;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + hw, y);
+        this.ctx.lineTo(x + hw, y - h);
+        this.ctx.lineTo(x, y + hh - h);
+        this.ctx.lineTo(x, y + hh);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // Top edge
+        this.ctx.fillStyle = palette.top;
+        this.ctx.fillRect(x + hw - 2, y - h - 2, 4, 4);
+    }
+
+    // Draw wall on bottom edge (for edge cells only - normally this is drawn by the adjacent cell's top wall)
+    drawWallBottom(x, y, palette) {
+        const hw = this.tileWidth / 2;
+        const hh = this.tileHeight / 2;
+        const h = this.wallHeight;
+
+        // Bottom wall faces the "front" of isometric view, use dark color (shadow side)
+        this.ctx.fillStyle = palette.dark;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y + hh);
+        this.ctx.lineTo(x, y + hh - h);
+        this.ctx.lineTo(x - hw, y - h);
+        this.ctx.lineTo(x - hw, y);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // Top edge
+        this.ctx.fillStyle = palette.top;
+        this.ctx.fillRect(x - hw - 1, y - h - 2, 4, 4);
+    }
+
     drawPlayer(x, y) {
         const pal = this.palette.player;
         const r = this.tileWidth / 5;
@@ -2017,6 +2275,48 @@ class IsometricRenderer extends CanvasRenderer {
         this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
         this.ctx.beginPath();
         this.ctx.arc(x - r/3, y - r, r/4, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+
+    drawPlayerDirectional(x, y, direction = 'south') {
+        const pal = this.palette.player;
+        const r = this.tileWidth / 5;
+
+        // Shadow
+        this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        this.ctx.beginPath();
+        this.ctx.ellipse(x, y + 2, r, r/2, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Body (sphere-ish)
+        const gradient = this.ctx.createRadialGradient(x - r/3, y - r - r/2, 0, x, y - r/2, r * 1.5);
+        gradient.addColorStop(0, pal.light);
+        gradient.addColorStop(0.5, pal.top);
+        gradient.addColorStop(1, pal.dark);
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y - r/2, r, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Directional highlight - shift based on facing direction
+        // In isometric: east/south = down-right, west/north = down-left
+        const highlightOffset = (direction === 'west' || direction === 'north') ? r/3 : -r/3;
+        this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        this.ctx.beginPath();
+        this.ctx.arc(x + highlightOffset, y - r, r/4, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Small direction indicator dot
+        const dotOffsets = {
+            north: { dx: 0, dy: -r * 1.3 },
+            south: { dx: 0, dy: r * 0.3 },
+            east: { dx: r * 0.9, dy: -r * 0.4 },
+            west: { dx: -r * 0.9, dy: -r * 0.4 }
+        };
+        const dot = dotOffsets[direction] || dotOffsets.south;
+        this.ctx.fillStyle = pal.light;
+        this.ctx.beginPath();
+        this.ctx.arc(x + dot.dx, y - r/2 + dot.dy, r/6, 0, Math.PI * 2);
         this.ctx.fill();
     }
 
@@ -2063,6 +2363,56 @@ class IsometricRenderer extends CanvasRenderer {
         this.ctx.arc(x - 3, y - r/2, 2, 0, Math.PI * 2);
         this.ctx.arc(x + 3, y - r/2, 2, 0, Math.PI * 2);
         this.ctx.fill();
+    }
+
+    /**
+     * Draw floating indicator above player (bouncing arrow/diamond)
+     */
+    drawPlayerIndicator(x, y) {
+        // Animated bounce using time
+        const time = Date.now() / 300;
+        const bounce = Math.sin(time) * 4;
+        const indicatorY = y - this.tileHeight - 25 + bounce;
+
+        // Draw glowing diamond/arrow pointing down
+        this.ctx.save();
+
+        // Outer glow
+        this.ctx.shadowColor = '#3b82f6';
+        this.ctx.shadowBlur = 10;
+
+        // Diamond shape pointing down
+        const size = 8;
+        this.ctx.fillStyle = '#60a5fa';
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, indicatorY + size * 2);  // Bottom point
+        this.ctx.lineTo(x - size, indicatorY + size);
+        this.ctx.lineTo(x, indicatorY);  // Top point
+        this.ctx.lineTo(x + size, indicatorY + size);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // Inner highlight
+        this.ctx.fillStyle = '#93c5fd';
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, indicatorY + size * 1.5);
+        this.ctx.lineTo(x - size/2, indicatorY + size);
+        this.ctx.lineTo(x, indicatorY + size/2);
+        this.ctx.lineTo(x + size/2, indicatorY + size);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        this.ctx.restore();
+
+        // Trigger re-render for animation (throttled)
+        if (!this._animationFrame) {
+            this._animationFrame = requestAnimationFrame(() => {
+                this._animationFrame = null;
+                if (this.lastMazeState) {
+                    this.render(this.lastMazeState);
+                }
+            });
+        }
     }
 
     drawTrap(x, y) {
@@ -2123,7 +2473,7 @@ const RendererRegistry = {
     },
 
     currentRenderer: null,
-    currentType: 'css-grid',
+    currentType: 'isometric',
 
     /**
      * Register a new renderer type
@@ -2199,7 +2549,7 @@ function detectLayoutMode() {
  * @returns {'mobile' | 'desktop'}
  */
 function getLayoutMode() {
-    const mode = extensionSettings?.layoutMode || 'auto';
+    const mode = extensionSettings?.layoutMode || 'desktop';
     if (mode === 'auto') {
         return detectLayoutMode();
     }
@@ -2240,7 +2590,7 @@ const MAZE_PROFILE_DEFAULTS = {
     theme: 'fantasy',
     mapStyle: 'maze',
     floors: 1,
-    fogOfWar: false, // Disabled by default for testing
+    fogOfWar: true, // Enabled by default
     // STScript hooks
     onMove: '',
     onMilestone: '',
@@ -2369,7 +2719,7 @@ function initSessionStats() {
         chestsOpened: 0,
         trapsTriggered: 0,
         teleportsUsed: 0,
-        itemsCollected: { key: 0, pow: 0, stealth: 0, grandpow: 0 },
+        itemsCollected: { key: 0, strike: 0, stealth: 0, execute: 0 },
     };
 }
 
@@ -2625,7 +2975,7 @@ function getThemedText(elementType, profile) {
 
 /**
  * Get themed item name
- * @param {string} itemId - The item ID (key, pow, stealth, etc.)
+ * @param {string} itemId - The item ID (key, strike, stealth, etc.)
  * @param {Object} profile - The maze profile
  * @returns {string} Themed item name or original itemId
  */
@@ -3773,9 +4123,11 @@ const defaultSettings = {
     currentMazeProfile: 'default',
     currentMinionProfile: 'default',
     currentTrapProfile: 'default',
-    activeGameConfig: 'wheel', // 'wheel' | 'battlebar' | 'maze' | 'minions' | 'traps'
+    activeGameConfig: 'maze', // 'wheel' | 'battlebar' | 'maze' | 'minions' | 'traps'
+    layoutMode: 'desktop', // 'desktop' | 'mobile' | 'auto'
     llmEnabled: true,
     llmPreset: '',
+    closeChatOnStart: true, // Close current chat before starting maze to prevent context bleed
     // D-Pad configuration
     dpadConfig: {
         enabled: true,
@@ -3789,75 +4141,270 @@ const defaultSettings = {
 // =============================================================================
 
 const DEFAULT_WHEEL_PROFILES = {
-    'Reward Wheel': {
+    // === BENEFICIAL WHEELS (friendly NPCs) ===
+    // Balance: 2 halfseg + 2 doubleseg = balanced
+    'Blessing Wheel': {
         segments: [
-            { trigger: '', text: 'Small Prize', command: '/echo You won a small prize!', size: 'fraction', respin: false },
-            { trigger: '', text: 'Medium Prize', command: '/echo You won a medium prize!', size: 'fraction', respin: false },
-            { trigger: '', text: 'Big Prize!', command: '/echo Amazing! You won the big prize!', size: 'fraction', respin: false },
-            { trigger: '', text: 'Try Again', command: '/echo Better luck next time...', size: 'fraction', respin: false },
-            { trigger: '', text: 'JACKPOT!', command: '/echo JACKPOT! Incredible luck!', size: 'fraction', respin: false },
-            { trigger: '', text: 'Bonus Spin', command: '/echo You get another spin!', size: 'fraction', respin: true },
+            { trigger: 'com0', text: 'Key', command: '/echo You receive a Key!', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Strike', command: '/echo You receive a STRIKE!', size: 'doubleseg', respin: false },
+            { trigger: 'com2', text: 'Stealth', command: '/echo You receive a Stealth!', size: 'fraction', respin: false },
+            { trigger: 'com3', text: 'Double Key!', command: '/echo You receive 2 Keys!', size: 'halfseg', respin: false },
+            { trigger: 'com4', text: 'EXECUTE!', command: '/echo You receive an EXECUTE!', size: 'halfseg', respin: false },
+            { trigger: 'com5', text: 'Spin Again', command: '/echo Blessed luck! Spin again!', size: 'fraction', respin: true },
         ],
         randomize: true,
         difficulty: 1,
     },
-    'Challenge Wheel': {
+    'Treasure Wheel': {
         segments: [
-            { trigger: '', text: 'Easy Task', command: '/echo Easy task assigned!', size: 'doubleseg', respin: false },
-            { trigger: '', text: 'Medium Task', command: '/echo Medium task assigned!', size: 'fraction', respin: false },
-            { trigger: '', text: 'Hard Task', command: '/echo Hard task - good luck!', size: 'halfseg', respin: false },
-            { trigger: '', text: 'Free Pass', command: '/echo Lucky! You get a free pass!', size: 'doubleseg', respin: false },
-            { trigger: '', text: 'Double or Nothing', command: '/echo Spin again - double stakes!', size: 'halfseg', respin: true },
+            { trigger: 'com0', text: 'Key', command: '/echo A key materializes!', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Strike', command: '/echo Power surges through you!', size: 'doubleseg', respin: false },
+            { trigger: 'com2', text: 'Stealth', command: '/echo Shadows embrace you!', size: 'fraction', respin: false },
+            { trigger: 'com3', text: 'Floor Key', command: '/echo A Floor Key appears!', size: 'halfseg', respin: false },
+            { trigger: 'com4', text: 'Bonus Spin', command: '/echo Fortune favors you!', size: 'halfseg', respin: true },
+            { trigger: 'com5', text: 'Portal Stone', command: '/echo A Portal Stone!', size: 'fraction', respin: false },
         ],
-        randomize: false,
+        randomize: true,
+        difficulty: 1,
+    },
+    // === MIXED WHEELS (neutral NPCs) ===
+    'Gambler\'s Wheel': {
+        segments: [
+            { trigger: 'com0', text: 'JACKPOT!', command: '/echo JACKPOT! You win big!', size: 'halfseg', respin: false },
+            { trigger: 'com1', text: 'Win Key', command: '/echo You win a Key!', size: 'doubleseg', respin: false },
+            { trigger: 'com2', text: 'Lose Key', command: '/echo You lose a Key...', size: 'fraction', respin: false },
+            { trigger: 'com3', text: 'Double Down', command: '/echo Double or nothing!', size: 'doubleseg', respin: true },
+            { trigger: 'com4', text: 'Nothing', command: '/echo The wheel mocks you...', size: 'fraction', respin: false },
+            { trigger: 'com5', text: 'Lose Strike', command: '/echo Your power fades...', size: 'halfseg', respin: false },
+        ],
+        randomize: true,
         difficulty: 2,
+    },
+    'Mystery Wheel': {
+        segments: [
+            { trigger: 'com0', text: '???', command: '/echo Something strange happens...', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Gain Item', command: '/echo You gain a random item!', size: 'fraction', respin: false },
+            { trigger: 'com2', text: 'Lose Item', command: '/echo An item vanishes!', size: 'fraction', respin: false },
+            { trigger: 'com3', text: 'Teleport', command: '/echo Reality shifts around you!', size: 'halfseg', respin: false },
+            { trigger: 'com4', text: 'Nothing', command: '/echo The mystery remains...', size: 'halfseg', respin: false },
+            { trigger: 'com5', text: 'Respin', command: '/echo Fate intervenes!', size: 'doubleseg', respin: true },
+        ],
+        randomize: true,
+        difficulty: 2,
+    },
+    'Tech Lottery': {
+        segments: [
+            { trigger: 'com0', text: 'System Bonus', command: '/echo System grants bonus credits!', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Malfunction', command: '/echo System error! Item lost!', size: 'fraction', respin: false },
+            { trigger: 'com2', text: 'Reboot', command: '/echo System rebooting...', size: 'fraction', respin: true },
+            { trigger: 'com3', text: 'Data Key', command: '/echo Access key downloaded!', size: 'doubleseg', respin: false },
+            { trigger: 'com4', text: 'Virus', command: '/echo Virus detected! Strike drained!', size: 'halfseg', respin: false },
+            { trigger: 'com5', text: 'Jackpot', command: '/echo JACKPOT PROTOCOL ACTIVATED!', size: 'halfseg', respin: false },
+        ],
+        randomize: true,
+        difficulty: 2,
+    },
+    // === PUNISHING WHEELS (hostile NPCs) ===
+    'Cursed Wheel': {
+        segments: [
+            { trigger: 'com0', text: 'Lose Key', command: '/echo The curse claims your key!', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Lose Strike', command: '/echo Dark energy drains you!', size: 'doubleseg', respin: false },
+            { trigger: 'com2', text: 'Lose Stealth', command: '/echo Shadows betray you!', size: 'fraction', respin: false },
+            { trigger: 'com3', text: 'Nothing', command: '/echo You escape the curse... barely.', size: 'fraction', respin: false },
+            { trigger: 'com4', text: 'Cursed Spin', command: '/echo The wheel demands another spin!', size: 'halfseg', respin: true },
+            { trigger: 'com5', text: 'RARE: Blessing', command: '/echo Against all odds, a blessing!', size: 'halfseg', respin: false },
+        ],
+        randomize: true,
+        difficulty: 3,
+    },
+    'Trap Wheel': {
+        segments: [
+            { trigger: 'com0', text: 'Spike Trap', command: '/echo Spikes shoot up! Lose 1 STRIKE!', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Poison Gas', command: '/echo Gas fills the room! Lose 1 Stealth!', size: 'fraction', respin: false },
+            { trigger: 'com2', text: 'Lock Trap', command: '/echo Your key breaks! Lose 1 Key!', size: 'fraction', respin: false },
+            { trigger: 'com3', text: 'Escape!', command: '/echo You dodge the trap!', size: 'halfseg', respin: false },
+            { trigger: 'com4', text: 'Double Trap', command: '/echo Two traps trigger!', size: 'halfseg', respin: false },
+            { trigger: 'com5', text: 'Trapped Again', command: '/echo Another trap awaits!', size: 'doubleseg', respin: true },
+        ],
+        randomize: true,
+        difficulty: 3,
+    },
+    'Dark Bargain': {
+        segments: [
+            { trigger: 'com0', text: 'Sacrifice Key', command: '/echo Your key dissolves...', size: 'doubleseg', respin: false },
+            { trigger: 'com1', text: 'Sacrifice Strike', command: '/echo Your power drains away...', size: 'fraction', respin: false },
+            { trigger: 'com2', text: 'Sacrifice All', command: '/echo Everything fades...', size: 'halfseg', respin: false },
+            { trigger: 'com3', text: 'EXECUTE!', command: '/echo The bargain pays off! EXECUTE!', size: 'halfseg', respin: false },
+            { trigger: 'com4', text: 'Nothing', command: '/echo The darkness waits...', size: 'doubleseg', respin: false },
+            { trigger: 'com5', text: 'Try Again', command: '/echo The darkness offers again...', size: 'fraction', respin: true },
+        ],
+        randomize: true,
+        difficulty: 4,
     },
 };
 
 const DEFAULT_BATTLEBAR_PROFILES = {
-    'Easy Fight': {
+    // Tutorial/Easy - very forgiving, basic drops
+    'Training Dummy': {
+        difficulty: 1,
+        hitsToWin: 2,
+        missesToLose: 5,
+        description: 'A simple training target - perfect for learning combat basics.',
+        hitCommand: '/echo Nice hit! You\'re getting the hang of it!',
+        missCommand: '/echo Missed! Try again, no rush.',
+        winCommand: '/echo Training complete! You\'re ready for real combat.',
+        loseCommand: '/echo Don\'t worry, practice makes perfect!',
+        mainTitle: 'Training Dummy',
+        images: [],
+        // Core drops
+        keyDropChance: 30, strikeDropChance: 15, stealthDropChance: 5, executeDropChance: 0,
+        // Special drops (very low for easy enemies)
+        floorKeyDropChance: 2, portalStoneDropChance: 1, minionBaneDropChance: 1,
+        mapFragmentDropChance: 5, timeShardDropChance: 0, voidWalkDropChance: 0,
+    },
+    // Fantasy themed - moderate
+    'Dungeon Guardian': {
         difficulty: 2,
         hitsToWin: 3,
-        missesToLose: 5,
-        description: 'A minor enemy blocks your path - a quick skirmish to test your reflexes.',
-        hitCommand: '/echo Hit! Keep going!',
-        missCommand: '/echo Missed! Watch the timing!',
-        winCommand: '/echo Victory! You defeated the enemy!',
-        loseCommand: '/echo Defeated... Try again!',
-        mainTitle: 'Goblin',
-        images: [
-            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'The enemy appears!' },
-            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'You land a blow!' },
-            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'Almost there!' },
-            { imagePath: 'images/easy_fight.jpeg', stageMessage: 'Victory!' },
-        ],
-        // Item drop chances (for maze encounters)
-        keyDropChance: 40,
-        powDropChance: 20,
-        stealthDropChance: 10,
+        missesToLose: 4,
+        description: 'A stalwart guardian blocks your path through the dungeon.',
+        hitCommand: '/echo Your blade finds its mark!',
+        missCommand: '/echo The guardian deflects your attack!',
+        winCommand: '/echo The guardian falls! The way is clear.',
+        loseCommand: '/echo The guardian has bested you...',
+        mainTitle: 'Dungeon Guardian',
+        images: [],
+        keyDropChance: 40, strikeDropChance: 20, stealthDropChance: 10, executeDropChance: 1,
+        floorKeyDropChance: 4, portalStoneDropChance: 2, minionBaneDropChance: 3,
+        mapFragmentDropChance: 8, timeShardDropChance: 1, voidWalkDropChance: 0,
     },
-    'Boss Battle': {
+    // Fantasy themed - harder
+    'Knight\'s Challenge': {
+        difficulty: 3,
+        hitsToWin: 4,
+        missesToLose: 3,
+        description: 'An armored knight demands honorable combat. Steel clashes against steel.',
+        hitCommand: '/echo A solid blow! The knight staggers!',
+        missCommand: '/echo The knight parries with practiced ease!',
+        winCommand: '/echo The knight yields! Honor is satisfied.',
+        loseCommand: '/echo The knight proves the superior warrior...',
+        mainTitle: 'Dark Knight',
+        images: [],
+        keyDropChance: 50, strikeDropChance: 25, stealthDropChance: 15, executeDropChance: 2,
+        floorKeyDropChance: 6, portalStoneDropChance: 4, minionBaneDropChance: 5,
+        mapFragmentDropChance: 10, timeShardDropChance: 2, voidWalkDropChance: 1,
+    },
+    // Horror themed - balanced tension
+    'Horror Encounter': {
+        difficulty: 3,
+        hitsToWin: 3,
+        missesToLose: 3,
+        description: 'Something unspeakable lurches from the shadows. Fight or be consumed!',
+        hitCommand: '/echo The creature screeches in pain!',
+        missCommand: '/echo It\'s too fast! Your attack goes wide!',
+        winCommand: '/echo The horror dissipates into mist...',
+        loseCommand: '/echo The darkness claims another victim...',
+        mainTitle: 'The Horror',
+        images: [],
+        keyDropChance: 35, strikeDropChance: 25, stealthDropChance: 20, executeDropChance: 2,
+        floorKeyDropChance: 5, portalStoneDropChance: 4, minionBaneDropChance: 6,
+        mapFragmentDropChance: 8, timeShardDropChance: 3, voidWalkDropChance: 2,
+    },
+    // Horror themed - brutal, high rewards
+    'Nightmare Battle': {
+        difficulty: 4,
+        hitsToWin: 4,
+        missesToLose: 2,
+        description: 'A manifestation of pure terror. One wrong move could be your last.',
+        hitCommand: '/echo You strike at the nightmare\'s core!',
+        missCommand: '/echo The nightmare\'s form shifts! Impossible to hit!',
+        winCommand: '/echo The nightmare shatters! Dawn breaks through.',
+        loseCommand: '/echo You are lost in eternal darkness...',
+        mainTitle: 'Nightmare',
+        images: [],
+        keyDropChance: 55, strikeDropChance: 35, stealthDropChance: 25, executeDropChance: 4,
+        floorKeyDropChance: 8, portalStoneDropChance: 6, minionBaneDropChance: 7,
+        mapFragmentDropChance: 12, timeShardDropChance: 4, voidWalkDropChance: 2,
+    },
+    // Sci-fi themed - moderate
+    'Security Drone': {
+        difficulty: 2,
+        hitsToWin: 3,
+        missesToLose: 4,
+        description: 'Automated security has detected an intruder. Disable it before the alarm triggers.',
+        hitCommand: '/echo Direct hit! Sparks fly!',
+        missCommand: '/echo The drone evades with precise thrusters!',
+        winCommand: '/echo System offline. Security bypassed.',
+        loseCommand: '/echo ALERT: Intruder neutralized.',
+        mainTitle: 'SEC-BOT',
+        images: [],
+        keyDropChance: 40, strikeDropChance: 20, stealthDropChance: 15, executeDropChance: 1,
+        floorKeyDropChance: 5, portalStoneDropChance: 3, minionBaneDropChance: 4,
+        mapFragmentDropChance: 10, timeShardDropChance: 2, voidWalkDropChance: 1,
+    },
+    // Sci-fi themed - hard, great rewards
+    'System Override': {
         difficulty: 4,
         hitsToWin: 5,
         missesToLose: 3,
-        description: 'A fearsome boss enemy stands before you - a brutal fight for survival with no room for error.',
-        hitCommand: '/echo Critical hit!',
-        missCommand: '/echo The boss counters!',
-        winCommand: '/echo The boss has been defeated!',
-        loseCommand: '/echo The boss was too powerful...',
-        mainTitle: 'Death Knight',
-        images: [
-            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'The boss towers before you!' },
-            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'You find an opening!' },
-            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'The boss staggers!' },
-            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'Keep attacking!' },
-            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'One more hit!' },
-            { imagePath: 'images/boss_battle.jpeg', stageMessage: 'VICTORY!' },
-        ],
-        // Item drop chances (for maze encounters)
-        keyDropChance: 50,
-        powDropChance: 30,
-        stealthDropChance: 20,
+        description: 'The mainframe AI has activated combat protocols. Override or be terminated.',
+        hitCommand: '/echo Firewall breached! Keep attacking!',
+        missCommand: '/echo ACCESS DENIED. Countermeasures deployed.',
+        winCommand: '/echo SYSTEM OVERRIDE COMPLETE. Full access granted.',
+        loseCommand: '/echo USER TERMINATED. Memory wiped.',
+        mainTitle: 'MAINFRAME',
+        images: [],
+        keyDropChance: 60, strikeDropChance: 40, stealthDropChance: 25, executeDropChance: 5,
+        floorKeyDropChance: 10, portalStoneDropChance: 8, minionBaneDropChance: 6,
+        mapFragmentDropChance: 15, timeShardDropChance: 5, voidWalkDropChance: 3,
+    },
+    // Cyberpunk/Action themed
+    'Street Fight': {
+        difficulty: 3,
+        hitsToWin: 4,
+        missesToLose: 3,
+        description: 'Fists and chrome clash in the neon-lit alley. No rules, no mercy.',
+        hitCommand: '/echo That\'s gonna leave a mark!',
+        missCommand: '/echo They\'re fast - street smart!',
+        winCommand: '/echo They hit the ground. You walk away.',
+        loseCommand: '/echo Concrete meets face. Lights out.',
+        mainTitle: 'Street Thug',
+        images: [],
+        keyDropChance: 45, strikeDropChance: 25, stealthDropChance: 15, executeDropChance: 2,
+        floorKeyDropChance: 5, portalStoneDropChance: 4, minionBaneDropChance: 5,
+        mapFragmentDropChance: 10, timeShardDropChance: 2, voidWalkDropChance: 1,
+    },
+    // Western themed
+    'Showdown': {
+        difficulty: 3,
+        hitsToWin: 3,
+        missesToLose: 3,
+        description: 'High noon. One chance. Draw!',
+        hitCommand: '/echo Quick draw! Right on target!',
+        missCommand: '/echo Dust in your eyes! Shot goes wide!',
+        winCommand: '/echo They fall. There\'s a new fastest gun in town.',
+        loseCommand: '/echo Not fast enough, partner...',
+        mainTitle: 'Outlaw',
+        images: [],
+        keyDropChance: 45, strikeDropChance: 30, stealthDropChance: 10, executeDropChance: 2,
+        floorKeyDropChance: 6, portalStoneDropChance: 3, minionBaneDropChance: 4,
+        mapFragmentDropChance: 12, timeShardDropChance: 2, voidWalkDropChance: 1,
+    },
+    // Elite/Boss tier - very hard, best rewards
+    'Elite Combat': {
+        difficulty: 5,
+        hitsToWin: 5,
+        missesToLose: 2,
+        description: 'The elite of the elite. Every move must be perfect. There are no second chances.',
+        hitCommand: '/echo Perfect strike! They\'re vulnerable!',
+        missCommand: '/echo Countered! They\'re impossibly fast!',
+        winCommand: '/echo Against all odds... victory is yours.',
+        loseCommand: '/echo Outmatched. Outplayed. Eliminated.',
+        mainTitle: 'Elite Operative',
+        images: [],
+        keyDropChance: 65, strikeDropChance: 45, stealthDropChance: 30, executeDropChance: 8,
+        floorKeyDropChance: 12, portalStoneDropChance: 10, minionBaneDropChance: 8,
+        mapFragmentDropChance: 18, timeShardDropChance: 6, voidWalkDropChance: 4,
     },
 };
 
@@ -3876,170 +4423,690 @@ function getExtensionImagePath(relativePath) {
 }
 
 const DEFAULT_MINIONS = {
-    'herald': {
-        name: 'Herald',
-        imagePath: `images/herald.jpeg`,
+    // ===== FANTASY PACK =====
+    'fantasy_herald': {
+        name: 'The Herald',
+        imagePath: '',
         type: 'messenger',
-        description: 'A mysterious messenger cloaked in shadow who delivers cryptic warnings and hints about the maze ahead.',
-        messages: ['Greetings, traveler!', 'The maze master watches...', 'Beware what lies ahead!'],
+        description: 'A cloaked messenger who appears from the shadows with cryptic warnings about the dungeon ahead.',
+        messages: ['Greetings, adventurer...', 'The maze master watches your every step...', 'Beware the darkness that lies ahead!', 'Many have entered. Few have returned.'],
         encounterScript: '',
     },
-    'guardian': {
-        name: 'Guardian',
-        imagePath: `images/guardian.jpeg`,
+    'fantasy_guardian': {
+        name: 'Dungeon Guardian',
+        imagePath: '',
         type: 'battlebar',
-        description: 'A fearsome armored warrior who blocks the path, challenging all who dare to pass.',
-        battlebarProfiles: ['Easy Fight'],
-        messages: ['You shall not pass!', 'Prepare to fight!', 'Only the worthy may continue!'],
+        description: 'A stalwart armored warrior sworn to protect this passage from intruders.',
+        battlebarProfiles: ['Dungeon Guardian', 'Knight\'s Challenge'],
+        messages: ['None shall pass!', 'Prepare yourself, intruder!', 'Only the worthy may continue!'],
         encounterScript: '',
     },
-    'fortune_teller': {
-        name: 'Fortune Teller',
-        imagePath: `images/fortune_teller.jpeg`,
+    'fantasy_oracle': {
+        name: 'The Oracle',
+        imagePath: '',
         type: 'prizewheel',
-        description: 'An enigmatic mystic with glowing eyes who offers to reveal your fate through a magical spinning wheel.',
-        wheelProfiles: ['Reward Wheel'],
-        messages: ['Spin the wheel of fate!', 'Let destiny decide!', 'What fortune awaits you?'],
+        description: 'An ancient mystic with glowing eyes who offers to reveal your fate through a magical spinning wheel.',
+        wheelProfiles: ['Blessing Wheel', 'Mystery Wheel'],
+        messages: ['Spin the wheel of fate!', 'Let destiny reveal itself!', 'Fortune favors the bold...'],
         encounterScript: '',
     },
-    'trader': {
-        name: 'Wandering Trader',
-        imagePath: `images/merchant.jpeg`,
+    'fantasy_merchant': {
+        name: 'Wandering Merchant',
+        imagePath: '',
         type: 'merchant',
-        description: 'A cunning merchant draped in exotic fabrics who trades valuable items for powerful rewards.',
+        description: 'A shrewd trader draped in exotic fabrics who deals in magical wares.',
+        merchantItemCount: { min: 2, max: 3 },
+        messages: ['Rare goods for a rare adventurer!', 'A fair trade benefits us both.', 'Perhaps something catches your eye?'],
+        encounterScript: '',
+    },
+    // ===== HORROR PACK =====
+    'horror_spirit': {
+        name: 'Whispering Spirit',
+        imagePath: '',
+        type: 'messenger',
+        description: 'A translucent specter that whispers unsettling warnings from beyond the grave.',
+        messages: ['You should not be here...', 'They are watching... always watching...', 'Turn back while you still can...', 'Join usssss...'],
+        encounterScript: '',
+    },
+    'horror_revenant': {
+        name: 'The Revenant',
+        imagePath: '',
+        type: 'battlebar',
+        description: 'An undying horror that claws its way from the shadows to claim another victim.',
+        battlebarProfiles: ['Horror Encounter', 'Nightmare Battle'],
+        messages: ['Your soul... will be mine...', 'Death is only the beginning!', 'YOU CANNOT ESCAPE!'],
+        encounterScript: '',
+    },
+    'horror_gambler': {
+        name: 'Cursed Gambler',
+        imagePath: '',
+        type: 'prizewheel',
+        description: 'A ghastly figure bound to an eternal game of chance. Win at your peril.',
+        wheelProfiles: ['Cursed Wheel', 'Dark Bargain'],
+        messages: ['Care to play a little game?', 'The stakes are... everything.', 'Fortune rarely favors the living here...'],
+        encounterScript: '',
+    },
+    'horror_graverobber': {
+        name: 'Graverobber',
+        imagePath: '',
+        type: 'merchant',
+        description: 'A hunched figure who deals in items "liberated" from the dead. Don\'t ask where they came from.',
+        merchantItemCount: { min: 3, max: 4 },
+        messages: ['Fresh stock... freshly acquired...', 'The dead have no need for such things.', 'A trade? The living always want something...'],
+        encounterScript: '',
+    },
+    // ===== SCI-FI PACK =====
+    'scifi_ai': {
+        name: 'AI Assistant',
+        imagePath: '',
+        type: 'messenger',
+        description: 'A holographic interface that provides technical readouts and mission updates.',
+        messages: ['ALERT: Hostile activity detected in adjacent sectors.', 'Scanning complete. Multiple life forms ahead.', 'Recommended route calculated. Proceed with caution.', 'Mission parameters updated.'],
+        encounterScript: '',
+    },
+    'scifi_bot': {
+        name: 'Security Bot',
+        imagePath: '',
+        type: 'battlebar',
+        description: 'An automated defense unit programmed to eliminate all unauthorized personnel.',
+        battlebarProfiles: ['Security Drone', 'System Override'],
+        messages: ['HALT. IDENTIFICATION REQUIRED.', 'INTRUDER DETECTED. ENGAGING COMBAT PROTOCOLS.', 'RESISTANCE IS INEFFICIENT.'],
+        encounterScript: '',
+    },
+    'scifi_matrix': {
+        name: 'Probability Matrix',
+        imagePath: '',
+        type: 'prizewheel',
+        description: 'A quantum randomization terminal that dispenses rewards based on probability algorithms.',
+        wheelProfiles: ['Tech Lottery', 'Treasure Wheel'],
+        messages: ['INITIATING PROBABILITY CASCADE...', 'QUANTUM OUTCOME GENERATOR READY.', 'CALCULATING OPTIMAL REWARD DISTRIBUTION...'],
+        encounterScript: '',
+    },
+    'scifi_terminal': {
+        name: 'Supply Terminal',
+        imagePath: '',
+        type: 'merchant',
+        description: 'An automated supply kiosk that exchanges resources for equipment.',
+        merchantItemCount: { min: 2, max: 3 },
+        messages: ['SUPPLY EXCHANGE TERMINAL ONLINE.', 'TRADE PROTOCOLS ACTIVATED.', 'RESOURCES DETECTED. INITIATING EXCHANGE.'],
+        encounterScript: '',
+    },
+    // ===== CYBERPUNK PACK =====
+    'cyber_fixer': {
+        name: 'Street Fixer',
+        imagePath: '',
+        type: 'messenger',
+        description: 'A well-connected operative with chrome implants who deals in underground intel.',
+        messages: ['Word on the street is things are about to get hot.', 'Got a tip for you, choom. For free this time.', 'Corp goons are crawling all over this sector.', 'Watch your back. Trust no one.'],
+        encounterScript: '',
+    },
+    'cyber_enforcer': {
+        name: 'Corp Enforcer',
+        imagePath: '',
+        type: 'battlebar',
+        description: 'A heavily augmented corporate security agent with combat-grade cyberware.',
+        battlebarProfiles: ['Street Fight', 'Elite Combat'],
+        messages: ['You\'re in restricted space, meat.', 'Corporate property. No trespassing.', 'This won\'t take long.'],
+        encounterScript: '',
+    },
+    'cyber_casino': {
+        name: 'Underground Casino',
+        imagePath: '',
+        type: 'prizewheel',
+        description: 'An illegal gambling den hidden in the neon underbelly of the city.',
+        wheelProfiles: ['Gambler\'s Wheel', 'Dark Bargain'],
+        messages: ['Step right up, choom. Feeling lucky?', 'The house always wins... usually.', 'High stakes, high rewards. You in?'],
+        encounterScript: '',
+    },
+    'cyber_market': {
+        name: 'Black Market',
+        imagePath: '',
+        type: 'merchant',
+        description: 'A shady dealer offering hot merchandise with no questions asked.',
         merchantItemCount: { min: 2, max: 4 },
-        messages: ['Care to make a trade?', 'I have something special...', 'A fair exchange benefits us both!'],
+        messages: ['Fell off a truck. Very recently.', 'You didn\'t get this from me.', 'Best prices in Night City. Untraceable.'],
+        encounterScript: '',
+    },
+    // ===== WESTERN PACK =====
+    'western_crier': {
+        name: 'Town Crier',
+        imagePath: '',
+        type: 'messenger',
+        description: 'A weathered old-timer who shares news and gossip from around these parts.',
+        messages: ['Howdy, stranger! Word is there\'s trouble ahead.', 'Outlaws been seen in these parts lately.', 'Watch your back out there, partner.', 'This here\'s dangerous territory.'],
+        encounterScript: '',
+    },
+    'western_outlaw': {
+        name: 'Outlaw',
+        imagePath: '',
+        type: 'battlebar',
+        description: 'A notorious desperado with a quick draw and a mean streak.',
+        battlebarProfiles: ['Showdown', 'Street Fight'],
+        messages: ['This town ain\'t big enough for the both of us.', 'Draw, stranger!', 'Your money or your life!'],
+        encounterScript: '',
+    },
+    'western_gambler': {
+        name: 'Saloon Gambler',
+        imagePath: '',
+        type: 'prizewheel',
+        description: 'A slick card shark who runs games of chance in the back room.',
+        wheelProfiles: ['Gambler\'s Wheel', 'Mystery Wheel'],
+        messages: ['Care to try your luck, partner?', 'The wheel never lies.', 'Fortune favors the bold... sometimes.'],
+        encounterScript: '',
+    },
+    'western_trader': {
+        name: 'Traveling Trader',
+        imagePath: '',
+        type: 'merchant',
+        description: 'A dusty merchant with a wagon full of frontier supplies.',
+        merchantItemCount: { min: 2, max: 3 },
+        messages: ['Got supplies fresh from back East!', 'Fair prices for fair folks.', 'Need anything for the trail ahead?'],
+        encounterScript: '',
+    },
+    // ===== ACTION PACK =====
+    'action_intel': {
+        name: 'Intel Officer',
+        imagePath: '',
+        type: 'messenger',
+        description: 'A tactical advisor providing real-time mission intelligence via secure comms.',
+        messages: ['Intel update: multiple hostiles in your AO.', 'HQ reports enemy movement ahead.', 'Objective markers updated. Stay frosty.', 'Watch your sectors, operator.'],
+        encounterScript: '',
+    },
+    'action_combatant': {
+        name: 'Enemy Combatant',
+        imagePath: '',
+        type: 'battlebar',
+        description: 'A heavily armed hostile operative blocking your route to the objective.',
+        battlebarProfiles: ['Street Fight', 'Elite Combat'],
+        messages: ['Contact! Engaging!', 'You\'re not getting past me!', 'Target acquired!'],
+        encounterScript: '',
+    },
+    'action_supply': {
+        name: 'Supply Drop',
+        imagePath: '',
+        type: 'prizewheel',
+        description: 'An airdropped supply crate with randomized military-grade equipment.',
+        wheelProfiles: ['Treasure Wheel', 'Mystery Wheel'],
+        messages: ['Supply drop inbound. Contents unknown.', 'Field requisition package received.', 'Let\'s see what command sent us...'],
+        encounterScript: '',
+    },
+    'action_dealer': {
+        name: 'Arms Dealer',
+        imagePath: '',
+        type: 'merchant',
+        description: 'A private military contractor offering tactical equipment trades.',
+        merchantItemCount: { min: 2, max: 3 },
+        messages: ['Need to gear up, soldier?', 'Top-shelf hardware. Fair exchange.', 'Got what you need to complete the mission.'],
         encounterScript: '',
     },
 };
 
 const DEFAULT_TRAPS = {
+    // ===== FANTASY TRAPS =====
     'spike_trap': {
         name: 'Spike Trap',
-        imagePath: 'images/spike_trap.jpg',
-        message: 'Sharp spikes shoot up from the floor!',
-        script: '/echo You triggered a spike trap!',
+        imagePath: '',
+        message: 'Sharp spikes shoot up from ancient pressure plates!',
+        script: '/echo The dungeon floor erupts with deadly spikes!',
     },
-    'poison_gas': {
-        name: 'Poison Gas',
-        imagePath: 'images/poison_trap.jpeg',
-        message: 'A cloud of noxious gas fills the corridor!',
-        script: '/echo Poison gas surrounds you!',
+    'poison_dart': {
+        name: 'Poison Dart',
+        imagePath: '',
+        message: 'Darts fly from hidden slits in the wall!',
+        script: '/echo Poisoned darts whistle past your head!',
+    },
+    'magic_rune': {
+        name: 'Magic Rune',
+        imagePath: '',
+        message: 'An arcane glyph flares to life beneath your feet!',
+        script: '/echo The rune explodes with magical energy!',
+    },
+    // ===== HORROR TRAPS =====
+    'ghostly_grasp': {
+        name: 'Ghostly Grasp',
+        imagePath: '',
+        message: 'Spectral hands reach up from the floor!',
+        script: '/echo Icy fingers claw at your ankles!',
+    },
+    'blood_pool': {
+        name: 'Blood Pool',
+        imagePath: '',
+        message: 'The floor gives way to a pool of viscous crimson!',
+        script: '/echo You sink into the unsettling warmth of the pool!',
+    },
+    'cursed_mirror': {
+        name: 'Cursed Mirror',
+        imagePath: '',
+        message: 'Your reflection grins and reaches through the glass!',
+        script: '/echo The mirror shatters as your doppelganger attacks!',
+    },
+    // ===== SCI-FI TRAPS =====
+    'laser_grid': {
+        name: 'Laser Grid',
+        imagePath: '',
+        message: 'Red laser beams crisscross the corridor!',
+        script: '/echo Security lasers activate! You take damage!',
+    },
+    'gas_leak': {
+        name: 'Gas Leak',
+        imagePath: '',
+        message: 'A ruptured pipe sprays toxic coolant!',
+        script: '/echo Warning: Hazardous atmosphere detected!',
+    },
+    'gravity_trap': {
+        name: 'Gravity Trap',
+        imagePath: '',
+        message: 'The gravity plating malfunctions violently!',
+        script: '/echo You slam into the ceiling then crash back down!',
+    },
+    // ===== CYBERPUNK TRAPS =====
+    'electric_floor': {
+        name: 'Electric Floor',
+        imagePath: '',
+        message: 'The chrome flooring crackles with lethal voltage!',
+        script: '/echo Electricity arcs through your body!',
+    },
+    'neural_spike': {
+        name: 'Neural Spike',
+        imagePath: '',
+        message: 'A hidden ICE program attacks your neural interface!',
+        script: '/echo Your vision glitches as malware floods your system!',
+    },
+    'security_turret': {
+        name: 'Security Turret',
+        imagePath: '',
+        message: 'An automated turret drops from the ceiling!',
+        script: '/echo The turret opens fire before you can react!',
+    },
+    // ===== WESTERN TRAPS =====
+    'bear_trap': {
+        name: 'Bear Trap',
+        imagePath: '',
+        message: 'A rusted bear trap snaps shut on your leg!',
+        script: '/echo The iron jaws bite deep!',
+    },
+    'dynamite': {
+        name: 'Dynamite',
+        imagePath: '',
+        message: 'A tripwire ignites a bundle of dynamite!',
+        script: '/echo BOOM! The explosion throws you back!',
+    },
+    'snake_pit': {
+        name: 'Snake Pit',
+        imagePath: '',
+        message: 'The floor collapses into a writhing pit of rattlesnakes!',
+        script: '/echo The snakes strike before you can climb out!',
+    },
+    // ===== ACTION TRAPS =====
+    'tripwire': {
+        name: 'Tripwire',
+        imagePath: '',
+        message: 'Your foot catches a nearly invisible wire!',
+        script: '/echo The tripwire triggers a concealed explosive!',
+    },
+    'flashbang': {
+        name: 'Flashbang',
+        imagePath: '',
+        message: 'A proximity sensor triggers a flashbang grenade!',
+        script: '/echo Your vision whites out as the blast deafens you!',
+    },
+    'claymore': {
+        name: 'Claymore',
+        imagePath: '',
+        message: 'You step into the kill zone of a claymore mine!',
+        script: '/echo Steel balls shred through the air!',
     },
 };
 
 // Default minion profile (a saved set of minions)
+// Minion profiles are collections of minion IDs that can be used together
 const DEFAULT_MINION_PROFILES = {
-    'Dungeon Crawl': {
-        'herald': {
-            name: 'Herald',
-            imagePath: 'images/herald.jpeg',
-            type: 'messenger',
-            description: 'A mysterious messenger cloaked in shadow who delivers cryptic warnings and hints about the maze ahead.',
-            messages: ['Greetings, traveler!', 'The maze master watches...', 'Beware what lies ahead!'],
-            encounterScript: '',
-        },
-        'guardian': {
-            name: 'Guardian',
-            imagePath: 'images/guardian.jpeg',
-            type: 'battlebar',
-            description: 'A fearsome armored warrior who blocks the path, challenging all who dare to pass.',
-            battlebarProfiles: ['Easy Fight'],
-            messages: ['You shall not pass!', 'Prepare to fight!', 'Only the worthy may continue!'],
-            encounterScript: '',
-        },
-        'fortune_teller': {
-            name: 'Fortune Teller',
-            imagePath: 'images/fortune_teller.jpeg',
-            type: 'prizewheel',
-            description: 'An enigmatic mystic with glowing eyes who offers to reveal your fate through a magical spinning wheel.',
-            wheelProfiles: ['Reward Wheel'],
-            messages: ['Spin the wheel of fate!', 'Let destiny decide!', 'What fortune awaits you?'],
-            encounterScript: '',
-        },
-        'trader': {
-            name: 'Wandering Trader',
-            imagePath: 'images/merchant.jpeg',
-            type: 'merchant',
-            description: 'A cunning merchant draped in exotic fabrics who trades valuable items for powerful rewards.',
-            merchantItemCount: { min: 2, max: 4 },
-            messages: ['Care to make a trade?', 'I have something special...', 'A fair exchange benefits us both!'],
-            encounterScript: '',
-        },
+    'Fantasy Pack': {
+        minions: ['fantasy_herald', 'fantasy_guardian', 'fantasy_oracle', 'fantasy_merchant'],
+    },
+    'Horror Pack': {
+        minions: ['horror_spirit', 'horror_revenant', 'horror_gambler', 'horror_graverobber'],
+    },
+    'Sci-Fi Pack': {
+        minions: ['scifi_ai', 'scifi_bot', 'scifi_matrix', 'scifi_terminal'],
+    },
+    'Cyberpunk Pack': {
+        minions: ['cyber_fixer', 'cyber_enforcer', 'cyber_casino', 'cyber_market'],
+    },
+    'Western Pack': {
+        minions: ['western_crier', 'western_outlaw', 'western_gambler', 'western_trader'],
+    },
+    'Action Pack': {
+        minions: ['action_intel', 'action_combatant', 'action_supply', 'action_dealer'],
     },
 };
 
-// Default trap profile (a saved set of traps)
+// Trap profiles are collections of trap IDs that can be used together
 const DEFAULT_TRAP_PROFILES = {
-    'Dungeon Crawl': {
-        'spike_trap': {
-            name: 'Spike Trap',
-            imagePath: 'images/spike_trap.jpg',
-            message: 'Sharp spikes shoot up from the floor!',
-            script: '/echo You triggered a spike trap!',
-        },
-        'poison_gas': {
-            name: 'Poison Gas',
-            imagePath: 'images/poison_trap.jpeg',
-            message: 'A cloud of noxious gas fills the corridor!',
-            script: '/echo Poison gas surrounds you!',
-        },
+    'Fantasy Traps': {
+        traps: ['spike_trap', 'poison_dart', 'magic_rune'],
+    },
+    'Horror Traps': {
+        traps: ['ghostly_grasp', 'blood_pool', 'cursed_mirror'],
+    },
+    'Sci-Fi Traps': {
+        traps: ['laser_grid', 'gas_leak', 'gravity_trap'],
+    },
+    'Cyberpunk Traps': {
+        traps: ['electric_floor', 'neural_spike', 'security_turret'],
+    },
+    'Western Traps': {
+        traps: ['bear_trap', 'dynamite', 'snake_pit'],
+    },
+    'Action Traps': {
+        traps: ['tripwire', 'flashbang', 'claymore'],
     },
 };
 
 const DEFAULT_MAZE_PROFILE = {
-    'Dungeon Crawl': {
-        gridSize: 10,
+    // ===== FANTASY THEME =====
+    'Dungeon Crawl - Easy': {
+        gridSize: 6, totalFloors: 1, difficulty: 'easy', theme: 'fantasy', mapStyle: 'dungeon', fogOfWar: true,
         winCommand: '/echo Congratulations! You escaped the dungeon!',
         loseCommand: '/echo The dungeon claims another victim...',
-        winMessage: 'You found the exit and escaped!',
+        winMessage: 'You found the exit and escaped the ancient dungeon!',
         winImage: '',
-        mainMinion: 'guardian',
+        mainMinion: 'fantasy_guardian',
         mainMinionIntroMessage: 'Welcome to my dungeon, adventurer. Find the exit... if you can!',
-        mainMinionRandomChance: 20,
-        mainMinionRandomMessages: [
-            'Still wandering, I see...',
-            'The exit grows ever closer... or does it?',
-            'Many have tried. Few have succeeded.',
-            'Your persistence is... admirable.',
-        ],
-        mainMinionExitType: 'battlebar',
-        mainMinionExitProfile: 'Boss Battle',
+        mainMinionRandomChance: 15,
+        mainMinionRandomMessages: ['Still wandering, I see...', 'Many have tried. Few have succeeded.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Dungeon Guardian',
         minionEncounters: [
-            { minionId: 'herald', percent: 15 },
-            { minionId: 'guardian', percent: 10 },
-            { minionId: 'fortune_teller', percent: 8 },
-            { minionId: 'trader', percent: 3 },
+            { minionId: 'fantasy_herald', percent: 2 },
+            { minionId: 'fantasy_guardian', percent: 1 },
+            { minionId: 'fantasy_oracle', percent: 1 },
         ],
-        trapEncounters: [
-            { trapId: 'spike_trap', percent: 4 },
-            { trapId: 'poison_gas', percent: 3 },
-        ],
+        trapEncounters: [{ trapId: 'spike_trap', percent: 1 }, { trapId: 'poison_dart', percent: 1 }],
         onBattlebarLoss: 'respawn',
-        chestImage: '',
-        chestTilePercent: 15,
-        chestLockedPercent: 30,
-        chestLockedBonusPercent: 50,
-        chestMimicPercent: 15,
-        chestLootMin: 1,
-        chestLootMax: 3,
-        chestKeyChance: 35,
-        chestPowChance: 45,
-        chestStealthChance: 15,
-        chestGrandpowChance: 2,
-        lockedChestKeyChance: 25,
-        lockedChestPowChance: 55,
-        lockedChestStealthChance: 25,
-        lockedChestGrandpowChance: 8,
-        startingInventory: { key: 1, pow: 0, stealth: 1, grandpow: 0 },
-        storyConfig: {
-            mainStory: 'You descend into the ancient dungeon. Shadows dance on the walls as torchlight flickers...',
-            milestones: [
-                { percent: 25, storyUpdate: 'You venture deeper. The air grows colder and the walls damper.' },
-                { percent: 50, storyUpdate: 'Halfway through! Strange sounds echo from the darkness ahead.' },
-                { percent: 75, storyUpdate: 'You sense the exit is near. But so is something else...' },
-            ],
-        },
+        chestTilePercent: 10, chestLockedPercent: 20, chestLockedBonusPercent: 50, chestMimicPercent: 5,
+        chestLootMin: 2, chestLootMax: 4,
+        chestKeyChance: 40, chestStrikeChance: 50, chestStealthChance: 20, chestExecuteChance: 2,
+        lockedChestKeyChance: 30, lockedChestStrikeChance: 60, lockedChestStealthChance: 30, lockedChestExecuteChance: 5,
+        startingInventory: { key: 2, strike: 2, stealth: 1, execute: 0 },
+        storyConfig: { mainStory: 'You descend into a small dungeon. Perfect for adventurers just starting out...' },
+    },
+    'Dungeon Crawl - Hard': {
+        gridSize: 12, totalFloors: 2, difficulty: 'hard', theme: 'fantasy', mapStyle: 'dungeon', fogOfWar: true,
+        winCommand: '/echo Glory! You have conquered the depths!',
+        loseCommand: '/echo The abyss swallows another soul...',
+        winMessage: 'Through blood and steel, you found the exit!',
+        winImage: '',
+        mainMinion: 'fantasy_guardian',
+        mainMinionIntroMessage: 'You dare challenge my domain? Prove your worth!',
+        mainMinionRandomChance: 25,
+        mainMinionRandomMessages: ['Your bones will join the others...', 'The deeper you go, the darker it gets.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Knight\'s Challenge',
+        minionEncounters: [
+            { minionId: 'fantasy_herald', percent: 4 },
+            { minionId: 'fantasy_guardian', percent: 4 },
+            { minionId: 'fantasy_oracle', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'spike_trap', percent: 3 }, { trapId: 'poison_dart', percent: 3 }, { trapId: 'magic_rune', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 6, chestLockedPercent: 40, chestLockedBonusPercent: 60, chestMimicPercent: 20,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 30, chestStrikeChance: 40, chestStealthChance: 15, chestExecuteChance: 3,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 8,
+        startingInventory: { key: 1, strike: 0, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'The ancient fortress looms before you. Two floors of deadly challenges await...' },
+    },
+    'Enchanted Forest - Medium': {
+        gridSize: 10, totalFloors: 1, difficulty: 'normal', theme: 'fantasy', mapStyle: 'forest', fogOfWar: true,
+        winCommand: '/echo You emerge from the mystical woods!',
+        loseCommand: '/echo The forest claims you as its own...',
+        winMessage: 'You found your way through the enchanted grove!',
+        winImage: '',
+        mainMinion: 'fantasy_oracle',
+        mainMinionIntroMessage: 'The spirits of the forest watch you, traveler...',
+        mainMinionRandomChance: 20,
+        mainMinionRandomMessages: ['The trees whisper your name...', 'Nature is not always kind.'],
+        mainMinionExitType: 'prizewheel', mainMinionExitProfile: 'Blessing Wheel',
+        minionEncounters: [
+            { minionId: 'fantasy_herald', percent: 3 },
+            { minionId: 'fantasy_oracle', percent: 2 },
+            { minionId: 'fantasy_merchant', percent: 1 },
+        ],
+        trapEncounters: [{ trapId: 'magic_rune', percent: 2 }, { trapId: 'poison_dart', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 8, chestLockedPercent: 30, chestLockedBonusPercent: 50, chestMimicPercent: 10,
+        chestLootMin: 1, chestLootMax: 3,
+        chestKeyChance: 35, chestStrikeChance: 45, chestStealthChance: 20, chestExecuteChance: 2,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 6,
+        startingInventory: { key: 1, strike: 1, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'Ancient trees tower overhead as you enter the enchanted forest...' },
+    },
+    // ===== HORROR THEME =====
+    'Haunted Manor - Easy': {
+        gridSize: 7, totalFloors: 1, difficulty: 'easy', theme: 'horror', mapStyle: 'apartment', fogOfWar: true,
+        winCommand: '/echo You escape the haunted manor!',
+        loseCommand: '/echo The spirits claim another soul...',
+        winMessage: 'You escaped the haunted manor... but the nightmares will follow.',
+        winImage: '',
+        mainMinion: 'horror_revenant',
+        mainMinionIntroMessage: 'Welcome to my home... you will never leave...',
+        mainMinionRandomChance: 20,
+        mainMinionRandomMessages: ['I can smell your fear...', 'The walls are watching...'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Horror Encounter',
+        minionEncounters: [
+            { minionId: 'horror_spirit', percent: 3 },
+            { minionId: 'horror_gambler', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'ghostly_grasp', percent: 2 }, { trapId: 'blood_pool', percent: 1 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 10, chestLockedPercent: 20, chestLockedBonusPercent: 50, chestMimicPercent: 10,
+        chestLootMin: 2, chestLootMax: 4,
+        chestKeyChance: 40, chestStrikeChance: 50, chestStealthChance: 25, chestExecuteChance: 2,
+        lockedChestKeyChance: 30, lockedChestStrikeChance: 55, lockedChestStealthChance: 30, lockedChestExecuteChance: 5,
+        startingInventory: { key: 2, strike: 2, stealth: 1, execute: 0 },
+        storyConfig: { mainStory: 'The manor door creaks open. Something draws you inside...' },
+    },
+    'Haunted Manor - Nightmare': {
+        gridSize: 12, totalFloors: 3, difficulty: 'nightmare', theme: 'horror', mapStyle: 'highrise', fogOfWar: true,
+        winCommand: '/echo Against all odds, you survived!',
+        loseCommand: '/echo Your screams echo for eternity...',
+        winMessage: 'You escaped... but at what cost?',
+        winImage: '',
+        mainMinion: 'horror_revenant',
+        mainMinionIntroMessage: 'There is no escape. There never was.',
+        mainMinionRandomChance: 30,
+        mainMinionRandomMessages: ['YOU CANNOT RUN!', 'DEATH IS ONLY THE BEGINNING!', 'JOIN US...'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Nightmare Battle',
+        minionEncounters: [
+            { minionId: 'horror_spirit', percent: 5 },
+            { minionId: 'horror_revenant', percent: 4 },
+            { minionId: 'horror_gambler', percent: 3 },
+        ],
+        trapEncounters: [{ trapId: 'ghostly_grasp', percent: 4 }, { trapId: 'blood_pool', percent: 3 }, { trapId: 'cursed_mirror', percent: 3 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 5, chestLockedPercent: 50, chestLockedBonusPercent: 70, chestMimicPercent: 25,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 25, chestStrikeChance: 35, chestStealthChance: 20, chestExecuteChance: 5,
+        lockedChestKeyChance: 20, lockedChestStrikeChance: 50, lockedChestStealthChance: 30, lockedChestExecuteChance: 10,
+        startingInventory: { key: 0, strike: 0, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'Three floors of pure terror. No supplies. No mercy. Good luck...' },
+    },
+    // ===== SCI-FI THEME =====
+    'Space Station - Medium': {
+        gridSize: 10, totalFloors: 2, difficulty: 'normal', theme: 'scifi', mapStyle: 'spacestation', fogOfWar: true,
+        winCommand: '/echo Mission complete. Extraction successful.',
+        loseCommand: '/echo Hull breach detected. Life signs terminated.',
+        winMessage: 'You reached the escape pods and evacuated safely!',
+        winImage: '',
+        mainMinion: 'scifi_bot',
+        mainMinionIntroMessage: 'UNAUTHORIZED PERSONNEL DETECTED. INITIATING LOCKDOWN.',
+        mainMinionRandomChance: 20,
+        mainMinionRandomMessages: ['SCANNING... THREAT LEVEL ELEVATED.', 'SECURITY PROTOCOLS ACTIVE.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Security Drone',
+        minionEncounters: [
+            { minionId: 'scifi_ai', percent: 3 },
+            { minionId: 'scifi_bot', percent: 2 },
+            { minionId: 'scifi_matrix', percent: 1 },
+        ],
+        trapEncounters: [{ trapId: 'laser_grid', percent: 3 }, { trapId: 'gas_leak', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 8, chestLockedPercent: 30, chestLockedBonusPercent: 50, chestMimicPercent: 10,
+        chestLootMin: 1, chestLootMax: 3,
+        chestKeyChance: 35, chestStrikeChance: 45, chestStealthChance: 20, chestExecuteChance: 3,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 7,
+        startingInventory: { key: 1, strike: 1, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'The station alarms blare. Find the escape pods before it\'s too late...' },
+    },
+    'Space Station - Hard': {
+        gridSize: 14, totalFloors: 3, difficulty: 'hard', theme: 'scifi', mapStyle: 'spacestation', fogOfWar: true,
+        winCommand: '/echo EXTRACTION COMPLETE. WELL DONE, OPERATIVE.',
+        loseCommand: '/echo MISSION FAILED. ASSET TERMINATED.',
+        winMessage: 'Against impossible odds, you escaped the derelict station!',
+        winImage: '',
+        mainMinion: 'scifi_bot',
+        mainMinionIntroMessage: 'CRITICAL ALERT: HOSTILE AI HAS TAKEN CONTROL.',
+        mainMinionRandomChance: 25,
+        mainMinionRandomMessages: ['RESISTANCE IS FUTILE.', 'ALL SECTORS COMPROMISED.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'System Override',
+        minionEncounters: [
+            { minionId: 'scifi_ai', percent: 4 },
+            { minionId: 'scifi_bot', percent: 4 },
+            { minionId: 'scifi_matrix', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'laser_grid', percent: 3 }, { trapId: 'gas_leak', percent: 3 }, { trapId: 'gravity_trap', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 6, chestLockedPercent: 40, chestLockedBonusPercent: 60, chestMimicPercent: 15,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 30, chestStrikeChance: 40, chestStealthChance: 15, chestExecuteChance: 4,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 50, lockedChestStealthChance: 25, lockedChestExecuteChance: 8,
+        startingInventory: { key: 1, strike: 0, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'Three decks. Rogue AI. Failing life support. Move fast or die...' },
+    },
+    // ===== CYBERPUNK THEME =====
+    'Neon Streets - Medium': {
+        gridSize: 10, totalFloors: 1, difficulty: 'normal', theme: 'cyberpunk', mapStyle: 'neotokyo', fogOfWar: true,
+        winCommand: '/echo Run complete. Payout received, choom.',
+        loseCommand: '/echo Flatlined. Your chrome belongs to the corp now.',
+        winMessage: 'You made it through the neon jungle!',
+        winImage: '',
+        mainMinion: 'cyber_enforcer',
+        mainMinionIntroMessage: 'You picked the wrong sector to run through, meat.',
+        mainMinionRandomChance: 20,
+        mainMinionRandomMessages: ['Corp knows you\'re here.', 'No one escapes the grid.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Street Fight',
+        minionEncounters: [
+            { minionId: 'cyber_fixer', percent: 3 },
+            { minionId: 'cyber_enforcer', percent: 2 },
+            { minionId: 'cyber_casino', percent: 1 },
+        ],
+        trapEncounters: [{ trapId: 'electric_floor', percent: 3 }, { trapId: 'neural_spike', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 8, chestLockedPercent: 30, chestLockedBonusPercent: 50, chestMimicPercent: 10,
+        chestLootMin: 1, chestLootMax: 3,
+        chestKeyChance: 35, chestStrikeChance: 45, chestStealthChance: 20, chestExecuteChance: 3,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 7,
+        startingInventory: { key: 1, strike: 1, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'Neon lights flicker overhead as you enter the dangerous megacity streets...' },
+    },
+    'Neon Streets - Nightmare': {
+        gridSize: 14, totalFloors: 2, difficulty: 'nightmare', theme: 'cyberpunk', mapStyle: 'city', fogOfWar: true,
+        winCommand: '/echo Preem run, choom. You\'re a legend now.',
+        loseCommand: '/echo Game over. Insert credit to continue... just kidding.',
+        winMessage: 'You survived the corporate kill squads and made it out!',
+        winImage: '',
+        mainMinion: 'cyber_enforcer',
+        mainMinionIntroMessage: 'Corporate has authorized lethal force. There\'s nowhere to run.',
+        mainMinionRandomChance: 30,
+        mainMinionRandomMessages: ['Your biosigns are being tracked.', 'Every exit is covered.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Elite Combat',
+        minionEncounters: [
+            { minionId: 'cyber_fixer', percent: 5 },
+            { minionId: 'cyber_enforcer', percent: 4 },
+            { minionId: 'cyber_casino', percent: 3 },
+        ],
+        trapEncounters: [{ trapId: 'electric_floor', percent: 4 }, { trapId: 'neural_spike', percent: 3 }, { trapId: 'security_turret', percent: 3 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 5, chestLockedPercent: 50, chestLockedBonusPercent: 70, chestMimicPercent: 20,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 25, chestStrikeChance: 35, chestStealthChance: 20, chestExecuteChance: 5,
+        lockedChestKeyChance: 20, lockedChestStrikeChance: 50, lockedChestStealthChance: 30, lockedChestExecuteChance: 10,
+        startingInventory: { key: 0, strike: 0, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'Two sectors of corporate hell. No gear. No backup. Pure nightmare mode...' },
+    },
+    // ===== WESTERN THEME =====
+    'Wild Frontier - Easy': {
+        gridSize: 8, totalFloors: 1, difficulty: 'easy', theme: 'western', mapStyle: 'outpost', fogOfWar: true,
+        winCommand: '/echo You ride off into the sunset, partner.',
+        loseCommand: '/echo This town wasn\'t big enough for the both of ya.',
+        winMessage: 'You cleared the outpost and rode on to new adventures!',
+        winImage: '',
+        mainMinion: 'western_outlaw',
+        mainMinionIntroMessage: 'Howdy, stranger. This here\'s my territory.',
+        mainMinionRandomChance: 15,
+        mainMinionRandomMessages: ['Keep walking, partner.', 'Outlaws don\'t take kindly to trespassers.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Showdown',
+        minionEncounters: [
+            { minionId: 'western_crier', percent: 2 },
+            { minionId: 'western_gambler', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'bear_trap', percent: 2 }, { trapId: 'snake_pit', percent: 1 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 10, chestLockedPercent: 20, chestLockedBonusPercent: 50, chestMimicPercent: 5,
+        chestLootMin: 2, chestLootMax: 4,
+        chestKeyChance: 40, chestStrikeChance: 50, chestStealthChance: 15, chestExecuteChance: 2,
+        lockedChestKeyChance: 30, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 5,
+        startingInventory: { key: 2, strike: 2, stealth: 1, execute: 0 },
+        storyConfig: { mainStory: 'Dust swirls as you enter the frontier outpost. Adventure awaits...' },
+    },
+    // ===== ACTION THEME =====
+    'Tactical Ops - Hard': {
+        gridSize: 12, totalFloors: 2, difficulty: 'hard', theme: 'action', mapStyle: 'arena', fogOfWar: true,
+        winCommand: '/echo Mission accomplished. Outstanding work, operator.',
+        loseCommand: '/echo KIA. Mission failed.',
+        winMessage: 'Objective secured! Extraction complete!',
+        winImage: '',
+        mainMinion: 'action_combatant',
+        mainMinionIntroMessage: 'Multiple hostiles in the AO. Weapons hot.',
+        mainMinionRandomChance: 25,
+        mainMinionRandomMessages: ['Contact left!', 'Stay frosty, operator.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Elite Combat',
+        minionEncounters: [
+            { minionId: 'action_intel', percent: 4 },
+            { minionId: 'action_combatant', percent: 4 },
+            { minionId: 'action_supply', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'tripwire', percent: 3 }, { trapId: 'flashbang', percent: 3 }, { trapId: 'claymore', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 6, chestLockedPercent: 40, chestLockedBonusPercent: 60, chestMimicPercent: 15,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 30, chestStrikeChance: 45, chestStealthChance: 15, chestExecuteChance: 4,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 8,
+        startingInventory: { key: 1, strike: 0, stealth: 0, execute: 0 },
+        storyConfig: { mainStory: 'Tactical insertion complete. Two floors of hostiles between you and extraction...' },
+    },
+    // ===== COMEDY THEME =====
+    'Comedy Dungeon - Easy': {
+        gridSize: 6, totalFloors: 1, difficulty: 'easy', theme: 'comedy', mapStyle: 'maze', fogOfWar: true,
+        winCommand: '/echo You win! The crowd goes mild!',
+        loseCommand: '/echo Wah wah wahhh... Game Over, buddy.',
+        winMessage: 'Congratulations! You found the extremely obvious exit!',
+        winImage: '',
+        mainMinion: 'fantasy_oracle',
+        mainMinionIntroMessage: 'Welcome to the World\'s Okayest Dungeon! Try not to trip.',
+        mainMinionRandomChance: 20,
+        mainMinionRandomMessages: ['Having fun yet?', 'This is fine. Everything is fine.', 'Bruh.'],
+        mainMinionExitType: 'prizewheel', mainMinionExitProfile: 'Gambler\'s Wheel',
+        minionEncounters: [
+            { minionId: 'fantasy_herald', percent: 3 },
+            { minionId: 'fantasy_merchant', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'spike_trap', percent: 1 }, { trapId: 'magic_rune', percent: 1 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 10, chestLockedPercent: 20, chestLockedBonusPercent: 50, chestMimicPercent: 5,
+        chestLootMin: 2, chestLootMax: 4,
+        chestKeyChance: 45, chestStrikeChance: 55, chestStealthChance: 20, chestExecuteChance: 3,
+        lockedChestKeyChance: 35, lockedChestStrikeChance: 60, lockedChestStealthChance: 25, lockedChestExecuteChance: 5,
+        startingInventory: { key: 2, strike: 2, stealth: 1, execute: 0 },
+        storyConfig: { mainStory: 'Welcome to a dungeon that doesn\'t take itself too seriously. Enjoy!' },
     },
 };
 
@@ -4096,8 +5163,8 @@ let currentMaze = {
     inventory: {
         key: 0,
         stealth: 0,
-        pow: 0,
-        grandpow: 0,
+        strike: 0,
+        execute: 0,
         // v1.2.0 new items
         floorKey: 0,
         portalStone: 0,
@@ -4472,8 +5539,24 @@ function loadSettings() {
             console.log(`[MazeMaster] Added default wheel profile: ${name}`);
         }
     }
+
+    // Migration: Fix broken wheel profiles with duplicate/empty triggers
+    for (const [name, defaultProfile] of Object.entries(DEFAULT_WHEEL_PROFILES)) {
+        const savedProfile = extensionSettings.profiles[name];
+        if (savedProfile?.segments?.length > 0) {
+            const triggers = savedProfile.segments.map(s => s.trigger);
+            const uniqueTriggers = new Set(triggers);
+            // If all triggers are the same (broken), or any are empty, replace with default
+            if (uniqueTriggers.size === 1 || triggers.some(t => !t || t === '')) {
+                extensionSettings.profiles[name] = JSON.parse(JSON.stringify(defaultProfile));
+                needsSave = true;
+                console.log(`[MazeMaster] Fixed broken wheel profile: ${name}`);
+            }
+        }
+    }
+
     if (!extensionSettings.currentProfile) {
-        extensionSettings.currentProfile = 'Reward Wheel';
+        extensionSettings.currentProfile = 'Blessing Wheel';
     }
 
     // Merge default battlebar profiles
@@ -4485,11 +5568,11 @@ function loadSettings() {
         }
     }
     if (!extensionSettings.currentBattlebarProfile) {
-        extensionSettings.currentBattlebarProfile = 'Easy Fight';
+        extensionSettings.currentBattlebarProfile = 'Training Dummy';
     }
 
     // Update existing battlebar profiles with any missing fields from defaults
-    const defaultBbTemplate = DEFAULT_BATTLEBAR_PROFILES['Easy Fight'];
+    const defaultBbTemplate = DEFAULT_BATTLEBAR_PROFILES['Training Dummy'];
     for (const [name, savedProfile] of Object.entries(extensionSettings.battlebarProfiles)) {
         for (const [key, defaultValue] of Object.entries(defaultBbTemplate)) {
             if (savedProfile[key] === undefined) {
@@ -4557,8 +5640,8 @@ function loadSettings() {
                     typeof existing[key] === 'object' &&
                     (existing[key].key || 0) === 0 &&
                     (existing[key].stealth || 0) === 0 &&
-                    (existing[key].pow || 0) === 0 &&
-                    (existing[key].grandpow || 0) === 0;
+                    (existing[key].strike || 0) === 0 &&
+                    (existing[key].execute || 0) === 0;
 
                 if ((isEmpty || isZeroInventory) && value && (Array.isArray(value) ? value.length > 0 : true)) {
                     existing[key] = JSON.parse(JSON.stringify(value));
@@ -4626,7 +5709,7 @@ function saveBattlebarProfile(name, profileData) {
         images: profileData.images || [],
         // Item drop chances (maze only)
         keyDropChance: profileData.keyDropChance ?? 40,
-        powDropChance: profileData.powDropChance ?? 20,
+        strikeDropChance: profileData.strikeDropChance ?? 20,
         stealthDropChance: profileData.stealthDropChance ?? 10,
     };
     saveSettingsDebounced();
@@ -4679,17 +5762,17 @@ function saveMazeProfile(name, profileData) {
         chestLootMax: profileData.chestLootMax || 2,
         // Regular chest loot chances
         chestKeyChance: profileData.chestKeyChance || 30,
-        chestPowChance: profileData.chestPowChance || 50,
+        chestStrikeChance: profileData.chestStrikeChance || 50,
         chestStealthChance: profileData.chestStealthChance || 0,
         // Locked chest loot chances
         lockedChestKeyChance: profileData.lockedChestKeyChance || 40,
-        lockedChestPowChance: profileData.lockedChestPowChance || 60,
+        lockedChestStrikeChance: profileData.lockedChestStrikeChance || 60,
         lockedChestStealthChance: profileData.lockedChestStealthChance || 30,
-        // Grandpow chances (rare)
-        chestGrandpowChance: profileData.chestGrandpowChance || 0,
-        lockedChestGrandpowChance: profileData.lockedChestGrandpowChance || 5,
+        // Execute chances (rare)
+        chestExecuteChance: profileData.chestExecuteChance || 0,
+        lockedChestExecuteChance: profileData.lockedChestExecuteChance || 5,
         // Starting inventory
-        startingInventory: profileData.startingInventory || { key: 0, stealth: 0, pow: 0, grandpow: 0 },
+        startingInventory: profileData.startingInventory || { key: 0, stealth: 0, strike: 0, execute: 0 },
         // Trap encounters
         trapEncounters: profileData.trapEncounters || [],
         // Story milestones
@@ -5134,10 +6217,24 @@ function registerSlashCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'wheel',
         callback: async (args) => {
-            const profileName = args.profile || 'default';
+            // Try specified profile, then current, then first available, then default
+            let profileName = args.profile;
+            if (!profileName) {
+                // Check if current profile exists
+                const current = extensionSettings.currentProfile;
+                if (current && getProfile(current)) {
+                    profileName = current;
+                } else {
+                    // Use first available profile or fallback
+                    const available = getProfileNames();
+                    profileName = available.length > 0 ? available[0] : 'Blessing Wheel';
+                }
+            }
 
+            console.log('[MazeMaster] /wheel command - loading profile:', profileName);
             const result = loadWheelFromProfile(profileName);
             if (result.error) {
+                console.error('[MazeMaster] /wheel error:', result.error);
                 return `Error: ${result.error}`;
             }
 
@@ -5166,7 +6263,7 @@ function registerSlashCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'battlebar',
         callback: async (args) => {
-            const profileName = args.profile || 'default';
+            const profileName = args.profile || extensionSettings.currentBattlebarProfile || 'Training Dummy';
             const result = startBattlebar(profileName);
             if (result.error) {
                 return `Error: ${result.error}`;
@@ -5550,11 +6647,11 @@ function getBattlebarModalHtml() {
                     <button id="mazemaster_bb_hit_btn" class="mazemaster-bb-hit-btn">
                         <i class="fa-solid fa-bullseye"></i> HIT!
                     </button>
-                    <button id="mazemaster_bb_pow_btn" class="mazemaster-bb-pow-btn" style="display: none;">
-                        <i class="fa-solid fa-bolt"></i> POW! (<span id="bb_pow_count">0</span>)
+                    <button id="mazemaster_bb_strike_btn" class="mazemaster-bb-strike-btn" style="display: none;">
+                        <i class="fa-solid fa-bolt"></i> STRIKE! (<span id="bb_strike_count">0</span>)
                     </button>
-                    <button id="mazemaster_bb_grandpow_btn" class="mazemaster-bb-grandpow-btn" style="display: none;">
-                        <i class="fa-solid fa-star"></i> GRANDPOW! (<span id="bb_grandpow_count">0</span>)
+                    <button id="mazemaster_bb_execute_btn" class="mazemaster-bb-execute-btn" style="display: none;">
+                        <i class="fa-solid fa-star"></i> GRANDSTRIKE! (<span id="bb_execute_count">0</span>)
                     </button>
                 </div>
             </div>
@@ -5835,21 +6932,21 @@ function showBattlebarModal() {
         });
     }
 
-    // Attach POW button handler
-    const powBtn = document.getElementById('mazemaster_bb_pow_btn');
+    // Attach Strike button handler
+    const powBtn = document.getElementById('mazemaster_bb_strike_btn');
     if (powBtn) {
-        powBtn.addEventListener('click', handlePowButton);
+        powBtn.addEventListener('click', handleStrikeButton);
     }
 
-    // Attach GRANDPOW button handler
-    const grandpowBtn = document.getElementById('mazemaster_bb_grandpow_btn');
-    if (grandpowBtn) {
-        grandpowBtn.addEventListener('click', handleGrandpowButton);
+    // Attach EXECUTE button handler
+    const executeBtn = document.getElementById('mazemaster_bb_execute_btn');
+    if (executeBtn) {
+        executeBtn.addEventListener('click', handleExecuteButton);
     }
 
-    // Update POW and GRANDPOW button visibility
-    updatePowButtonVisibility();
-    updateGrandpowButtonVisibility();
+    // Update Strike and Execute button visibility
+    updateStrikeButtonVisibility();
+    updateExecuteButtonVisibility();
 }
 
 function updateBattlebarTitles() {
@@ -5899,32 +6996,32 @@ function handleBattlebarHitButton(e) {
 }
 
 /**
- * Update POW button visibility based on maze inventory
+ * Update Strike button visibility based on maze inventory
  */
-function updatePowButtonVisibility() {
-    const powBtn = document.getElementById('mazemaster_bb_pow_btn');
-    const powCount = document.getElementById('bb_pow_count');
+function updateStrikeButtonVisibility() {
+    const powBtn = document.getElementById('mazemaster_bb_strike_btn');
+    const powCount = document.getElementById('bb_strike_count');
 
-    if (powBtn && currentMaze.isOpen && currentMaze.inventory.pow > 0) {
+    if (powBtn && currentMaze.isOpen && currentMaze.inventory.strike > 0) {
         powBtn.style.display = '';
-        if (powCount) powCount.textContent = currentMaze.inventory.pow;
+        if (powCount) powCount.textContent = currentMaze.inventory.strike;
     } else if (powBtn) {
         powBtn.style.display = 'none';
     }
 }
 
 /**
- * Handle POW button click - guaranteed hit
+ * Handle Strike button click - guaranteed hit
  */
-function handlePowButton(e) {
+function handleStrikeButton(e) {
     e.preventDefault();
-    if (!currentMaze.isOpen || currentMaze.inventory.pow <= 0) return;
+    if (!currentMaze.isOpen || currentMaze.inventory.strike <= 0) return;
     if (!currentBattlebar.isOpen) return;
     if (currentBattlebar.isVictory || currentBattlebar.isDefeat) return;
 
-    // Use POW - automatic hit
-    removeFromInventory('pow');
-    updatePowButtonVisibility();
+    // Use Strike - automatic hit
+    removeFromInventory('strike');
+    updateStrikeButtonVisibility();
 
     // Register as a hit
     currentBattlebar.hits++;
@@ -5944,39 +7041,39 @@ function isMainMinionEncounter() {
 }
 
 /**
- * Update GRANDPOW button visibility based on maze inventory and encounter type
+ * Update EXECUTE button visibility based on maze inventory and encounter type
  */
-function updateGrandpowButtonVisibility() {
-    const grandpowBtn = document.getElementById('mazemaster_bb_grandpow_btn');
-    const grandpowCount = document.getElementById('bb_grandpow_count');
+function updateExecuteButtonVisibility() {
+    const executeBtn = document.getElementById('mazemaster_bb_execute_btn');
+    const executeCount = document.getElementById('bb_execute_count');
 
-    // Hide if not in maze, no grandpow, or fighting main minion
-    if (grandpowBtn && currentMaze.isOpen && currentMaze.inventory.grandpow > 0 && !isMainMinionEncounter()) {
-        grandpowBtn.style.display = '';
-        if (grandpowCount) grandpowCount.textContent = currentMaze.inventory.grandpow;
-    } else if (grandpowBtn) {
-        grandpowBtn.style.display = 'none';
+    // Hide if not in maze, no execute, or fighting main minion
+    if (executeBtn && currentMaze.isOpen && currentMaze.inventory.execute > 0 && !isMainMinionEncounter()) {
+        executeBtn.style.display = '';
+        if (executeCount) executeCount.textContent = currentMaze.inventory.execute;
+    } else if (executeBtn) {
+        executeBtn.style.display = 'none';
     }
 }
 
 /**
- * Handle GRANDPOW button click - instant win (except vs main minion)
+ * Handle EXECUTE button click - instant win (except vs main minion)
  */
-function handleGrandpowButton(e) {
+function handleExecuteButton(e) {
     e.preventDefault();
-    if (!currentMaze.isOpen || currentMaze.inventory.grandpow <= 0) return;
+    if (!currentMaze.isOpen || currentMaze.inventory.execute <= 0) return;
     if (!currentBattlebar.isOpen) return;
     if (currentBattlebar.isVictory || currentBattlebar.isDefeat) return;
 
     // Cannot use against main minion
     if (isMainMinionEncounter()) {
-        console.log('[MazeMaster] GRANDPOW cannot be used against the main minion!');
+        console.log('[MazeMaster] EXECUTE cannot be used against the main minion!');
         return;
     }
 
-    // Use GRANDPOW - instant win
-    removeFromInventory('grandpow');
-    updateGrandpowButtonVisibility();
+    // Use EXECUTE - instant win
+    removeFromInventory('execute');
+    updateExecuteButtonVisibility();
 
     // Set hits to win threshold - instant victory
     currentBattlebar.hits = currentBattlebar.profile.hitsToWin;
@@ -6248,15 +7345,37 @@ async function handleBattlebarWin() {
     if (currentMaze.isOpen && currentMaze.pendingEncounter) {
         const profile = currentBattlebar.profile;
 
-        // Roll for drops
+        // Roll for core item drops
         if (Math.random() * 100 < (profile.keyDropChance ?? 40)) {
             addToInventory('key');
         }
-        if (Math.random() * 100 < (profile.powDropChance ?? 20)) {
-            addToInventory('pow');
+        if (Math.random() * 100 < (profile.strikeDropChance ?? 20)) {
+            addToInventory('strike');
         }
         if (Math.random() * 100 < (profile.stealthDropChance ?? 10)) {
             addToInventory('stealth');
+        }
+        if (Math.random() * 100 < (profile.executeDropChance ?? 2)) {
+            addToInventory('execute');
+        }
+        // Roll for special item drops (rarer)
+        if (Math.random() * 100 < (profile.floorKeyDropChance ?? 5)) {
+            addToInventory('floorKey');
+        }
+        if (Math.random() * 100 < (profile.portalStoneDropChance ?? 3)) {
+            addToInventory('portalStone');
+        }
+        if (Math.random() * 100 < (profile.minionBaneDropChance ?? 4)) {
+            addToInventory('minionBane');
+        }
+        if (Math.random() * 100 < (profile.mapFragmentDropChance ?? 8)) {
+            addToInventory('mapFragment');
+        }
+        if (Math.random() * 100 < (profile.timeShardDropChance ?? 2)) {
+            addToInventory('timeShard');
+        }
+        if (Math.random() * 100 < (profile.voidWalkDropChance ?? 1)) {
+            addToInventory('voidWalk');
         }
     }
 
@@ -6969,7 +8088,10 @@ function addStaircasesToFloors(floors, size, requireFloorKey) {
             }
         }
 
-        if (validPositions.length < 2) continue;
+        if (validPositions.length < 1) {
+            console.warn(`[MazeMaster] No valid staircase positions found for floor ${f} -> ${f + 1}`);
+            continue;
+        }
 
         // Pick 1-2 staircase locations per floor connection
         const staircaseCount = Math.min(2, Math.max(1, Math.floor(size / 5)));
@@ -7000,11 +8122,66 @@ function addStaircasesToFloors(floors, size, requireFloorKey) {
 }
 
 /**
- * Add extra passages to create multiple pathways and dead ends
+ * Enforce wall consistency - ensure both sides of each wall match
+ * If cell A has no right wall, cell B (to the right) should have no left wall
+ * This fixes rendering/movement mismatches caused by asymmetric wall data
+ */
+function enforceWallConsistency(grid, size) {
+    let fixes = 0;
+    console.log('[MazeMaster] Running wall consistency check...');
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const cell = grid[y][x];
+
+            // Check right neighbor - walls must be symmetric
+            if (x < size - 1) {
+                const rightCell = grid[y][x + 1];
+                const rightWallMismatch = cell.walls.right !== rightCell.walls.left;
+                if (rightWallMismatch) {
+                    console.log(`[MazeMaster] Wall mismatch at (${x},${y}) right: ${cell.walls.right} vs (${x+1},${y}) left: ${rightCell.walls.left}`);
+                    // If either says open, make both open
+                    if (!cell.walls.right || !rightCell.walls.left) {
+                        cell.walls.right = false;
+                        rightCell.walls.left = false;
+                    } else {
+                        // Both say closed but somehow different? Keep closed
+                        cell.walls.right = true;
+                        rightCell.walls.left = true;
+                    }
+                    fixes++;
+                }
+            }
+
+            // Check bottom neighbor - walls must be symmetric
+            if (y < size - 1) {
+                const bottomCell = grid[y + 1][x];
+                const bottomWallMismatch = cell.walls.bottom !== bottomCell.walls.top;
+                if (bottomWallMismatch) {
+                    console.log(`[MazeMaster] Wall mismatch at (${x},${y}) bottom: ${cell.walls.bottom} vs (${x},${y+1}) top: ${bottomCell.walls.top}`);
+                    // If either says open, make both open
+                    if (!cell.walls.bottom || !bottomCell.walls.top) {
+                        cell.walls.bottom = false;
+                        bottomCell.walls.top = false;
+                    } else {
+                        cell.walls.bottom = true;
+                        bottomCell.walls.top = true;
+                    }
+                    fixes++;
+                }
+            }
+        }
+    }
+    console.log(`[MazeMaster] Wall consistency check complete. Fixed ${fixes} mismatch(es)`);
+}
+
+/**
+ * Add extra passages to create alternate pathways (sparingly to keep maze challenging)
  */
 function addExtraPassages(grid, size) {
-    // Calculate how many extra passages based on grid size (~8% of cells)
-    const extraCount = Math.floor(size * size * 0.08);
+    // Calculate how many extra passages based on grid size (~3% of cells)
+    // Lower = more challenging maze, higher = more alternate routes
+    const extraCount = Math.floor(size * size * 0.03);
 
     for (let i = 0; i < extraCount; i++) {
         // Pick random cell (not on edge to avoid border issues)
@@ -7079,9 +8256,10 @@ function normalizeTileDistribution(profile, totalValidCells) {
     result.chestCount = Math.floor(totalValidCells * (chestPercent * scale) / 100);
 
     // Convert minion percentages to counts (with difficulty scaling)
+    // Use Math.round to ensure small percentages still produce encounters
     for (const encounter of minionEncounters) {
         const scaledPercent = (encounter.percent || 0) * encounterMult * scale;
-        const count = Math.floor(totalValidCells * scaledPercent / 100);
+        const count = Math.round(totalValidCells * scaledPercent / 100);
         if (count > 0) {
             result.minionPlacements.push({ minionId: encounter.minionId, count });
         }
@@ -7090,7 +8268,7 @@ function normalizeTileDistribution(profile, totalValidCells) {
     // Convert trap percentages to counts (with difficulty scaling)
     for (const encounter of trapEncounters) {
         const scaledPercent = (encounter.percent || 0) * trapMult * scale;
-        const count = Math.floor(totalValidCells * scaledPercent / 100);
+        const count = Math.round(totalValidCells * scaledPercent / 100);
         if (count > 0) {
             result.trapPlacements.push({ trapId: encounter.trapId, count });
         }
@@ -7201,6 +8379,23 @@ function startMaze(profileName) {
         return { error: `Profile "${profileName}" not found` };
     }
 
+    // Close current chat to prevent context bleed (if enabled)
+    if (extensionSettings.closeChatOnStart !== false) {
+        try {
+            const context = SillyTavern.getContext();
+            if (context && typeof context.clearChat === 'function') {
+                context.clearChat();
+                console.log('[MazeMaster] Closed current chat to prevent context bleed');
+            } else if (typeof doNewChat === 'function') {
+                // Alternative: Start a new chat
+                doNewChat();
+                console.log('[MazeMaster] Started new chat to prevent context bleed');
+            }
+        } catch (e) {
+            console.warn('[MazeMaster] Could not close chat:', e);
+        }
+    }
+
     const size = profile.gridSize || 10;
     const mapStyle = profile.mapStyle || 'maze';
     const totalFloors = Math.max(1, Math.min(10, profile.floors || 1));
@@ -7211,6 +8406,8 @@ function startMaze(profileName) {
     const exitY = size - 1;
     for (let f = 0; f < totalFloors; f++) {
         const floorGrid = generateGridByStyle(size, mapStyle);
+        // Ensure wall consistency (both sides of each wall match)
+        enforceWallConsistency(floorGrid, size);
         placeTiles(floorGrid, profile, size);
         // v1.2.1: Generate room names for each cell
         generateRoomInfoForGrid(floorGrid, profile, size, exitX, exitY);
@@ -7226,14 +8423,14 @@ function startMaze(profileName) {
     const grid = floors[0];
 
     // Get starting inventory config with difficulty scaling
-    const baseStartInv = profile.startingInventory || { key: 0, stealth: 0, pow: 0, grandpow: 0 };
+    const baseStartInv = profile.startingInventory || { key: 0, stealth: 0, strike: 0, execute: 0 };
     const difficulty = getDifficultySettings(profile);
     const invMult = difficulty.inventoryStartMult || 1.0;
     const startInv = {
         key: Math.floor((baseStartInv.key || 0) * invMult),
         stealth: Math.floor((baseStartInv.stealth || 0) * invMult),
-        pow: Math.floor((baseStartInv.pow || 0) * invMult),
-        grandpow: Math.floor((baseStartInv.grandpow || 0) * invMult),
+        strike: Math.floor((baseStartInv.strike || 0) * invMult),
+        execute: Math.floor((baseStartInv.execute || 0) * invMult),
         // v1.2.0 new items
         floorKey: Math.floor((baseStartInv.floorKey || 0) * invMult),
         portalStone: Math.floor((baseStartInv.portalStone || 0) * invMult),
@@ -7272,6 +8469,7 @@ function startMaze(profileName) {
         size: size,
         playerX: 0,
         playerY: 0,
+        playerDirection: 'south',  // Last movement direction for sprite facing
         exitX: size - 1,
         exitY: size - 1,
         visited: new Set(['0:0,0']),  // Format: "floor:x,y"
@@ -7287,8 +8485,8 @@ function startMaze(profileName) {
         inventory: {
             key: startInv.key || 0,
             stealth: startInv.stealth || 0,
-            pow: startInv.pow || 0,
-            grandpow: startInv.grandpow || 0,
+            strike: startInv.strike || 0,
+            execute: startInv.execute || 0,
             // v1.2.0 new items
             floorKey: startInv.floorKey || 0,
             portalStone: startInv.portalStone || 0,
@@ -7379,6 +8577,10 @@ function showMazeModal() {
                     <div class="mazemaster-maze-info-stack">
                         <!-- Stats Bar -->
                         <div class="mazemaster-maze-stats-bar">
+                            <div class="stats-item stats-persona" title="Current Persona">
+                                <i class="fa-solid fa-user"></i>
+                                <span id="maze_stat_persona">${getCurrentPersonaName()}</span>
+                            </div>
                             <div class="stats-item" title="Moves">
                                 <i class="fa-solid fa-shoe-prints"></i>
                                 <span id="maze_stat_moves">0</span>
@@ -7411,13 +8613,13 @@ function showMazeModal() {
                                 <i class="fa-solid fa-user-ninja"></i>
                                 <span id="maze_inv_stealth">${currentMaze.inventory.stealth}</span>
                             </div>
-                            <div class="inventory-item" title="POW - Combat boost">
+                            <div class="inventory-item" title="Strike - Combat boost">
                                 <i class="fa-solid fa-bolt"></i>
-                                <span id="maze_inv_pow">${currentMaze.inventory.pow}</span>
+                                <span id="maze_inv_pow">${currentMaze.inventory.strike}</span>
                             </div>
-                            <div class="inventory-item grandpow" title="GRANDPOW - Instant Win!">
+                            <div class="inventory-item execute" title="EXECUTE - Instant Win!">
                                 <i class="fa-solid fa-star"></i>
-                                <span id="maze_inv_grandpow">${currentMaze.inventory.grandpow}</span>
+                                <span id="maze_inv_execute">${currentMaze.inventory.execute}</span>
                             </div>
                             <div class="inventory-item floor-key" title="Floor Key - Unlock staircases">
                                 <i class="fa-solid fa-stairs"></i>
@@ -7474,16 +8676,16 @@ function showMazeModal() {
                             <div class="room-info-name" id="room_info_name">Unknown Room</div>
                             <div class="room-info-desc" id="room_info_desc">...</div>
                             <div class="room-info-section">
-                                <div class="room-info-label"><i class="fa-solid fa-compass"></i> Exits</div>
-                                <div id="room_info_exits">None</div>
-                            </div>
-                            <div class="room-info-section">
                                 <div class="room-info-label"><i class="fa-solid fa-users"></i> Occupants</div>
                                 <div id="room_info_occupants">None</div>
                             </div>
                             <div class="room-info-section">
                                 <div class="room-info-label"><i class="fa-solid fa-skull"></i> Defeated</div>
                                 <div id="room_info_defeated">None</div>
+                            </div>
+                            <div class="room-info-section room-info-exits-section">
+                                <div class="room-info-label"><i class="fa-solid fa-compass"></i> Exits</div>
+                                <div id="room_info_exits" class="room-info-exits-list">None</div>
                             </div>
                         </div>
                     </div>
@@ -7505,12 +8707,21 @@ function showMazeModal() {
                         <div id="maze_grid_container" class="mazemaster-maze-grid-wrapper" style="position: relative;">
                             <!-- Renderer inserts grid/canvas here -->
                         </div>
+
+                        <!-- Action Popup Overlay (for encounter buttons) - OUTSIDE grid container so it persists through re-renders -->
+                        <div id="maze_action_popup" class="maze-action-popup" style="display: none;">
+                            <div class="maze-action-popup-content">
+                                <div id="maze_action_popup_buttons" class="maze-action-popup-buttons">
+                                    <!-- Buttons populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Circular D-Pad (floating) -->
-                <div id="maze_dpad" class="maze-dpad ${extensionSettings.dpadConfig?.floating ? 'floating' : ''}"
-                     style="${extensionSettings.dpadConfig?.position?.x ? `left: ${extensionSettings.dpadConfig.position.x}px; top: ${extensionSettings.dpadConfig.position.y}px;` : ''}">
+                <div id="maze_dpad" class="maze-dpad ${extensionSettings.dpadConfig?.floating !== false ? 'floating' : ''}"
+                     style="${extensionSettings.dpadConfig?.enabled === false ? 'display: none;' : ''}${extensionSettings.dpadConfig?.position?.x ? `left: ${extensionSettings.dpadConfig.position.x}px; top: ${extensionSettings.dpadConfig.position.y}px;` : ''}">
                     <div class="dpad-ring">
                         <button class="dpad-btn dpad-up" data-dir="up" title="Move Up (Arrow Up)">
                             <i class="fa-solid fa-chevron-up"></i>
@@ -8112,7 +9323,7 @@ function showMazeModal() {
             .inventory-item i.fa-key { color: #f1c40f; }
             .inventory-item i.fa-user-ninja { color: #9b59b6; }
             .inventory-item i.fa-bolt { color: #e74c3c; }
-            .inventory-item.grandpow i { color: #ffd700; text-shadow: 0 0 4px #ffd700; }
+            .inventory-item.execute i { color: #ffd700; text-shadow: 0 0 4px #ffd700; }
             .inventory-item.floor-key i { color: #3498db; }
             .inventory-item.portal-stone i { color: #9b59b6; }
             .inventory-item.minion-bane i { color: #c0392b; }
@@ -8187,7 +9398,7 @@ function showMazeModal() {
             .inventory-drawer-item i.fa-key { color: #f1c40f; }
             .inventory-drawer-item i.fa-user-ninja { color: #9b59b6; }
             .inventory-drawer-item i.fa-bolt { color: #e74c3c; }
-            .inventory-drawer-item.grandpow i { color: #ffd700; text-shadow: 0 0 4px #ffd700; }
+            .inventory-drawer-item.execute i { color: #ffd700; text-shadow: 0 0 4px #ffd700; }
             .inventory-drawer-item.floor-key i { color: #3498db; }
             .inventory-drawer-item.portal-stone i { color: #9b59b6; }
             .inventory-drawer-item.minion-bane i { color: #c0392b; }
@@ -8216,6 +9427,7 @@ function showMazeModal() {
 
             /* Maze Area */
             .mazemaster-maze-area {
+                position: relative; /* Required for action popup overlay positioning */
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -8278,18 +9490,28 @@ function showMazeModal() {
             }
 
             .dpad-btn:hover {
-                transform: scale(1.1);
                 filter: brightness(1.2);
             }
 
             .dpad-btn:active {
-                transform: scale(0.95);
+                filter: brightness(0.9);
             }
 
             .dpad-up { top: 5px; left: 50%; transform: translateX(-50%); }
+            .dpad-up:hover { transform: translateX(-50%) scale(1.1); }
+            .dpad-up:active { transform: translateX(-50%) scale(0.95); }
+
             .dpad-right { right: 5px; top: 50%; transform: translateY(-50%); }
+            .dpad-right:hover { transform: translateY(-50%) scale(1.1); }
+            .dpad-right:active { transform: translateY(-50%) scale(0.95); }
+
             .dpad-down { bottom: 5px; left: 50%; transform: translateX(-50%); }
+            .dpad-down:hover { transform: translateX(-50%) scale(1.1); }
+            .dpad-down:active { transform: translateX(-50%) scale(0.95); }
+
             .dpad-left { left: 5px; top: 50%; transform: translateY(-50%); }
+            .dpad-left:hover { transform: translateY(-50%) scale(1.1); }
+            .dpad-left:active { transform: translateY(-50%) scale(0.95); }
 
             .dpad-center {
                 position: absolute;
@@ -8316,7 +9538,11 @@ function showMazeModal() {
             }
 
             .dpad-floor-up { top: 50%; left: -58px; transform: translateY(-50%); }
+            .dpad-floor-up:hover { transform: translateY(-50%) scale(1.1); }
+            .dpad-floor-up:active { transform: translateY(-50%) scale(0.95); }
             .dpad-floor-down { top: 50%; right: -58px; transform: translateY(-50%); }
+            .dpad-floor-down:hover { transform: translateY(-50%) scale(1.1); }
+            .dpad-floor-down:active { transform: translateY(-50%) scale(0.95); }
 
             .dpad-floor-up.hidden, .dpad-floor-down.hidden {
                 display: none;
@@ -8426,6 +9652,74 @@ function showMazeModal() {
             .maze-close-btn {
                 padding: 10px 28px;
                 font-size: 1em;
+            }
+
+            /* =====================================================
+               ACTION POPUP OVERLAY (over map)
+               ===================================================== */
+            .maze-action-popup {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0, 0, 0, 0.75);
+                z-index: 100;
+                backdrop-filter: blur(3px);
+                animation: popupFadeIn 0.2s ease-out;
+            }
+
+            @keyframes popupFadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .maze-action-popup-content {
+                background: linear-gradient(145deg, #2a2a3a, #1a1a2a);
+                border: 2px solid #4a4a6a;
+                border-radius: 12px;
+                padding: 20px 30px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(100, 100, 200, 0.2);
+                min-width: 200px;
+                max-width: 90%;
+            }
+
+            .maze-action-popup-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .maze-action-popup-buttons .menu_button,
+            .maze-action-popup-buttons .maze-confirm-btn {
+                padding: 12px 24px;
+                font-size: 1.1em;
+                font-weight: 600;
+                border-radius: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                transition: all 0.15s ease;
+                min-width: 150px;
+            }
+
+            .maze-action-popup-buttons .menu_button:hover,
+            .maze-action-popup-buttons .maze-confirm-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+            .maze-action-popup-buttons .maze-accept-btn {
+                background: linear-gradient(145deg, #2ecc71, #27ae60) !important;
+                border-color: #27ae60 !important;
+            }
+
+            .maze-action-popup-buttons .maze-slip-btn {
+                background: linear-gradient(145deg, #9b59b6, #8e44ad) !important;
+                border-color: #8e44ad !important;
             }
 
             .maze-cell.victory-glow {
@@ -8810,15 +10104,38 @@ function updateRoomInfoBox() {
     if (nameEl) nameEl.textContent = cell.roomInfo?.name || 'Unknown Room';
     if (descEl) descEl.textContent = cell.roomInfo?.description || '...';
 
-    // Update exits based on walls
+    // Update exits based on walls - show direction and room name
     const exitsEl = document.getElementById('room_info_exits');
     if (exitsEl) {
         const exits = [];
-        if (!cell.walls.top) exits.push('North');
-        if (!cell.walls.right) exits.push('East');
-        if (!cell.walls.bottom) exits.push('South');
-        if (!cell.walls.left) exits.push('West');
-        exitsEl.textContent = exits.length ? exits.join(', ') : 'None';
+        const size = currentMaze.size;
+
+        // North (top wall = y-1)
+        if (!cell.walls.top && playerY > 0) {
+            const northCell = grid[playerY - 1]?.[playerX];
+            const roomName = northCell?.roomInfo?.name || 'Unknown';
+            exits.push(`North → ${roomName}`);
+        }
+        // East (right wall = x+1)
+        if (!cell.walls.right && playerX < size - 1) {
+            const eastCell = grid[playerY]?.[playerX + 1];
+            const roomName = eastCell?.roomInfo?.name || 'Unknown';
+            exits.push(`East → ${roomName}`);
+        }
+        // South (bottom wall = y+1)
+        if (!cell.walls.bottom && playerY < size - 1) {
+            const southCell = grid[playerY + 1]?.[playerX];
+            const roomName = southCell?.roomInfo?.name || 'Unknown';
+            exits.push(`South → ${roomName}`);
+        }
+        // West (left wall = x-1)
+        if (!cell.walls.left && playerX > 0) {
+            const westCell = grid[playerY]?.[playerX - 1];
+            const roomName = westCell?.roomInfo?.name || 'Unknown';
+            exits.push(`West → ${roomName}`);
+        }
+
+        exitsEl.innerHTML = exits.length ? exits.join('<br>') : 'None';
     }
 
     // Update occupants (active minions)
@@ -8918,12 +10235,15 @@ async function tryMazeMove(dx, dy) {
         cancelVoidWalk();
     }
 
-    // Determine direction for hook
+    // Determine direction for hook and sprite facing
     const direction = dx === 1 ? 'right' : dx === -1 ? 'left' : dy === 1 ? 'down' : 'up';
+    // Convert to compass for sprite facing (right=east, left=west, down=south, up=north)
+    const compassDirection = dx === 1 ? 'east' : dx === -1 ? 'west' : dy === 1 ? 'south' : 'north';
 
     // Move player
     currentMaze.playerX = newX;
     currentMaze.playerY = newY;
+    currentMaze.playerDirection = compassDirection;
     currentMaze.visited.add(`${currentMaze.currentFloor}:${newX},${newY}`);
     currentMaze.moveCount++;
 
@@ -8945,8 +10265,9 @@ async function tryMazeMove(dx, dy) {
     // Update grid (fog of war, etc.)
     renderMazeGrid();
 
-    // Check for exit (but don't win yet if boss exists)
-    if (newX === currentMaze.exitX && newY === currentMaze.exitY) {
+    // Check for exit - only on final floor
+    if (newX === currentMaze.exitX && newY === currentMaze.exitY &&
+        currentMaze.currentFloor === currentMaze.totalFloors - 1) {
         handleExitReached();
         return;
     }
@@ -9261,17 +10582,11 @@ async function triggerTrapEncounter(trapId, x, y) {
  * Show continue button after trap encounter
  */
 function showTrapContinueButton(x, y) {
-    const confirmContainer = document.getElementById('maze_encounter_confirm');
-    if (!confirmContainer) return;
-
-    confirmContainer.innerHTML = `
-        <button id="maze_trap_continue" class="menu_button maze-confirm-btn">Continue</button>
-    `;
-    confirmContainer.style.display = 'flex';
+    const buttons = `<button id="maze_trap_continue" class="menu_button maze-confirm-btn">Continue</button>`;
+    showActionPopup(buttons);
 
     document.getElementById('maze_trap_continue')?.addEventListener('click', () => {
-        confirmContainer.style.display = 'none';
-        confirmContainer.innerHTML = '';
+        hideActionPopup();
         resumeMaze();
     });
 }
@@ -9323,8 +10638,8 @@ function populateInventoryDrawer() {
     const items = [
         { id: 'key', icon: 'fa-key', colorClass: '' },
         { id: 'stealth', icon: 'fa-user-ninja', colorClass: '' },
-        { id: 'pow', icon: 'fa-bolt', colorClass: '' },
-        { id: 'grandpow', icon: 'fa-star', colorClass: 'grandpow' },
+        { id: 'strike', icon: 'fa-bolt', colorClass: '' },
+        { id: 'execute', icon: 'fa-star', colorClass: 'execute' },
         { id: 'floorKey', icon: 'fa-stairs', colorClass: 'floor-key' },
         { id: 'portalStone', icon: 'fa-gem', colorClass: 'portal-stone' },
         { id: 'minionBane', icon: 'fa-skull-crossbones', colorClass: 'minion-bane' },
@@ -9354,12 +10669,12 @@ function updateInventoryDisplay() {
     const keyEl = document.getElementById('maze_inv_key');
     const stealthEl = document.getElementById('maze_inv_stealth');
     const powEl = document.getElementById('maze_inv_pow');
-    const grandpowEl = document.getElementById('maze_inv_grandpow');
+    const executeEl = document.getElementById('maze_inv_execute');
 
     if (keyEl) keyEl.textContent = currentMaze.inventory.key;
     if (stealthEl) stealthEl.textContent = currentMaze.inventory.stealth;
-    if (powEl) powEl.textContent = currentMaze.inventory.pow;
-    if (grandpowEl) grandpowEl.textContent = currentMaze.inventory.grandpow || 0;
+    if (powEl) powEl.textContent = currentMaze.inventory.strike;
+    if (executeEl) executeEl.textContent = currentMaze.inventory.execute || 0;
 
     // v1.2.0 new items - update values
     const newItems = ['floorKey', 'portalStone', 'minionBane', 'mapFragment', 'timeShard', 'voidWalk'];
@@ -9468,9 +10783,6 @@ async function triggerChestEncounter(chestData, x, y) {
  * Show chest confirmation buttons
  */
 function showChestConfirmation(isLocked, hasKey) {
-    const confirmContainer = document.getElementById('maze_encounter_confirm');
-    if (!confirmContainer) return;
-
     let buttons = '';
     if (isLocked) {
         if (hasKey) {
@@ -9490,8 +10802,8 @@ function showChestConfirmation(isLocked, hasKey) {
         `;
     }
 
-    confirmContainer.innerHTML = buttons;
-    confirmContainer.style.display = 'flex';
+    // Show buttons in popup overlay
+    showActionPopup(buttons);
 
     // Attach handlers
     document.getElementById('maze_chest_open')?.addEventListener('click', handleChestOpen);
@@ -9503,11 +10815,7 @@ function showChestConfirmation(isLocked, hasKey) {
  * Handle opening a normal chest
  */
 function handleChestOpen() {
-    const confirmContainer = document.getElementById('maze_encounter_confirm');
-    if (confirmContainer) {
-        confirmContainer.style.display = 'none';
-        confirmContainer.innerHTML = '';
-    }
+    hideActionPopup();
 
     const { chestData, x, y } = currentMaze.pendingChest || {};
     if (!chestData) return;
@@ -9530,11 +10838,7 @@ function handleChestOpen() {
  * Handle unlocking a locked chest
  */
 function handleChestUnlock() {
-    const confirmContainer = document.getElementById('maze_encounter_confirm');
-    if (confirmContainer) {
-        confirmContainer.style.display = 'none';
-        confirmContainer.innerHTML = '';
-    }
+    hideActionPopup();
 
     const { chestData, x, y } = currentMaze.pendingChest || {};
     if (!chestData) return;
@@ -9560,12 +10864,7 @@ function handleChestUnlock() {
  * Handle ignoring a chest
  */
 function handleChestIgnore() {
-    const confirmContainer = document.getElementById('maze_encounter_confirm');
-    if (confirmContainer) {
-        confirmContainer.style.display = 'none';
-        confirmContainer.innerHTML = '';
-    }
-
+    hideActionPopup();
     currentMaze.pendingChest = null;
     resumeMaze();
 }
@@ -9614,7 +10913,7 @@ async function openLockedChest(x, y) {
  */
 function generateChestLoot(profile, isLocked) {
     const loot = {
-        key: 0, pow: 0, stealth: 0, grandpow: 0,
+        key: 0, strike: 0, stealth: 0, execute: 0,
         // v1.2.0 new items
         floorKey: 0, portalStone: 0, minionBane: 0, mapFragment: 0, timeShard: 0, voidWalk: 0
     };
@@ -9629,14 +10928,14 @@ function generateChestLoot(profile, isLocked) {
     // Base chances for original items
     const chances = isLocked ? {
         key: (profile.lockedChestKeyChance || 40) * lootMult,
-        pow: (profile.lockedChestPowChance || 60) * lootMult,
+        strike: (profile.lockedChestStrikeChance || 60) * lootMult,
         stealth: (profile.lockedChestStealthChance || 30) * lootMult,
-        grandpow: (profile.lockedChestGrandpowChance || 5) * lootMult,
+        execute: (profile.lockedChestExecuteChance || 5) * lootMult,
     } : {
         key: (profile.chestKeyChance || 30) * lootMult,
-        pow: (profile.chestPowChance || 50) * lootMult,
+        strike: (profile.chestStrikeChance || 50) * lootMult,
         stealth: (profile.chestStealthChance || 0) * lootMult,
-        grandpow: (profile.chestGrandpowChance || 0) * lootMult,
+        execute: (profile.chestExecuteChance || 0) * lootMult,
     };
 
     // v1.2.0 new item chances (rarer, locked chests give better odds)
@@ -9653,9 +10952,9 @@ function generateChestLoot(profile, isLocked) {
     if (isLocked) {
         const bonus = 1 + (profile.chestLockedBonusPercent || 50) / 100;
         chances.key = Math.min(100, chances.key * bonus);
-        chances.pow = Math.min(100, chances.pow * bonus);
+        chances.strike = Math.min(100, chances.strike * bonus);
         chances.stealth = Math.min(100, chances.stealth * bonus);
-        chances.grandpow = Math.min(100, chances.grandpow * bonus);
+        chances.execute = Math.min(100, chances.execute * bonus);
         // Apply bonus to new items too
         for (const item of Object.keys(newItemChances)) {
             newItemChances[item] = Math.min(100, newItemChances[item] * bonus);
@@ -9665,9 +10964,9 @@ function generateChestLoot(profile, isLocked) {
     for (let i = 0; i < itemCount; i++) {
         // Roll for each item type
         if (Math.random() * 100 < chances.key) loot.key++;
-        if (Math.random() * 100 < chances.pow) loot.pow++;
+        if (Math.random() * 100 < chances.strike) loot.strike++;
         if (Math.random() * 100 < chances.stealth) loot.stealth++;
-        if (Math.random() * 100 < chances.grandpow) loot.grandpow++;
+        if (Math.random() * 100 < chances.execute) loot.execute++;
         // Roll for new items
         if (Math.random() * 100 < newItemChances.floorKey) loot.floorKey++;
         if (Math.random() * 100 < newItemChances.portalStone) loot.portalStone++;
@@ -9685,9 +10984,9 @@ function generateChestLoot(profile, isLocked) {
  */
 function awardLoot(loot) {
     if (loot.key > 0) addToInventory('key', loot.key);
-    if (loot.pow > 0) addToInventory('pow', loot.pow);
+    if (loot.strike > 0) addToInventory('strike', loot.strike);
     if (loot.stealth > 0) addToInventory('stealth', loot.stealth);
-    if (loot.grandpow > 0) addToInventory('grandpow', loot.grandpow);
+    if (loot.execute > 0) addToInventory('execute', loot.execute);
     // v1.2.0 new items
     if (loot.floorKey > 0) addToInventory('floorKey', loot.floorKey);
     if (loot.portalStone > 0) addToInventory('portalStone', loot.portalStone);
@@ -9716,9 +11015,9 @@ function showChestLootMessage(loot, chestType) {
     const items = [];
     // Original items
     if (loot.key > 0) items.push(`${loot.key} Key${loot.key > 1 ? 's' : ''}`);
-    if (loot.pow > 0) items.push(`${loot.pow} POW${loot.pow > 1 ? 's' : ''}`);
+    if (loot.strike > 0) items.push(`${loot.strike} Strike${loot.strike > 1 ? 's' : ''}`);
     if (loot.stealth > 0) items.push(`${loot.stealth} Stealth${loot.stealth > 1 ? 's' : ''}`);
-    if (loot.grandpow > 0) items.push(`${loot.grandpow} GRANDPOW!`);
+    if (loot.execute > 0) items.push(`${loot.execute} GRANDSTRIKE!`);
     // v1.2.0 new items
     if (loot.floorKey > 0) items.push(`${loot.floorKey} Floor Key${loot.floorKey > 1 ? 's' : ''}`);
     if (loot.portalStone > 0) items.push(`${loot.portalStone} Portal Stone${loot.portalStone > 1 ? 's' : ''}`);
@@ -9766,6 +11065,49 @@ function triggerMimicEncounter(x, y) {
 }
 
 /**
+ * Show action popup overlay with buttons
+ * @param {string} buttonsHTML - HTML string of buttons to display
+ */
+function showActionPopup(buttonsHTML) {
+    const popup = document.getElementById('maze_action_popup');
+    const buttonsContainer = document.getElementById('maze_action_popup_buttons');
+
+    if (!popup || !buttonsContainer) return;
+
+    buttonsContainer.innerHTML = buttonsHTML;
+    popup.style.display = 'flex';
+
+    // Also hide the old confirm area if it exists
+    const oldConfirm = document.getElementById('maze_encounter_confirm');
+    if (oldConfirm) {
+        oldConfirm.style.display = 'none';
+        oldConfirm.innerHTML = '';
+    }
+}
+
+/**
+ * Hide action popup overlay
+ */
+function hideActionPopup() {
+    const popup = document.getElementById('maze_action_popup');
+    const buttonsContainer = document.getElementById('maze_action_popup_buttons');
+
+    if (popup) {
+        popup.style.display = 'none';
+    }
+    if (buttonsContainer) {
+        buttonsContainer.innerHTML = '';
+    }
+
+    // Also hide the old confirm area if it exists
+    const oldConfirm = document.getElementById('maze_encounter_confirm');
+    if (oldConfirm) {
+        oldConfirm.style.display = 'none';
+        oldConfirm.innerHTML = '';
+    }
+}
+
+/**
  * Show encounter confirmation buttons
  */
 function showEncounterConfirmation(minionId, x, y, encounterType) {
@@ -9773,10 +11115,6 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
     const canSlipAway = encounterType !== 'messenger' && encounterType !== 'merchant' && currentMaze.inventory.stealth > 0;
 
     currentMaze.pendingConfirmation = { type: encounterType, minionId, x, y, canSlipAway };
-
-    // Show confirmation buttons in dedicated confirm area
-    const confirmEl = document.getElementById('maze_encounter_confirm');
-    if (!confirmEl) return;
 
     let buttons = '';
     if (encounterType === 'messenger') {
@@ -9788,7 +11126,7 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
         currentMaze.pendingConfirmation.merchantItemCount = itemCount;
 
         // Update message with trade offer
-        const tradeMessage = `I'll give you a GRANDPOW for ${itemCount} of your items...`;
+        const tradeMessage = `I'll give you a EXECUTE for ${itemCount} of your items...`;
         currentMaze.currentMinion.message = tradeMessage;
         updateMazeHero();
 
@@ -9804,9 +11142,8 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
         }
     }
 
-    // Show buttons in confirm area
-    confirmEl.innerHTML = buttons;
-    confirmEl.style.display = 'flex';
+    // Show buttons in popup overlay
+    showActionPopup(buttons);
 
     // Attach handlers
     document.getElementById('maze_confirm_ok')?.addEventListener('click', handleConfirmOk);
@@ -9820,6 +11157,7 @@ function showEncounterConfirmation(minionId, x, y, encounterType) {
  * Handle OK confirmation (messenger encounters)
  */
 function handleConfirmOk() {
+    hideActionPopup();
     currentMaze.pendingConfirmation = null;
     resumeMaze();
 }
@@ -9828,6 +11166,7 @@ function handleConfirmOk() {
  * Handle action confirmation (battlebar/prizewheel encounters)
  */
 function handleConfirmAction() {
+    hideActionPopup();
     const conf = currentMaze.pendingConfirmation;
     if (!conf) return;
 
@@ -9859,6 +11198,7 @@ function handleConfirmAction() {
  * Handle slip away (uses stealth to skip encounter)
  */
 function handleConfirmSlipAway() {
+    hideActionPopup();
     if (currentMaze.inventory.stealth > 0) {
         removeFromInventory('stealth');
         currentMaze.pendingConfirmation = null;
@@ -9867,7 +11207,7 @@ function handleConfirmSlipAway() {
 }
 
 /**
- * Handle merchant accept - trade items for grandpow
+ * Handle merchant accept - trade items for execute
  */
 function handleMerchantAccept() {
     const conf = currentMaze.pendingConfirmation;
@@ -9875,29 +11215,27 @@ function handleMerchantAccept() {
 
     const itemsNeeded = conf.merchantItemCount || 1;
 
-    // Count total tradeable items (not grandpow)
+    // Count total tradeable items (not execute)
     const totalItems = (currentMaze.inventory.key || 0) +
                        (currentMaze.inventory.stealth || 0) +
-                       (currentMaze.inventory.pow || 0);
+                       (currentMaze.inventory.strike || 0);
 
     if (totalItems < itemsNeeded) {
         // Not enough items
         currentMaze.currentMinion.message = `You don't have enough items! You need ${itemsNeeded} but only have ${totalItems}.`;
         updateMazeHero();
 
-        // Show decline button in control bar
-        const confirmEl = document.getElementById('maze_encounter_confirm');
-        if (confirmEl) {
-            confirmEl.innerHTML = `<button id="maze_confirm_decline" class="menu_button maze-confirm-btn">OK</button>`;
-            confirmEl.style.display = 'flex';
-            document.getElementById('maze_confirm_decline')?.addEventListener('click', handleMerchantDecline);
-        }
+        // Show OK button in popup
+        showActionPopup(`<button id="maze_confirm_decline" class="menu_button maze-confirm-btn">OK</button>`);
+        document.getElementById('maze_confirm_decline')?.addEventListener('click', handleMerchantDecline);
         return;
     }
 
+    hideActionPopup();
+
     // Remove random items
     let itemsToRemove = itemsNeeded;
-    const itemTypes = ['key', 'stealth', 'pow'];
+    const itemTypes = ['key', 'stealth', 'strike'];
 
     while (itemsToRemove > 0) {
         // Build list of available item types
@@ -9910,11 +11248,11 @@ function handleMerchantAccept() {
         itemsToRemove--;
     }
 
-    // Give grandpow
-    addToInventory('grandpow');
+    // Give execute
+    addToInventory('execute');
 
     // Show success message
-    currentMaze.currentMinion.message = "Pleasure doing business with you! Here's your GRANDPOW!";
+    currentMaze.currentMinion.message = "Pleasure doing business with you! Here's your GRANDSTRIKE!";
     updateMazeHero();
 
     // Show OK to continue in the confirm area
@@ -9930,6 +11268,7 @@ function handleMerchantAccept() {
  * Handle merchant decline - skip trade
  */
 function handleMerchantDecline() {
+    hideActionPopup();
     currentMaze.pendingConfirmation = null;
     resumeMaze();
 }
@@ -10124,6 +11463,14 @@ async function handleMazeWin() {
     }
 
     console.log(`[MazeMaster] Maze "${currentMaze.profileName}" completed!`);
+
+    // Auto-close after delay so player can see victory state
+    await delay(2500);
+    closeMaze();
+
+    // Switch to Game tab in extension panel
+    const gameTab = document.querySelector('.mazemaster-tab[data-tab="game"]');
+    if (gameTab) gameTab.click();
 }
 
 // =============================================================================
@@ -10140,7 +11487,7 @@ function getPanelHtml() {
     const currentMazeProfileName = extensionSettings.currentMazeProfile || 'default';
     const currentMazeData = getMazeProfile(currentMazeProfileName) || {};
     const minionsList = getMinionNames();
-    const activeGame = extensionSettings.activeGameConfig || 'wheel';
+    const activeGame = extensionSettings.activeGameConfig || 'maze';
 
     return `
         <div class="mazemaster-panel">
@@ -10148,12 +11495,12 @@ function getPanelHtml() {
                 <h2><i class="fa-solid fa-gamepad"></i> MazeMaster</h2>
             </div>
             <div class="mazemaster-tabs">
-                <button class="mazemaster-tab" data-tab="game">Game</button>
-                <button class="mazemaster-tab active" data-tab="config">Config</button>
+                <button class="mazemaster-tab active" data-tab="game">Game</button>
+                <button class="mazemaster-tab" data-tab="config">Config</button>
             </div>
             <div class="mazemaster-panel-content">
                 <!-- GAME TAB -->
-                <div class="mazemaster-tab-content" id="mazemaster-tab-game">
+                <div class="mazemaster-tab-content active" id="mazemaster-tab-game">
                     <div class="mazemaster-game-launch">
                         <div class="mazemaster-section">
                             <label class="mazemaster-label">Maze Profile</label>
@@ -10181,6 +11528,10 @@ function getPanelHtml() {
                             <input type="checkbox" id="mazemaster_llm_enabled" ${extensionSettings.llmEnabled !== false ? 'checked' : ''}>
                             Enable LLM message generation
                         </label>
+                        <label class="mazemaster-checkbox-label">
+                            <input type="checkbox" id="mazemaster_close_chat" ${extensionSettings.closeChatOnStart !== false ? 'checked' : ''}>
+                            Close current chat before starting (prevents context bleed)
+                        </label>
                     </div>
 
                     <!-- D-Pad Settings -->
@@ -10203,8 +11554,8 @@ function getPanelHtml() {
                     <div class="mazemaster-section">
                         <label class="mazemaster-label"><i class="fa-solid fa-cube"></i> Renderer</label>
                         <select id="mazemaster_renderer_type" class="mazemaster-select">
-                            <option value="css-grid" ${(extensionSettings.rendererType || 'css-grid') === 'css-grid' ? 'selected' : ''}>Classic (CSS Grid)</option>
-                            <option value="isometric" ${extensionSettings.rendererType === 'isometric' ? 'selected' : ''}>Isometric 2.5D</option>
+                            <option value="css-grid" ${extensionSettings.rendererType === 'css-grid' ? 'selected' : ''}>Classic (CSS Grid)</option>
+                            <option value="isometric" ${(extensionSettings.rendererType || 'isometric') === 'isometric' ? 'selected' : ''}>Isometric 2.5D</option>
                             <option value="canvas" ${extensionSettings.rendererType === 'canvas' ? 'selected' : ''}>Canvas (Experimental)</option>
                         </select>
                         <div class="mazemaster-help-small"><small>Isometric gives a 3D-like view. Requires restart of active maze.</small></div>
@@ -10214,9 +11565,9 @@ function getPanelHtml() {
                     <div class="mazemaster-section">
                         <label class="mazemaster-label"><i class="fa-solid fa-mobile-screen"></i> Layout Mode</label>
                         <select id="mazemaster_layout_mode" class="mazemaster-select">
-                            <option value="auto" ${(extensionSettings.layoutMode || 'auto') === 'auto' ? 'selected' : ''}>Auto-detect</option>
-                            <option value="desktop" ${extensionSettings.layoutMode === 'desktop' ? 'selected' : ''}>Desktop (Horizontal)</option>
-                            <option value="mobile" ${extensionSettings.layoutMode === 'mobile' ? 'selected' : ''}>Mobile (Vertical)</option>
+                            <option value="auto" ${extensionSettings.layoutMode === 'auto' ? 'selected' : ''} disabled>Auto-detect (disabled)</option>
+                            <option value="desktop" ${(extensionSettings.layoutMode || 'desktop') === 'desktop' ? 'selected' : ''}>Desktop (Horizontal)</option>
+                            <option value="mobile" ${extensionSettings.layoutMode === 'mobile' ? 'selected' : ''} disabled>Mobile (Vertical) (disabled)</option>
                         </select>
                         <div class="mazemaster-help-small"><small>Mobile layout stacks UI vertically for portrait screens.</small></div>
                     </div>
@@ -10231,17 +11582,17 @@ function getPanelHtml() {
                 </div>
 
                 <!-- CONFIG TAB -->
-                <div class="mazemaster-tab-content active" id="mazemaster-tab-config">
+                <div class="mazemaster-tab-content" id="mazemaster-tab-config">
                     <!-- Game Selector -->
                     <div class="mazemaster-game-selector">
+                        <button id="mazemaster_show_maze" class="menu_button mazemaster-game-btn ${activeGame === 'maze' ? 'active' : ''}">
+                            <i class="fa-solid fa-border-all"></i> Maze
+                        </button>
                         <button id="mazemaster_show_wheel" class="menu_button mazemaster-game-btn ${activeGame === 'wheel' ? 'active' : ''}">
                             <i class="fa-solid fa-dharmachakra"></i> Wheel
                         </button>
                         <button id="mazemaster_show_battlebar" class="menu_button mazemaster-game-btn ${activeGame === 'battlebar' ? 'active' : ''}">
                             <i class="fa-solid fa-bars-progress"></i> Battlebar
-                        </button>
-                        <button id="mazemaster_show_maze" class="menu_button mazemaster-game-btn ${activeGame === 'maze' ? 'active' : ''}">
-                            <i class="fa-solid fa-border-all"></i> Maze
                         </button>
                         <button id="mazemaster_show_minions" class="menu_button mazemaster-game-btn ${activeGame === 'minions' ? 'active' : ''}">
                             <i class="fa-solid fa-ghost"></i> Minions
@@ -10425,8 +11776,8 @@ function getPanelHtml() {
                                 <input type="number" id="mazemaster_bb_key_drop" class="mazemaster-input-small" min="0" max="100" value="${currentBb.keyDropChance ?? 40}">
                             </div>
                             <div class="mazemaster-row">
-                                <label>POW %</label>
-                                <input type="number" id="mazemaster_bb_pow_drop" class="mazemaster-input-small" min="0" max="100" value="${currentBb.powDropChance ?? 20}">
+                                <label>Strike %</label>
+                                <input type="number" id="mazemaster_bb_pow_drop" class="mazemaster-input-small" min="0" max="100" value="${currentBb.strikeDropChance ?? 20}">
                             </div>
                             <div class="mazemaster-row">
                                 <label>Stealth %</label>
@@ -10546,7 +11897,7 @@ function getPanelHtml() {
 
                         <div class="mazemaster-row" style="margin-top: 8px;">
                             <label class="mazemaster-checkbox-label">
-                                <input type="checkbox" id="mazemaster_maze_fog_of_war" ${currentMazeData.fogOfWar ? 'checked' : ''}>
+                                <input type="checkbox" id="mazemaster_maze_fog_of_war" ${currentMazeData.fogOfWar !== false ? 'checked' : ''}>
                                 <span>Enable Fog of War</span>
                             </label>
                         </div>
@@ -10641,7 +11992,7 @@ function getPanelHtml() {
                                                     </div>
                                                     <div class="objective-config-row objective-target-row" style="display: ${obj.type !== 'explore' ? 'flex' : 'none'};">
                                                         <label>Target:</label>
-                                                        <input type="text" class="objective-target mazemaster-input" value="${escapeHtml(obj.target || '')}" placeholder="${obj.type === 'collect' ? 'key, pow, stealth...' : 'minion ID'}">
+                                                        <input type="text" class="objective-target mazemaster-input" value="${escapeHtml(obj.target || '')}" placeholder="${obj.type === 'collect' ? 'key, strike, stealth...' : 'minion ID'}">
                                                     </div>
                                                     <div class="objective-config-row">
                                                         <label>Count:</label>
@@ -10840,9 +12191,9 @@ function getPanelHtml() {
                                     <label class="mazemaster-label">Regular Chest Loot %</label>
                                     <div class="mazemaster-grid-4col">
                                         <div class="mazemaster-row"><label>Key</label><input type="number" id="mazemaster_maze_chest_key" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.chestKeyChance || 30}"></div>
-                                        <div class="mazemaster-row"><label>POW</label><input type="number" id="mazemaster_maze_chest_pow" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.chestPowChance || 50}"></div>
+                                        <div class="mazemaster-row"><label>Strike</label><input type="number" id="mazemaster_maze_chest_pow" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.chestStrikeChance || 50}"></div>
                                         <div class="mazemaster-row"><label>Stealth</label><input type="number" id="mazemaster_maze_chest_stealth" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.chestStealthChance || 0}"></div>
-                                        <div class="mazemaster-row"><label>G-POW</label><input type="number" id="mazemaster_maze_chest_grandpow" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.chestGrandpowChance || 0}"></div>
+                                        <div class="mazemaster-row"><label>Execute</label><input type="number" id="mazemaster_maze_chest_execute" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.chestExecuteChance || 0}"></div>
                                     </div>
                                 </div>
 
@@ -10850,9 +12201,9 @@ function getPanelHtml() {
                                     <label class="mazemaster-label">Locked Chest Loot %</label>
                                     <div class="mazemaster-grid-4col">
                                         <div class="mazemaster-row"><label>Key</label><input type="number" id="mazemaster_maze_locked_key" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.lockedChestKeyChance || 40}"></div>
-                                        <div class="mazemaster-row"><label>POW</label><input type="number" id="mazemaster_maze_locked_pow" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.lockedChestPowChance || 60}"></div>
+                                        <div class="mazemaster-row"><label>Strike</label><input type="number" id="mazemaster_maze_locked_pow" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.lockedChestStrikeChance || 60}"></div>
                                         <div class="mazemaster-row"><label>Stealth</label><input type="number" id="mazemaster_maze_locked_stealth" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.lockedChestStealthChance || 30}"></div>
-                                        <div class="mazemaster-row"><label>G-POW</label><input type="number" id="mazemaster_maze_locked_grandpow" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.lockedChestGrandpowChance || 5}"></div>
+                                        <div class="mazemaster-row"><label>Execute</label><input type="number" id="mazemaster_maze_locked_execute" class="mazemaster-input-small" min="0" max="100" value="${currentMazeData.lockedChestExecuteChance || 5}"></div>
                                     </div>
                                 </div>
                             </div>
@@ -10905,9 +12256,9 @@ function getPanelHtml() {
                                 <div class="mazemaster-section">
                                     <div class="mazemaster-grid-4col">
                                         <div class="mazemaster-row"><label><i class="fa-solid fa-key"></i> Keys</label><input type="number" id="mazemaster_start_key" class="mazemaster-input-small" min="0" max="99" value="${currentMazeData.startingInventory?.key || 0}"></div>
-                                        <div class="mazemaster-row"><label><i class="fa-solid fa-bolt"></i> POW</label><input type="number" id="mazemaster_start_pow" class="mazemaster-input-small" min="0" max="99" value="${currentMazeData.startingInventory?.pow || 0}"></div>
+                                        <div class="mazemaster-row"><label><i class="fa-solid fa-bolt"></i> Strike</label><input type="number" id="mazemaster_start_pow" class="mazemaster-input-small" min="0" max="99" value="${currentMazeData.startingInventory?.strike || 0}"></div>
                                         <div class="mazemaster-row"><label><i class="fa-solid fa-user-ninja"></i> Stealth</label><input type="number" id="mazemaster_start_stealth" class="mazemaster-input-small" min="0" max="99" value="${currentMazeData.startingInventory?.stealth || 0}"></div>
-                                        <div class="mazemaster-row"><label><i class="fa-solid fa-star"></i> G-POW</label><input type="number" id="mazemaster_start_grandpow" class="mazemaster-input-small" min="0" max="99" value="${currentMazeData.startingInventory?.grandpow || 0}"></div>
+                                        <div class="mazemaster-row"><label><i class="fa-solid fa-star"></i> Execute</label><input type="number" id="mazemaster_start_execute" class="mazemaster-input-small" min="0" max="99" value="${currentMazeData.startingInventory?.execute || 0}"></div>
                                     </div>
                                 </div>
                             </div>
@@ -11915,8 +13266,8 @@ function getPanelHtml() {
             .inventory-item i.fa-key { color: #f1c40f; }
             .inventory-item i.fa-user-ninja { color: #9b59b6; }
             .inventory-item i.fa-bolt { color: #e74c3c; }
-            .inventory-item.grandpow i.fa-star { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
-            .inventory-item.grandpow { font-weight: bold; }
+            .inventory-item.execute i.fa-star { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
+            .inventory-item.execute { font-weight: bold; }
 
             /* Encounter Confirmation Buttons */
             .maze-confirm-buttons {
@@ -11976,8 +13327,8 @@ function getPanelHtml() {
                 max-width: 400px;
             }
 
-            .mazemaster-bb-pow-btn,
-            .mazemaster-bb-grandpow-btn {
+            .mazemaster-bb-strike-btn,
+            .mazemaster-bb-execute-btn {
                 flex: 1;
                 min-width: 120px;
                 max-width: 180px;
@@ -11994,25 +13345,25 @@ function getPanelHtml() {
                 transition: transform 0.1s, box-shadow 0.1s;
             }
 
-            .mazemaster-bb-pow-btn {
+            .mazemaster-bb-strike-btn {
                 background: linear-gradient(to bottom, #e74c3c, #c0392b);
                 color: #fff;
                 box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
             }
 
-            .mazemaster-bb-pow-btn:hover {
+            .mazemaster-bb-strike-btn:hover {
                 background: linear-gradient(to bottom, #c0392b, #a93226);
                 transform: scale(1.02);
             }
 
-            .mazemaster-bb-grandpow-btn {
+            .mazemaster-bb-execute-btn {
                 background: linear-gradient(135deg, #ffd700, #ffaa00);
                 color: #000;
                 text-shadow: 0 1px 0 rgba(255,255,255,0.5);
                 box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
             }
 
-            .mazemaster-bb-grandpow-btn:hover {
+            .mazemaster-bb-execute-btn:hover {
                 background: linear-gradient(135deg, #ffea00, #ffc400);
                 box-shadow: 0 4px 20px rgba(255, 215, 0, 0.6);
                 transform: scale(1.02);
@@ -13150,7 +14501,7 @@ function collectBattlebarDataFromUI() {
         images: existingProfile.images || [],
         // Item drops (maze only)
         keyDropChance: parseInt(document.getElementById('mazemaster_bb_key_drop')?.value) ?? 40,
-        powDropChance: parseInt(document.getElementById('mazemaster_bb_pow_drop')?.value) ?? 20,
+        strikeDropChance: parseInt(document.getElementById('mazemaster_bb_pow_drop')?.value) ?? 20,
         stealthDropChance: parseInt(document.getElementById('mazemaster_bb_stealth_drop')?.value) ?? 10,
     };
 }
@@ -13347,32 +14698,32 @@ function updateMazeSettings() {
     if (chestKey) chestKey.value = profile.chestKeyChance || 30;
 
     const chestPow = document.getElementById('mazemaster_maze_chest_pow');
-    if (chestPow) chestPow.value = profile.chestPowChance || 50;
+    if (chestPow) chestPow.value = profile.chestStrikeChance || 50;
 
     const chestStealth = document.getElementById('mazemaster_maze_chest_stealth');
     if (chestStealth) chestStealth.value = profile.chestStealthChance || 0;
 
-    const chestGrandpow = document.getElementById('mazemaster_maze_chest_grandpow');
-    if (chestGrandpow) chestGrandpow.value = profile.chestGrandpowChance || 0;
+    const chestExecute = document.getElementById('mazemaster_maze_chest_execute');
+    if (chestExecute) chestExecute.value = profile.chestExecuteChance || 0;
 
     // Locked chest loot chances
     const lockedKey = document.getElementById('mazemaster_maze_locked_key');
     if (lockedKey) lockedKey.value = profile.lockedChestKeyChance || 40;
 
     const lockedPow = document.getElementById('mazemaster_maze_locked_pow');
-    if (lockedPow) lockedPow.value = profile.lockedChestPowChance || 60;
+    if (lockedPow) lockedPow.value = profile.lockedChestStrikeChance || 60;
 
     const lockedStealth = document.getElementById('mazemaster_maze_locked_stealth');
     if (lockedStealth) lockedStealth.value = profile.lockedChestStealthChance || 30;
 
-    const lockedGrandpow = document.getElementById('mazemaster_maze_locked_grandpow');
-    if (lockedGrandpow) lockedGrandpow.value = profile.lockedChestGrandpowChance || 5;
+    const lockedExecute = document.getElementById('mazemaster_maze_locked_execute');
+    if (lockedExecute) lockedExecute.value = profile.lockedChestExecuteChance || 5;
 
     // Starting inventory - use defaults if empty/zero
     let startInv = profile.startingInventory || {};
 
     // If startingInventory is empty/zero and we have defaults, use them
-    const isEmptyInventory = !startInv.key && !startInv.stealth && !startInv.pow && !startInv.grandpow;
+    const isEmptyInventory = !startInv.key && !startInv.stealth && !startInv.strike && !startInv.execute;
     if (isEmptyInventory && DEFAULT_MAZE_PROFILE[profileName]?.startingInventory) {
         startInv = DEFAULT_MAZE_PROFILE[profileName].startingInventory;
         profile.startingInventory = JSON.parse(JSON.stringify(startInv));
@@ -13386,10 +14737,10 @@ function updateMazeSettings() {
     if (startStealth) startStealth.value = startInv.stealth || 0;
 
     const startPow = document.getElementById('mazemaster_start_pow');
-    if (startPow) startPow.value = startInv.pow || 0;
+    if (startPow) startPow.value = startInv.strike || 0;
 
-    const startGrandpow = document.getElementById('mazemaster_start_grandpow');
-    if (startGrandpow) startGrandpow.value = startInv.grandpow || 0;
+    const startExecute = document.getElementById('mazemaster_start_execute');
+    if (startExecute) startExecute.value = startInv.execute || 0;
 
     // Render encounters list - use defaults from DEFAULT_MAZE_PROFILE if empty
     let minionEncounters = profile.minionEncounters || [];
@@ -13594,19 +14945,19 @@ function collectMazeDataFromUI() {
         chestLootMin: parseInt(document.getElementById('mazemaster_maze_loot_min')?.value) || 1,
         chestLootMax: parseInt(document.getElementById('mazemaster_maze_loot_max')?.value) || 2,
         chestKeyChance: parseInt(document.getElementById('mazemaster_maze_chest_key')?.value) || 30,
-        chestPowChance: parseInt(document.getElementById('mazemaster_maze_chest_pow')?.value) || 50,
+        chestStrikeChance: parseInt(document.getElementById('mazemaster_maze_chest_pow')?.value) || 50,
         chestStealthChance: parseInt(document.getElementById('mazemaster_maze_chest_stealth')?.value) || 0,
-        chestGrandpowChance: parseInt(document.getElementById('mazemaster_maze_chest_grandpow')?.value) || 0,
+        chestExecuteChance: parseInt(document.getElementById('mazemaster_maze_chest_execute')?.value) || 0,
         lockedChestKeyChance: parseInt(document.getElementById('mazemaster_maze_locked_key')?.value) || 40,
-        lockedChestPowChance: parseInt(document.getElementById('mazemaster_maze_locked_pow')?.value) || 60,
+        lockedChestStrikeChance: parseInt(document.getElementById('mazemaster_maze_locked_pow')?.value) || 60,
         lockedChestStealthChance: parseInt(document.getElementById('mazemaster_maze_locked_stealth')?.value) || 30,
-        lockedChestGrandpowChance: parseInt(document.getElementById('mazemaster_maze_locked_grandpow')?.value) || 5,
+        lockedChestExecuteChance: parseInt(document.getElementById('mazemaster_maze_locked_execute')?.value) || 5,
         // Starting inventory
         startingInventory: {
             key: parseInt(document.getElementById('mazemaster_start_key')?.value) || 0,
-            pow: parseInt(document.getElementById('mazemaster_start_pow')?.value) || 0,
+            strike: parseInt(document.getElementById('mazemaster_start_pow')?.value) || 0,
             stealth: parseInt(document.getElementById('mazemaster_start_stealth')?.value) || 0,
-            grandpow: parseInt(document.getElementById('mazemaster_start_grandpow')?.value) || 0,
+            execute: parseInt(document.getElementById('mazemaster_start_execute')?.value) || 0,
         },
         // Portals
         portals: collectPortalsFromUI(),
@@ -13849,7 +15200,7 @@ function renderMinionsList() {
                             <input type="number" class="merchant-min-input mazemaster-input-small" min="1" max="10" value="${merchantItemCount.min}">
                             <span>to</span>
                             <input type="number" class="merchant-max-input mazemaster-input-small" min="1" max="10" value="${merchantItemCount.max}">
-                            <span>items for 1 Grandpow</span>
+                            <span>items for 1 Execute</span>
                         </div>
                     </div>
                     <div class="minion-encounter-script">
@@ -14251,8 +15602,37 @@ function renderTrapsList() {
     });
 }
 
-function initUI() {
-    console.log('[MazeMaster] initUI called');
+function initUI(retryCount = 0) {
+    console.log('[MazeMaster] initUI called (attempt ' + (retryCount + 1) + ')');
+
+    // Check if drawer already exists (prevent duplicates)
+    const existingDrawer = document.getElementById('mazemaster-button');
+    if (existingDrawer) {
+        console.log('[MazeMaster] Drawer already exists, skipping insertion');
+        setupEventHandlers();
+        renderSegmentsList();
+        renderMinionsList();
+        renderTrapsList();
+        updateMazeSettings();
+        if (extensionSettings.activeGameConfig === 'battlebar') {
+            renderBattlebarImages();
+        }
+        return;
+    }
+
+    // Check if extensions button exists yet
+    const extensionsButton = document.getElementById('extensions-settings-button');
+    if (!extensionsButton) {
+        if (retryCount < 10) {
+            console.log('[MazeMaster] extensions-settings-button not found, retrying in 500ms...');
+            setTimeout(() => initUI(retryCount + 1), 500);
+            return;
+        } else {
+            console.error('[MazeMaster] extensions-settings-button NOT FOUND after 10 retries!');
+            return;
+        }
+    }
+
     let panelHtml;
     try {
         panelHtml = getPanelHtml();
@@ -14274,14 +15654,8 @@ function initUI() {
         </div>
     `;
 
-    const extensionsButton = document.getElementById('extensions-settings-button');
-    console.log('[MazeMaster] extensions-settings-button:', extensionsButton);
-    if (extensionsButton) {
-        extensionsButton.after(drawerWrapper);
-        console.log('[MazeMaster] Drawer inserted after extensions button');
-    } else {
-        console.error('[MazeMaster] extensions-settings-button NOT FOUND!');
-    }
+    extensionsButton.after(drawerWrapper);
+    console.log('[MazeMaster] Drawer inserted after extensions button');
 
     // Set up drawer toggle click handler directly (more reliable than copying from another drawer)
     const drawerToggle = drawerWrapper.querySelector('.drawer-toggle');
@@ -14535,7 +15909,7 @@ function loadMazeProgress(profileName) {
         pendingConfirmation: null,
         pendingChest: null,
         inventory: {
-            key: 0, stealth: 0, pow: 0, grandpow: 0,
+            key: 0, stealth: 0, strike: 0, execute: 0,
             floorKey: 0, portalStone: 0, minionBane: 0, mapFragment: 0, timeShard: 0, voidWalk: 0,
             ...saveState.inventory  // Overlay saved values
         },
@@ -15166,6 +16540,14 @@ function setupEventHandlers() {
         });
     }
 
+    const closeChatCheckbox = document.getElementById('mazemaster_close_chat');
+    if (closeChatCheckbox) {
+        closeChatCheckbox.addEventListener('change', (e) => {
+            extensionSettings.closeChatOnStart = e.target.checked;
+            saveSettingsDebounced();
+        });
+    }
+
     // D-PAD SETTINGS
     // =========================================================================
     const dpadEnabledCheckbox = document.getElementById('mazemaster_dpad_enabled');
@@ -15175,6 +16557,11 @@ function setupEventHandlers() {
                 extensionSettings.dpadConfig = { enabled: true, floating: true, position: { x: null, y: null } };
             }
             extensionSettings.dpadConfig.enabled = e.target.checked;
+            // Update visibility if D-pad exists
+            const dpad = document.getElementById('maze_dpad');
+            if (dpad) {
+                dpad.style.display = e.target.checked ? '' : 'none';
+            }
             saveSettingsDebounced();
         });
     }
@@ -15186,6 +16573,14 @@ function setupEventHandlers() {
                 extensionSettings.dpadConfig = { enabled: true, floating: true, position: { x: null, y: null } };
             }
             extensionSettings.dpadConfig.floating = e.target.checked;
+            // Update floating class if D-pad exists
+            const dpad = document.getElementById('maze_dpad');
+            if (dpad) {
+                dpad.classList.toggle('floating', e.target.checked);
+                if (e.target.checked) {
+                    initDpadDrag();
+                }
+            }
             saveSettingsDebounced();
         });
     }
@@ -15801,7 +17196,7 @@ function setupEventHandlers() {
                     </div>
                     <div class="objective-config-row objective-target-row">
                         <label>Target:</label>
-                        <input type="text" class="objective-target mazemaster-input" value="" placeholder="key, pow, stealth...">
+                        <input type="text" class="objective-target mazemaster-input" value="" placeholder="key, strike, stealth...">
                     </div>
                     <div class="objective-config-row">
                         <label>Count:</label>

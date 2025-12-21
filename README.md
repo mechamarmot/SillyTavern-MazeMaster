@@ -6,6 +6,21 @@ A modular adventure toolkit for SillyTavern featuring procedurally generated maz
 
 ---
 
+## What's New in v1.2.1
+
+- **Isometric Renderer** - Beautiful 2.5D view with Kenney sprite support
+- **Multi-Floor Dungeons** - Staircases connect multiple maze levels
+- **Fog of War** - Optional visibility system reveals tiles as you explore
+- **New Items** - Floor Keys, Portal Stones, Minion Bane, Map Fragments, Time Shards, Void Walk
+- **12 Default Maze Profiles** - Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action themes
+- **Themed Content Packs** - Pre-built minions, traps, battlebars, and wheels per theme
+- **Player Direction** - Character sprite faces movement direction
+- **Auto-Close Victory** - Maze closes automatically after winning
+- **Profile Renaming** - Rename wheel, battlebar, and maze profiles
+- **Balance Improvements** - Better encounter distribution, fixed wall rendering
+
+---
+
 ## Installation
 
 ### Via SillyTavern Extension Manager (Recommended)
