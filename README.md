@@ -61,13 +61,15 @@ The heart of MazeMaster is a complete dungeon-crawling adventure. Players naviga
 ### Features
 
 - **Procedural Generation** - Every maze is unique (5x5 to 20x20 grids)
-- **Multi-Floor Dungeons** - Staircases connect multiple levels
+- **Multi-Floor Dungeons** - Staircases connect multiple levels with Floor Keys
 - **Isometric Renderer** - Beautiful 2.5D view with Kenney sprite support
-- **Fog of War** - Tiles reveal as you explore
-- **Minion Encounters** - NPCs that trigger mini games
-- **Chest System** - Regular, locked, and mimic chests with loot tables
-- **Trap Tiles** - Hazards with custom effects
+- **Fog of War** - Tiles reveal as you explore; use Map Fragments for intel
+- **HP System** - Track health with potions, damage, and revival mechanics
+- **8 Mini Games** - Combat, puzzles, stealth, and social encounters
+- **Chest System** - Regular, locked, and mimic chests with configurable loot
+- **Trap Tiles** - Hazards that deal damage or trigger STScript
 - **Story Milestones** - Narrative beats at exploration percentages
+- **Difficulty Tiers** - Easy, Normal, Hard, Nightmare with scaling HP/damage
 
 ### Minion Types
 
@@ -75,23 +77,25 @@ When you encounter a minion in the maze, it triggers one of these behaviors:
 
 | Type | Behavior |
 |------|----------|
-| Messenger | Displays a message (story, hints, lore) |
-| Battlebar | Triggers timing-based combat |
-| Prize Wheel | Triggers a wheel spin for rewards |
-| Merchant | Opens a shop to buy/sell items |
-| Combat | Triggers any of the 6 combat mini games |
+| **Messenger** | Displays story text, hints, or lore |
+| **Battlebar** | Triggers timing-based combat challenge |
+| **Prize Wheel** | Spin for randomized rewards |
+| **Merchant** | Buy/sell items from configurable pools |
+| **Turn-Based** | RPG combat with Attack/Defend/Item/Flee |
+| **QTE** | Quick-time event key presses |
+| **Dice** | Roll against a target number |
+| **Stealth** | Sneak past with Advance/Hide/Distract |
+| **Puzzle** | Sequence or memory challenge |
+| **Negotiation** | Social encounter with Persuade/Bribe |
 
-### Items
+### Items (15 Total)
 
-| Item | Effect |
-|------|--------|
-| Key | Opens locked chests |
-| Strike (POW) | Guarantees next battlebar hit |
-| Stealth | Skips next encounter |
-| Execute (GRANDPOW) | Instantly wins any battlebar |
-| Floor Key | Unlocks staircases to next floor |
-| Healing Potions | Restore HP (25%, 50%, or 100%) |
-| Revival Charm | Auto-resurrect on death |
+| Category | Items |
+|----------|-------|
+| **Core** | Key (unlock chests), Stealth (skip encounter), Strike (guaranteed hit), Execute (instant win) |
+| **Exploration** | Floor Key (stairs), Portal Stone (teleport), Map Fragment (reveal 3x3), Void Walk (phase through wall) |
+| **Combat** | Minion Bane (skip combat), Time Shard (extra move) |
+| **HP** | Healing Potion (25%), Greater Healing (50%), Elixir (100%), Revival Charm (auto-revive), Heart Crystal (+10 max HP) |
 
 ### HP System
 
