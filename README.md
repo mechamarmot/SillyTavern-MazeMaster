@@ -6,18 +6,26 @@ A modular adventure toolkit for SillyTavern featuring procedurally generated maz
 
 ---
 
-## What's New in v1.2.1
+## What's New in v1.3.0
 
-- **Isometric Renderer** - Beautiful 2.5D view with Kenney sprite support
-- **Multi-Floor Dungeons** - Staircases connect multiple maze levels
-- **Fog of War** - Optional visibility system reveals tiles as you explore
-- **New Items** - Floor Keys, Portal Stones, Minion Bane, Map Fragments, Time Shards, Void Walk
-- **12 Default Maze Profiles** - Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action themes
-- **Themed Content Packs** - Pre-built minions, traps, battlebars, and wheels per theme
-- **Player Direction** - Character sprite faces movement direction
-- **Auto-Close Victory** - Maze closes automatically after winning
-- **Profile Renaming** - Rename wheel, battlebar, and maze profiles
-- **Balance Improvements** - Better encounter distribution, fixed wall rendering
+- **6 Combat Modes** - Turn-based, QTE, Dice, Stealth, Puzzle, and Negotiation encounters
+- **HP System** - Health points with damage/heal mechanics and visual effects
+- **15 Inventory Items** - Core (key, stealth, strike, execute), Special (floorKey, portalStone, minionBane, mapFragment, timeShard, voidWalk), and HP items (potions, elixirs, revival charms)
+- **Battlebar 1-10 Difficulty** - Continuous difficulty scaling with maze multipliers
+- **Factory Defaults System** - Automatic profile updates when new defaults are added
+- **Merchant Item Pools** - Configure item pools for merchant encounters
+- **Expanded STScript Hooks** - onEncounter, onChest, onTrap events
+
+<details>
+<summary>v1.2.1 Changes</summary>
+
+- Isometric Renderer with Kenney sprite support
+- Multi-Floor Dungeons with staircases
+- Fog of War visibility system
+- 12 Default Maze Profiles (Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action)
+- Themed Content Packs for minions, traps, battlebars, and wheels
+- Profile Renaming and Auto-Close Victory
+</details>
 
 ---
 
@@ -83,6 +91,21 @@ MazeMaster is a modular game system that brings interactive gameplay elements to
   <img src="screenshots/isometric-fog.png" alt="Fog of War - Progressive visibility as you explore" width="400">
 </p>
 <p align="center"><em>Fog of War - Tiles reveal as you explore the dungeon</em></p>
+
+### Combat Modes (v1.3.0)
+
+<table>
+<tr>
+<td align="center"><img src="screenshots/combat-turnbased.png" width="280"><br><em>Turn-Based Combat</em></td>
+<td align="center"><img src="screenshots/combat-qte.png" width="280"><br><em>QTE Challenge</em></td>
+<td align="center"><img src="screenshots/combat-dice.png" width="280"><br><em>Dice Roll</em></td>
+</tr>
+<tr>
+<td align="center"><img src="screenshots/combat-stealth.png" width="280"><br><em>Stealth Encounter</em></td>
+<td align="center"><img src="screenshots/combat-puzzle.png" width="280"><br><em>Puzzle Challenge</em></td>
+<td align="center"><img src="screenshots/combat-negotiate.png" width="280"><br><em>Negotiation</em></td>
+</tr>
+</table>
 
 <p align="center">
   <img src="screenshots/config-maze.png" alt="Maze Configuration - Set up dungeon profiles with encounters and loot" width="400">
