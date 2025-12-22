@@ -231,15 +231,26 @@ Trigger games naturally through dialogue:
 
 ## Quick Start
 
-1. **Play immediately** - Click Play on a default maze profile
-2. **Or customize** - Create minions, configure encounters, set up loot tables
-3. **Or use standalone** - Call any mini game directly via slash commands
+### Option 1: Jump Right In
+MazeMaster comes with **12 pre-built maze profiles** across 6 themes (Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action). Just open the extension panel, select a profile, and click **Play**.
 
+### Option 2: Test the Mini Games
+Try any mini game standalone to see how they work:
 ```
-/maze profile="Dungeon Crawl"    // Full experience
-/battlebar profile="Quick Fight" // Just combat
-/wheel profile="Daily Reward"    // Just rewards
+/turnbased profile="Training Bout"    // Learn turn-based combat
+/dice profile="Lucky Roll"            // Simple dice challenge
+/stealth profile="Simple Sneak"       // Stealth mechanics
+/puzzle profile="Simple Riddle"       // Sequence puzzle
+/negotiate profile="Friendly Chat"    // Social encounter
+/wheel profile="Blessing Wheel"       // Spin for rewards
+/battlebar profile="Training Dummy"   // Timing combat
 ```
+
+### Option 3: Build Your Own
+1. **Minions Tab** - Create NPCs (messengers, merchants, combat triggers)
+2. **Combat Tabs** - Configure mini game profiles with custom difficulty
+3. **Maze Tab** - Build a dungeon profile with your encounters, loot, and win conditions
+4. Click **Play** or use `/maze profile="Your Profile"`
 
 ---
 
