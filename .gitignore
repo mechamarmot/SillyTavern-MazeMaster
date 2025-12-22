@@ -24,3 +24,6 @@ yarn-error.log*
 
 # Large asset source packs (not the optimized sprites we ship)
 # /assets/isometric/Kenney*
+
+# Build documentation (internal planning)
+/build_docs
