@@ -21023,12 +21023,139 @@ function getPanelHtml() {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="mazemaster-section">
-                                <div class="mazemaster-help" style="text-align: center; padding: 40px;">
-                                    <i class="fa-solid fa-crossed-swords" style="font-size: 48px; opacity: 0.3; margin-bottom: 10px;"></i>
-                                    <div>Turn-Based Combat coming soon!</div>
-                                    <small>Classic RPG-style attack/defend/item/flee combat</small>
+                                <label class="mazemaster-label">Display</label>
+                                <div class="mazemaster-row">
+                                    <label>Title</label>
+                                    <input type="text" id="mazemaster_tb_main_title" class="mazemaster-input" placeholder="Combat!" value="">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label>Enemy Name</label>
+                                    <input type="text" id="mazemaster_tb_enemy_name" class="mazemaster-input" placeholder="Enemy" value="">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label>Description</label>
+                                    <textarea id="mazemaster_tb_description" class="mazemaster-input" rows="2" placeholder="A fierce battle awaits..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Combat Stats</label>
+                                <div class="mazemaster-combat-grid">
+                                    <div class="mazemaster-combat-col">
+                                        <strong style="color: #2ecc71;">Player</strong>
+                                        <div class="mazemaster-row">
+                                            <label>HP</label>
+                                            <input type="number" id="mazemaster_tb_player_hp" class="mazemaster-input-small" min="1" max="999" value="100">
+                                        </div>
+                                        <div class="mazemaster-row">
+                                            <label>Attack</label>
+                                            <input type="number" id="mazemaster_tb_player_attack" class="mazemaster-input-small" min="1" max="99" value="15">
+                                        </div>
+                                        <div class="mazemaster-row">
+                                            <label>Defense</label>
+                                            <input type="number" id="mazemaster_tb_player_defense" class="mazemaster-input-small" min="0" max="99" value="5">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-combat-col">
+                                        <strong style="color: #e74c3c;">Enemy</strong>
+                                        <div class="mazemaster-row">
+                                            <label>HP</label>
+                                            <input type="number" id="mazemaster_tb_enemy_hp" class="mazemaster-input-small" min="1" max="999" value="50">
+                                        </div>
+                                        <div class="mazemaster-row">
+                                            <label>Attack</label>
+                                            <input type="number" id="mazemaster_tb_enemy_attack" class="mazemaster-input-small" min="1" max="99" value="8">
+                                        </div>
+                                        <div class="mazemaster-row">
+                                            <label>Defense</label>
+                                            <input type="number" id="mazemaster_tb_enemy_defense" class="mazemaster-input-small" min="0" max="99" value="2">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Mechanics</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Turn Order</label>
+                                            <select id="mazemaster_tb_turn_order" class="mazemaster-select">
+                                                <option value="player_first">Player First</option>
+                                                <option value="enemy_first">Enemy First</option>
+                                                <option value="random">Random</option>
+                                            </select>
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Flee Chance %</label>
+                                            <input type="number" id="mazemaster_tb_flee_chance" class="mazemaster-input-small" min="0" max="100" value="50">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Crit Chance %</label>
+                                            <input type="number" id="mazemaster_tb_crit_chance" class="mazemaster-input-small" min="0" max="100" value="15">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Crit Multiplier</label>
+                                            <input type="number" id="mazemaster_tb_crit_mult" class="mazemaster-input-small" min="1" max="5" step="0.1" value="1.5">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field" style="flex: 2;">
+                                            <label>Difficulty <span id="mazemaster_tb_diff_val" style="opacity: 0.7;">(5)</span></label>
+                                            <input type="range" id="mazemaster_tb_difficulty" min="1" max="10" value="5" style="width: 100%;">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Damage on Loss</label>
+                                            <input type="number" id="mazemaster_tb_damage" class="mazemaster-input-small" min="0" max="100" value="15">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">STScript Hooks</label>
+                                <div class="mazemaster-bb-commands">
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Win:</label>
+                                        <textarea id="mazemaster_tb_on_win" placeholder="/echo Victory!"></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Lose:</label>
+                                        <textarea id="mazemaster_tb_on_lose" placeholder="/echo Defeat..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Item Drops on Win</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Key %</label>
+                                            <input type="number" id="mazemaster_tb_key_drop" class="mazemaster-input-small" min="0" max="100" value="30">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Strike %</label>
+                                            <input type="number" id="mazemaster_tb_strike_drop" class="mazemaster-input-small" min="0" max="100" value="15">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Stealth %</label>
+                                            <input type="number" id="mazemaster_tb_stealth_drop" class="mazemaster-input-small" min="0" max="100" value="10">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Potion %</label>
+                                            <input type="number" id="mazemaster_tb_potion_drop" class="mazemaster-input-small" min="0" max="100" value="25">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <button id="mazemaster_tb_save_btn" class="menu_button menu_button_primary mazemaster-save-btn">
+                                    <i class="fa-solid fa-save"></i> Save Profile
+                                </button>
                             </div>
                         </div><!-- End combat_turnbased_content -->
 
@@ -21055,19 +21182,86 @@ function getPanelHtml() {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="mazemaster-section">
-                                <div class="mazemaster-help" style="padding: 15px; background: rgba(155, 89, 182, 0.1); border-radius: 8px; border: 1px solid rgba(155, 89, 182, 0.3);">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-keyboard" style="font-size: 24px; color: #9b59b6;"></i>
-                                        <strong>Quick-Time Events</strong>
-                                    </div>
-                                    <small style="color: #aaa;">
-                                        Press the correct keys as they appear before time runs out!<br>
-                                        • <span style="color: #2ecc71;">Perfect</span> timing gives bonus points<br>
-                                        • Build <span style="color: #f39c12;">combos</span> for consecutive hits<br>
-                                        • Need 50% success rate to pass
-                                    </small>
+                                <label class="mazemaster-label">Display</label>
+                                <div class="mazemaster-row">
+                                    <label>Title</label>
+                                    <input type="text" id="mazemaster_qte_main_title" class="mazemaster-input" placeholder="Reaction Test" value="">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label>Description</label>
+                                    <textarea id="mazemaster_qte_description" class="mazemaster-input" rows="2" placeholder="Press the keys as they appear!"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Sequence Settings</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Min Length</label>
+                                            <input type="number" id="mazemaster_qte_seq_min" class="mazemaster-input-small" min="1" max="20" value="3">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Max Length</label>
+                                            <input type="number" id="mazemaster_qte_seq_max" class="mazemaster-input-small" min="1" max="20" value="5">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Time Window (ms)</label>
+                                            <input type="number" id="mazemaster_qte_time_base" class="mazemaster-input-small" min="500" max="5000" step="100" value="1500">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Min Time (ms)</label>
+                                            <input type="number" id="mazemaster_qte_time_min" class="mazemaster-input-small" min="200" max="2000" step="100" value="800">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field" style="flex: 2;">
+                                            <label>Difficulty <span id="mazemaster_qte_diff_val" style="opacity: 0.7;">(5)</span></label>
+                                            <input type="range" id="mazemaster_qte_difficulty" min="1" max="10" value="5" style="width: 100%;">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Damage on Fail</label>
+                                            <input type="number" id="mazemaster_qte_damage" class="mazemaster-input-small" min="0" max="100" value="10">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Perfect Window %</label>
+                                            <input type="number" id="mazemaster_qte_perfect" class="mazemaster-input-small" min="10" max="50" value="30">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Allowed Keys</label>
+                                <div class="mazemaster-checkbox-row">
+                                    <label><input type="checkbox" id="mazemaster_qte_key_w" checked> W</label>
+                                    <label><input type="checkbox" id="mazemaster_qte_key_a" checked> A</label>
+                                    <label><input type="checkbox" id="mazemaster_qte_key_s" checked> S</label>
+                                    <label><input type="checkbox" id="mazemaster_qte_key_d" checked> D</label>
+                                    <label><input type="checkbox" id="mazemaster_qte_key_space" checked> SPACE</label>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">STScript Hooks</label>
+                                <div class="mazemaster-bb-commands">
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Complete:</label>
+                                        <textarea id="mazemaster_qte_on_complete" placeholder="/echo Quick reflexes!"></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Fail:</label>
+                                        <textarea id="mazemaster_qte_on_fail" placeholder="/echo Too slow..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <button id="mazemaster_qte_save_btn" class="menu_button menu_button_primary mazemaster-save-btn">
+                                    <i class="fa-solid fa-save"></i> Save Profile
+                                </button>
                             </div>
                         </div><!-- End combat_qte_content -->
 
@@ -21094,20 +21288,87 @@ function getPanelHtml() {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="mazemaster-section">
-                                <div class="mazemaster-help" style="padding: 15px; background: rgba(243, 156, 18, 0.1); border-radius: 8px; border: 1px solid rgba(243, 156, 18, 0.3);">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-dice" style="font-size: 24px; color: #f39c12;"></i>
-                                        <strong>Dice Combat</strong>
-                                    </div>
-                                    <small style="color: #aaa;">
-                                        Roll dice against a threshold to succeed!<br>
-                                        • Supports d4, d6, d8, d10, d12, d20, d100<br>
-                                        • <span style="color: #f1c40f;">Critical Success</span> on max roll<br>
-                                        • <span style="color: #e74c3c;">Critical Fail</span> on minimum<br>
-                                        • Reroll options with item costs
-                                    </small>
+                                <label class="mazemaster-label">Display</label>
+                                <div class="mazemaster-row">
+                                    <label>Title</label>
+                                    <input type="text" id="mazemaster_dice_main_title" class="mazemaster-input" placeholder="Skill Check" value="">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label>Description</label>
+                                    <textarea id="mazemaster_dice_description" class="mazemaster-input" rows="2" placeholder="Roll to beat the target!"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Dice Settings</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Dice Count</label>
+                                            <input type="number" id="mazemaster_dice_count" class="mazemaster-input-small" min="1" max="10" value="2">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Dice Type</label>
+                                            <select id="mazemaster_dice_type" class="mazemaster-select">
+                                                <option value="4">d4</option>
+                                                <option value="6" selected>d6</option>
+                                                <option value="8">d8</option>
+                                                <option value="10">d10</option>
+                                                <option value="12">d12</option>
+                                                <option value="20">d20</option>
+                                                <option value="100">d100</option>
+                                            </select>
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Target Number</label>
+                                            <input type="number" id="mazemaster_dice_target" class="mazemaster-input-small" min="1" max="100" value="7">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Modifier</label>
+                                            <input type="number" id="mazemaster_dice_modifier" class="mazemaster-input-small" min="-20" max="20" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field" style="flex: 2;">
+                                            <label>Difficulty <span id="mazemaster_dice_diff_val" style="opacity: 0.7;">(5)</span></label>
+                                            <input type="range" id="mazemaster_dice_difficulty" min="1" max="10" value="5" style="width: 100%;">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Damage on Fail</label>
+                                            <input type="number" id="mazemaster_dice_damage" class="mazemaster-input-small" min="0" max="100" value="15">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Rerolls</label>
+                                            <input type="number" id="mazemaster_dice_rerolls" class="mazemaster-input-small" min="0" max="5" value="1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">STScript Hooks</label>
+                                <div class="mazemaster-bb-commands">
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Success:</label>
+                                        <textarea id="mazemaster_dice_on_success" placeholder="/echo Success!"></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Fail:</label>
+                                        <textarea id="mazemaster_dice_on_fail" placeholder="/echo Failed the check..."></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Critical:</label>
+                                        <textarea id="mazemaster_dice_on_crit" placeholder="/echo Critical success!"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <button id="mazemaster_dice_save_btn" class="menu_button menu_button_primary mazemaster-save-btn">
+                                    <i class="fa-solid fa-save"></i> Save Profile
+                                </button>
                             </div>
                         </div><!-- End combat_dice_content -->
 
@@ -21134,20 +21395,79 @@ function getPanelHtml() {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="mazemaster-section">
-                                <div class="mazemaster-help" style="padding: 15px; background: rgba(26, 188, 156, 0.1); border-radius: 8px; border: 1px solid rgba(26, 188, 156, 0.3);">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-user-ninja" style="font-size: 24px; color: #1abc9c;"></i>
-                                        <strong>Stealth Encounters</strong>
-                                    </div>
-                                    <small style="color: #aaa;">
-                                        Sneak past guards without being detected!<br>
-                                        • <span style="color: #1abc9c;">Advance</span> - move forward (risky)<br>
-                                        • <span style="color: #9b59b6;">Hide</span> - reduce detection<br>
-                                        • <span style="color: #f39c12;">Distract</span> - may greatly reduce detection<br>
-                                        • <span style="color: #3498db;">Wait</span> - small detection reduction
-                                    </small>
+                                <label class="mazemaster-label">Display</label>
+                                <div class="mazemaster-row">
+                                    <label>Title</label>
+                                    <input type="text" id="mazemaster_stealth_main_title" class="mazemaster-input" placeholder="Sneak Past" value="">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label>Guard Name</label>
+                                    <input type="text" id="mazemaster_stealth_guard_name" class="mazemaster-input" placeholder="Guard" value="">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label>Description</label>
+                                    <textarea id="mazemaster_stealth_description" class="mazemaster-input" rows="2" placeholder="Sneak past without being detected!"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Stealth Settings</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Sections</label>
+                                            <input type="number" id="mazemaster_stealth_sections" class="mazemaster-input-small" min="1" max="10" value="3" title="Areas to pass through">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Detection Limit</label>
+                                            <input type="number" id="mazemaster_stealth_detection_limit" class="mazemaster-input-small" min="50" max="200" value="100" title="Max detection before caught">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Base Detection</label>
+                                            <input type="number" id="mazemaster_stealth_base_detection" class="mazemaster-input-small" min="5" max="50" value="15" title="Detection gain when advancing">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Damage on Fail</label>
+                                            <input type="number" id="mazemaster_stealth_damage" class="mazemaster-input-small" min="0" max="100" value="20">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field" style="flex: 2;">
+                                            <label>Difficulty <span id="mazemaster_stealth_diff_val" style="opacity: 0.7;">(5)</span></label>
+                                            <input type="range" id="mazemaster_stealth_difficulty" min="1" max="10" value="5" style="width: 100%;">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Hide Reduction</label>
+                                            <input type="number" id="mazemaster_stealth_hide_reduce" class="mazemaster-input-small" min="5" max="30" value="10" title="Detection reduced by Hide">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Distract Max</label>
+                                            <input type="number" id="mazemaster_stealth_distract_max" class="mazemaster-input-small" min="10" max="50" value="25" title="Max detection reduced by Distract">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">STScript Hooks</label>
+                                <div class="mazemaster-bb-commands">
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Success:</label>
+                                        <textarea id="mazemaster_stealth_on_success" placeholder="/echo You made it past!"></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Caught:</label>
+                                        <textarea id="mazemaster_stealth_on_caught" placeholder="/echo You've been spotted!"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <button id="mazemaster_stealth_save_btn" class="menu_button menu_button_primary mazemaster-save-btn">
+                                    <i class="fa-solid fa-save"></i> Save Profile
+                                </button>
                             </div>
                         </div><!-- End combat_stealth_content -->
 
@@ -21174,20 +21494,80 @@ function getPanelHtml() {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="mazemaster-section">
-                                <div class="mazemaster-help" style="padding: 15px; background: rgba(155, 89, 182, 0.1); border-radius: 8px; border: 1px solid rgba(155, 89, 182, 0.3);">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-puzzle-piece" style="font-size: 24px; color: #9b59b6;"></i>
-                                        <strong>Puzzle Encounters</strong>
-                                    </div>
-                                    <small style="color: #aaa;">
-                                        Solve the sequence puzzle to proceed!<br>
-                                        • Watch the <span style="color: #9b59b6;">highlighted sequence</span><br>
-                                        • Repeat the pattern in order<br>
-                                        • Use <span style="color: #f39c12;">hints</span> if you get stuck<br>
-                                        • Limited wrong guesses allowed
-                                    </small>
+                                <label class="mazemaster-label">Display</label>
+                                <div class="mazemaster-row">
+                                    <label>Title</label>
+                                    <input type="text" id="mazemaster_puzzle_main_title" class="mazemaster-input" placeholder="Memory Puzzle" value="">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label>Description</label>
+                                    <textarea id="mazemaster_puzzle_description" class="mazemaster-input" rows="2" placeholder="Watch the sequence and repeat it!"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Puzzle Settings</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Grid Size</label>
+                                            <select id="mazemaster_puzzle_grid_size" class="mazemaster-select">
+                                                <option value="2">2x2</option>
+                                                <option value="3" selected>3x3</option>
+                                                <option value="4">4x4</option>
+                                                <option value="5">5x5</option>
+                                            </select>
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Sequence Length</label>
+                                            <input type="number" id="mazemaster_puzzle_seq_length" class="mazemaster-input-small" min="2" max="12" value="4">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Max Mistakes</label>
+                                            <input type="number" id="mazemaster_puzzle_max_mistakes" class="mazemaster-input-small" min="1" max="10" value="5">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Hints</label>
+                                            <input type="number" id="mazemaster_puzzle_hints" class="mazemaster-input-small" min="0" max="5" value="3">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field" style="flex: 2;">
+                                            <label>Difficulty <span id="mazemaster_puzzle_diff_val" style="opacity: 0.7;">(5)</span></label>
+                                            <input type="range" id="mazemaster_puzzle_difficulty" min="1" max="10" value="5" style="width: 100%;">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Damage on Fail</label>
+                                            <input type="number" id="mazemaster_puzzle_damage" class="mazemaster-input-small" min="0" max="100" value="15">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Time Limit (sec)</label>
+                                            <input type="number" id="mazemaster_puzzle_time_limit" class="mazemaster-input-small" min="0" max="300" value="60" title="0 = no limit">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">STScript Hooks</label>
+                                <div class="mazemaster-bb-commands">
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Solve:</label>
+                                        <textarea id="mazemaster_puzzle_on_solve" placeholder="/echo Puzzle solved!"></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Fail:</label>
+                                        <textarea id="mazemaster_puzzle_on_fail" placeholder="/echo Too many mistakes..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <button id="mazemaster_puzzle_save_btn" class="menu_button menu_button_primary mazemaster-save-btn">
+                                    <i class="fa-solid fa-save"></i> Save Profile
+                                </button>
                             </div>
                         </div><!-- End combat_puzzle_content -->
 
@@ -21214,20 +21594,112 @@ function getPanelHtml() {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="mazemaster-section">
-                                <div class="mazemaster-help" style="padding: 15px; background: rgba(218, 165, 32, 0.1); border-radius: 8px; border: 1px solid rgba(218, 165, 32, 0.3);">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-comments" style="font-size: 24px; color: #daa520;"></i>
-                                        <strong>Negotiation Encounters</strong>
-                                    </div>
-                                    <small style="color: #aaa;">
-                                        Convince NPCs through social skills!<br>
-                                        • <span style="color: #3498db;">Persuade</span> - use logic and reason<br>
-                                        • <span style="color: #e74c3c;">Intimidate</span> - force compliance (risky)<br>
-                                        • <span style="color: #e91e63;">Flatter</span> - charm your way through<br>
-                                        • <span style="color: #f39c12;">Bribe</span> - offer items for favor
-                                    </small>
+                                <label class="mazemaster-label">Display</label>
+                                <div class="mazemaster-row">
+                                    <label>Title</label>
+                                    <input type="text" id="mazemaster_negotiate_main_title" class="mazemaster-input" placeholder="Negotiation" value="">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label>NPC Name</label>
+                                    <input type="text" id="mazemaster_negotiate_npc_name" class="mazemaster-input" placeholder="Merchant" value="">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label>Description</label>
+                                    <textarea id="mazemaster_negotiate_description" class="mazemaster-input" rows="2" placeholder="Convince them to help you..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">Negotiation Settings</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Favor Target</label>
+                                            <input type="number" id="mazemaster_negotiate_favor_target" class="mazemaster-input-small" min="25" max="100" value="75" title="Favor needed to win">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Starting Favor</label>
+                                            <input type="number" id="mazemaster_negotiate_starting_favor" class="mazemaster-input-small" min="0" max="75" value="25">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Max Turns</label>
+                                            <input type="number" id="mazemaster_negotiate_max_turns" class="mazemaster-input-small" min="3" max="20" value="6">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Damage on Fail</label>
+                                            <input type="number" id="mazemaster_negotiate_damage" class="mazemaster-input-small" min="0" max="100" value="10">
+                                        </div>
+                                    </div>
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field" style="flex: 2;">
+                                            <label>Difficulty <span id="mazemaster_negotiate_diff_val" style="opacity: 0.7;">(5)</span></label>
+                                            <input type="range" id="mazemaster_negotiate_difficulty" min="1" max="10" value="5" style="width: 100%;">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Persuade Avg</label>
+                                            <input type="number" id="mazemaster_negotiate_persuade" class="mazemaster-input-small" min="5" max="30" value="12" title="Average favor from Persuade">
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Flatter Avg</label>
+                                            <input type="number" id="mazemaster_negotiate_flatter" class="mazemaster-input-small" min="5" max="25" value="10" title="Average favor from Flatter">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">NPC Personality</label>
+                                <div class="mazemaster-bb-settings">
+                                    <div class="mazemaster-bb-row">
+                                        <div class="mazemaster-bb-field">
+                                            <label>Starting Mood</label>
+                                            <select id="mazemaster_negotiate_mood" class="mazemaster-select">
+                                                <option value="hostile">Hostile (-favor)</option>
+                                                <option value="unfriendly" selected>Unfriendly</option>
+                                                <option value="neutral">Neutral</option>
+                                                <option value="friendly">Friendly (+favor)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Intimidate Risk</label>
+                                            <select id="mazemaster_negotiate_intimidate" class="mazemaster-select">
+                                                <option value="low">Low (safe)</option>
+                                                <option value="medium" selected>Medium</option>
+                                                <option value="high">High (risky)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mazemaster-bb-field">
+                                            <label>Bribe Cost</label>
+                                            <select id="mazemaster_negotiate_bribe_cost" class="mazemaster-select">
+                                                <option value="key">Key</option>
+                                                <option value="gold" selected>Gold (10)</option>
+                                                <option value="potion">Potion</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <label class="mazemaster-label">STScript Hooks</label>
+                                <div class="mazemaster-bb-commands">
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Success:</label>
+                                        <textarea id="mazemaster_negotiate_on_success" placeholder="/echo They agreed to help!"></textarea>
+                                    </div>
+                                    <div class="mazemaster-bb-command">
+                                        <label>On Fail:</label>
+                                        <textarea id="mazemaster_negotiate_on_fail" placeholder="/echo Negotiations broke down..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mazemaster-section">
+                                <button id="mazemaster_negotiate_save_btn" class="menu_button menu_button_primary mazemaster-save-btn">
+                                    <i class="fa-solid fa-save"></i> Save Profile
+                                </button>
                             </div>
                         </div><!-- End combat_negotiation_content -->
 
@@ -27153,6 +27625,183 @@ function setupEventHandlers() {
     }
 
     // =========================================================================
+    // TURN-BASED HANDLERS
+    // =========================================================================
+
+    // Turn-based profile select
+    const tbProfileSelect = document.getElementById('mazemaster_tb_profile_select');
+    if (tbProfileSelect) {
+        tbProfileSelect.addEventListener('change', (e) => {
+            extensionSettings.currentTurnbasedProfile = e.target.value;
+            saveSettingsDebounced();
+            loadTurnbasedProfileIntoUI(e.target.value);
+        });
+    }
+
+    // Turn-based new profile
+    const tbNewProfileBtn = document.getElementById('mazemaster_tb_new_profile_btn');
+    if (tbNewProfileBtn) {
+        tbNewProfileBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const name = await callGenericPopup('Enter new Turn-Based profile name:', POPUP_TYPE.INPUT, '');
+            if (name && name.trim()) {
+                const trimmed = name.trim();
+                if (!extensionSettings.turnbasedProfiles[trimmed]) {
+                    const template = getTurnbasedProfile('Training Bout') || {};
+                    saveTurnbasedProfile(trimmed, { ...template, mainTitle: trimmed });
+                    extensionSettings.currentTurnbasedProfile = trimmed;
+                    saveSettingsDebounced();
+                    refreshPanel();
+                    setTimeout(() => {
+                        document.getElementById('mazemaster_show_combat')?.click();
+                        setTimeout(() => {
+                            document.querySelector('[data-combat="turnbased"]')?.click();
+                        }, 50);
+                    }, 100);
+                } else {
+                    await callGenericPopup(`Turn-Based profile "${trimmed}" already exists.`, POPUP_TYPE.TEXT);
+                }
+            }
+        });
+    }
+
+    // Turn-based delete profile
+    const tbDeleteProfileBtn = document.getElementById('mazemaster_tb_delete_profile_btn');
+    if (tbDeleteProfileBtn) {
+        tbDeleteProfileBtn.addEventListener('click', async () => {
+            const profileName = document.getElementById('mazemaster_tb_profile_select')?.value;
+            if (profileName) {
+                const confirmed = await callGenericPopup(`Delete Turn-Based profile "${profileName}"?`, POPUP_TYPE.CONFIRM);
+                if (confirmed) {
+                    deleteTurnbasedProfile(profileName);
+                    refreshPanel();
+                    setTimeout(() => {
+                        document.getElementById('mazemaster_show_combat')?.click();
+                        setTimeout(() => {
+                            document.querySelector('[data-combat="turnbased"]')?.click();
+                        }, 50);
+                    }, 100);
+                }
+            }
+        });
+    }
+
+    // Turn-based rename profile
+    const tbRenameProfileBtn = document.getElementById('mazemaster_tb_rename_profile_btn');
+    if (tbRenameProfileBtn) {
+        tbRenameProfileBtn.addEventListener('click', async () => {
+            const oldName = document.getElementById('mazemaster_tb_profile_select')?.value;
+            if (!oldName) {
+                alert('No profile selected to rename');
+                return;
+            }
+            const newName = await callGenericPopup('Enter new profile name:', POPUP_TYPE.INPUT, oldName);
+            if (newName && newName.trim() && newName.trim() !== oldName) {
+                const trimmed = newName.trim();
+                if (extensionSettings.turnbasedProfiles[trimmed]) {
+                    await callGenericPopup(`Profile "${trimmed}" already exists.`, POPUP_TYPE.TEXT);
+                    return;
+                }
+                extensionSettings.turnbasedProfiles[trimmed] = extensionSettings.turnbasedProfiles[oldName];
+                delete extensionSettings.turnbasedProfiles[oldName];
+                extensionSettings.currentTurnbasedProfile = trimmed;
+                saveSettingsDebounced();
+                refreshPanel();
+                setTimeout(() => {
+                    document.getElementById('mazemaster_show_combat')?.click();
+                    setTimeout(() => {
+                        document.querySelector('[data-combat="turnbased"]')?.click();
+                    }, 50);
+                }, 100);
+            }
+        });
+    }
+
+    // Turn-based difficulty slider
+    const tbDifficultySlider = document.getElementById('mazemaster_tb_difficulty');
+    const tbDifficultyVal = document.getElementById('mazemaster_tb_diff_val');
+    if (tbDifficultySlider && tbDifficultyVal) {
+        tbDifficultySlider.addEventListener('input', (e) => {
+            tbDifficultyVal.textContent = `(${e.target.value})`;
+        });
+    }
+
+    // Turn-based save button
+    const tbSaveBtn = document.getElementById('mazemaster_tb_save_btn');
+    if (tbSaveBtn) {
+        tbSaveBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_tb_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a Turn-Based profile first');
+                return;
+            }
+
+            const profileData = {
+                mainTitle: document.getElementById('mazemaster_tb_main_title')?.value || '',
+                enemyName: document.getElementById('mazemaster_tb_enemy_name')?.value || 'Enemy',
+                description: document.getElementById('mazemaster_tb_description')?.value || '',
+                playerHP: parseInt(document.getElementById('mazemaster_tb_player_hp')?.value) || 100,
+                playerAttack: parseInt(document.getElementById('mazemaster_tb_player_attack')?.value) || 15,
+                playerDefense: parseInt(document.getElementById('mazemaster_tb_player_defense')?.value) || 5,
+                enemyHP: parseInt(document.getElementById('mazemaster_tb_enemy_hp')?.value) || 50,
+                enemyAttack: parseInt(document.getElementById('mazemaster_tb_enemy_attack')?.value) || 8,
+                enemyDefense: parseInt(document.getElementById('mazemaster_tb_enemy_defense')?.value) || 2,
+                turnOrder: document.getElementById('mazemaster_tb_turn_order')?.value || 'player_first',
+                fleeChance: parseInt(document.getElementById('mazemaster_tb_flee_chance')?.value) || 50,
+                critChance: parseInt(document.getElementById('mazemaster_tb_crit_chance')?.value) || 15,
+                critMultiplier: parseFloat(document.getElementById('mazemaster_tb_crit_mult')?.value) || 1.5,
+                difficulty: parseInt(document.getElementById('mazemaster_tb_difficulty')?.value) || 5,
+                damage: parseInt(document.getElementById('mazemaster_tb_damage')?.value) || 15,
+                onWin: document.getElementById('mazemaster_tb_on_win')?.value || '',
+                onLose: document.getElementById('mazemaster_tb_on_lose')?.value || '',
+                keyDropChance: parseInt(document.getElementById('mazemaster_tb_key_drop')?.value) || 30,
+                strikeDropChance: parseInt(document.getElementById('mazemaster_tb_strike_drop')?.value) || 15,
+                stealthDropChance: parseInt(document.getElementById('mazemaster_tb_stealth_drop')?.value) || 10,
+                healingPotionDropChance: parseInt(document.getElementById('mazemaster_tb_potion_drop')?.value) || 25,
+            };
+
+            saveTurnbasedProfile(profileName, profileData);
+            alert(`Turn-Based profile "${profileName}" saved!`);
+        });
+    }
+
+    // Helper to load turn-based profile data into UI
+    function loadTurnbasedProfileIntoUI(profileName) {
+        const profile = getTurnbasedProfile(profileName) || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        setVal('mazemaster_tb_main_title', profile.mainTitle);
+        setVal('mazemaster_tb_enemy_name', profile.enemyName);
+        setVal('mazemaster_tb_description', profile.description);
+        setVal('mazemaster_tb_player_hp', profile.playerHP || 100);
+        setVal('mazemaster_tb_player_attack', profile.playerAttack || 15);
+        setVal('mazemaster_tb_player_defense', profile.playerDefense || 5);
+        setVal('mazemaster_tb_enemy_hp', profile.enemyHP || 50);
+        setVal('mazemaster_tb_enemy_attack', profile.enemyAttack || 8);
+        setVal('mazemaster_tb_enemy_defense', profile.enemyDefense || 2);
+        setVal('mazemaster_tb_turn_order', profile.turnOrder || 'player_first');
+        setVal('mazemaster_tb_flee_chance', profile.fleeChance || 50);
+        setVal('mazemaster_tb_crit_chance', profile.critChance || 15);
+        setVal('mazemaster_tb_crit_mult', profile.critMultiplier || 1.5);
+        setVal('mazemaster_tb_difficulty', profile.difficulty || 5);
+        setVal('mazemaster_tb_damage', profile.damage || 15);
+        setVal('mazemaster_tb_on_win', profile.onWin);
+        setVal('mazemaster_tb_on_lose', profile.onLose);
+        setVal('mazemaster_tb_key_drop', profile.keyDropChance || 30);
+        setVal('mazemaster_tb_strike_drop', profile.strikeDropChance || 15);
+        setVal('mazemaster_tb_stealth_drop', profile.stealthDropChance || 10);
+        setVal('mazemaster_tb_potion_drop', profile.healingPotionDropChance || 25);
+        // Update difficulty display
+        const diffVal = document.getElementById('mazemaster_tb_diff_val');
+        if (diffVal) diffVal.textContent = `(${profile.difficulty || 5})`;
+    }
+
+    // Load initial turn-based profile
+    if (extensionSettings.currentTurnbasedProfile) {
+        loadTurnbasedProfileIntoUI(extensionSettings.currentTurnbasedProfile);
+    }
+
+    // =========================================================================
     // QTE HANDLERS
     // =========================================================================
 
@@ -27261,6 +27910,52 @@ function setupEventHandlers() {
             if (result.error) {
                 alert(`Error: ${result.error}`);
             }
+        });
+    }
+
+    // QTE difficulty slider
+    const qteDifficultySlider = document.getElementById('mazemaster_qte_difficulty');
+    const qteDifficultyVal = document.getElementById('mazemaster_qte_diff_val');
+    if (qteDifficultySlider && qteDifficultyVal) {
+        qteDifficultySlider.addEventListener('input', (e) => {
+            qteDifficultyVal.textContent = `(${e.target.value})`;
+        });
+    }
+
+    // QTE save button
+    const qteSaveBtn = document.getElementById('mazemaster_qte_save_btn');
+    if (qteSaveBtn) {
+        qteSaveBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_qte_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a QTE profile first');
+                return;
+            }
+
+            const allowedKeys = [];
+            if (document.getElementById('mazemaster_qte_key_w')?.checked) allowedKeys.push('W');
+            if (document.getElementById('mazemaster_qte_key_a')?.checked) allowedKeys.push('A');
+            if (document.getElementById('mazemaster_qte_key_s')?.checked) allowedKeys.push('S');
+            if (document.getElementById('mazemaster_qte_key_d')?.checked) allowedKeys.push('D');
+            if (document.getElementById('mazemaster_qte_key_space')?.checked) allowedKeys.push('SPACE');
+
+            const profileData = {
+                mainTitle: document.getElementById('mazemaster_qte_main_title')?.value || '',
+                description: document.getElementById('mazemaster_qte_description')?.value || '',
+                sequenceLengthMin: parseInt(document.getElementById('mazemaster_qte_seq_min')?.value) || 3,
+                sequenceLengthMax: parseInt(document.getElementById('mazemaster_qte_seq_max')?.value) || 5,
+                timeWindowBase: parseInt(document.getElementById('mazemaster_qte_time_base')?.value) || 1500,
+                timeWindowMin: parseInt(document.getElementById('mazemaster_qte_time_min')?.value) || 800,
+                difficulty: parseInt(document.getElementById('mazemaster_qte_difficulty')?.value) || 5,
+                damage: parseInt(document.getElementById('mazemaster_qte_damage')?.value) || 10,
+                perfectWindowPercent: parseInt(document.getElementById('mazemaster_qte_perfect')?.value) || 30,
+                allowedKeys: allowedKeys,
+                onComplete: document.getElementById('mazemaster_qte_on_complete')?.value || '',
+                onFail: document.getElementById('mazemaster_qte_on_fail')?.value || '',
+            };
+
+            saveQteProfile(profileName, profileData);
+            alert(`QTE profile "${profileName}" saved!`);
         });
     }
 
@@ -27376,6 +28071,45 @@ function setupEventHandlers() {
         });
     }
 
+    // Dice difficulty slider
+    const diceDifficultySlider = document.getElementById('mazemaster_dice_difficulty');
+    const diceDifficultyVal = document.getElementById('mazemaster_dice_diff_val');
+    if (diceDifficultySlider && diceDifficultyVal) {
+        diceDifficultySlider.addEventListener('input', (e) => {
+            diceDifficultyVal.textContent = `(${e.target.value})`;
+        });
+    }
+
+    // Dice save button
+    const diceSaveBtn = document.getElementById('mazemaster_dice_save_btn');
+    if (diceSaveBtn) {
+        diceSaveBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_dice_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a Dice profile first');
+                return;
+            }
+
+            const profileData = {
+                mainTitle: document.getElementById('mazemaster_dice_main_title')?.value || '',
+                description: document.getElementById('mazemaster_dice_description')?.value || '',
+                diceCount: parseInt(document.getElementById('mazemaster_dice_count')?.value) || 2,
+                diceType: parseInt(document.getElementById('mazemaster_dice_type')?.value) || 6,
+                targetNumber: parseInt(document.getElementById('mazemaster_dice_target')?.value) || 7,
+                modifier: parseInt(document.getElementById('mazemaster_dice_modifier')?.value) || 0,
+                difficulty: parseInt(document.getElementById('mazemaster_dice_difficulty')?.value) || 5,
+                damage: parseInt(document.getElementById('mazemaster_dice_damage')?.value) || 15,
+                rerolls: parseInt(document.getElementById('mazemaster_dice_rerolls')?.value) || 1,
+                onSuccess: document.getElementById('mazemaster_dice_on_success')?.value || '',
+                onFail: document.getElementById('mazemaster_dice_on_fail')?.value || '',
+                onCritical: document.getElementById('mazemaster_dice_on_crit')?.value || '',
+            };
+
+            saveDiceProfile(profileName, profileData);
+            alert(`Dice profile "${profileName}" saved!`);
+        });
+    }
+
     // =========================================================================
     // STEALTH HANDLERS
     // =========================================================================
@@ -27485,6 +28219,45 @@ function setupEventHandlers() {
             if (result.error) {
                 alert(`Error: ${result.error}`);
             }
+        });
+    }
+
+    // Stealth difficulty slider
+    const stealthDifficultySlider = document.getElementById('mazemaster_stealth_difficulty');
+    const stealthDifficultyVal = document.getElementById('mazemaster_stealth_diff_val');
+    if (stealthDifficultySlider && stealthDifficultyVal) {
+        stealthDifficultySlider.addEventListener('input', (e) => {
+            stealthDifficultyVal.textContent = `(${e.target.value})`;
+        });
+    }
+
+    // Stealth save button
+    const stealthSaveBtn = document.getElementById('mazemaster_stealth_save_btn');
+    if (stealthSaveBtn) {
+        stealthSaveBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_stealth_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a Stealth profile first');
+                return;
+            }
+
+            const profileData = {
+                mainTitle: document.getElementById('mazemaster_stealth_main_title')?.value || '',
+                guardName: document.getElementById('mazemaster_stealth_guard_name')?.value || 'Guard',
+                description: document.getElementById('mazemaster_stealth_description')?.value || '',
+                sections: parseInt(document.getElementById('mazemaster_stealth_sections')?.value) || 3,
+                detectionLimit: parseInt(document.getElementById('mazemaster_stealth_detection_limit')?.value) || 100,
+                baseDetection: parseInt(document.getElementById('mazemaster_stealth_base_detection')?.value) || 15,
+                damage: parseInt(document.getElementById('mazemaster_stealth_damage')?.value) || 20,
+                difficulty: parseInt(document.getElementById('mazemaster_stealth_difficulty')?.value) || 5,
+                hideReduction: parseInt(document.getElementById('mazemaster_stealth_hide_reduce')?.value) || 10,
+                distractMax: parseInt(document.getElementById('mazemaster_stealth_distract_max')?.value) || 25,
+                onSuccess: document.getElementById('mazemaster_stealth_on_success')?.value || '',
+                onCaught: document.getElementById('mazemaster_stealth_on_caught')?.value || '',
+            };
+
+            saveStealthProfile(profileName, profileData);
+            alert(`Stealth profile "${profileName}" saved!`);
         });
     }
 
@@ -27600,6 +28373,44 @@ function setupEventHandlers() {
         });
     }
 
+    // Puzzle difficulty slider
+    const puzzleDifficultySlider = document.getElementById('mazemaster_puzzle_difficulty');
+    const puzzleDifficultyVal = document.getElementById('mazemaster_puzzle_diff_val');
+    if (puzzleDifficultySlider && puzzleDifficultyVal) {
+        puzzleDifficultySlider.addEventListener('input', (e) => {
+            puzzleDifficultyVal.textContent = `(${e.target.value})`;
+        });
+    }
+
+    // Puzzle save button
+    const puzzleSaveBtn = document.getElementById('mazemaster_puzzle_save_btn');
+    if (puzzleSaveBtn) {
+        puzzleSaveBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_puzzle_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a Puzzle profile first');
+                return;
+            }
+
+            const profileData = {
+                mainTitle: document.getElementById('mazemaster_puzzle_main_title')?.value || '',
+                description: document.getElementById('mazemaster_puzzle_description')?.value || '',
+                gridSize: parseInt(document.getElementById('mazemaster_puzzle_grid_size')?.value) || 3,
+                sequenceLength: parseInt(document.getElementById('mazemaster_puzzle_seq_length')?.value) || 4,
+                maxMistakes: parseInt(document.getElementById('mazemaster_puzzle_max_mistakes')?.value) || 5,
+                hints: parseInt(document.getElementById('mazemaster_puzzle_hints')?.value) || 3,
+                difficulty: parseInt(document.getElementById('mazemaster_puzzle_difficulty')?.value) || 5,
+                damage: parseInt(document.getElementById('mazemaster_puzzle_damage')?.value) || 15,
+                timeLimit: parseInt(document.getElementById('mazemaster_puzzle_time_limit')?.value) || 60,
+                onSolve: document.getElementById('mazemaster_puzzle_on_solve')?.value || '',
+                onFail: document.getElementById('mazemaster_puzzle_on_fail')?.value || '',
+            };
+
+            savePuzzleProfile(profileName, profileData);
+            alert(`Puzzle profile "${profileName}" saved!`);
+        });
+    }
+
     // =========================================================================
     // NEGOTIATION HANDLERS
     // =========================================================================
@@ -27709,6 +28520,48 @@ function setupEventHandlers() {
             if (result.error) {
                 alert(`Error: ${result.error}`);
             }
+        });
+    }
+
+    // Negotiation difficulty slider
+    const negotiateDifficultySlider = document.getElementById('mazemaster_negotiate_difficulty');
+    const negotiateDifficultyVal = document.getElementById('mazemaster_negotiate_diff_val');
+    if (negotiateDifficultySlider && negotiateDifficultyVal) {
+        negotiateDifficultySlider.addEventListener('input', (e) => {
+            negotiateDifficultyVal.textContent = `(${e.target.value})`;
+        });
+    }
+
+    // Negotiation save button
+    const negotiateSaveBtn = document.getElementById('mazemaster_negotiate_save_btn');
+    if (negotiateSaveBtn) {
+        negotiateSaveBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_negotiation_profile_select')?.value;
+            if (!profileName) {
+                alert('Please create a Negotiation profile first');
+                return;
+            }
+
+            const profileData = {
+                mainTitle: document.getElementById('mazemaster_negotiate_main_title')?.value || '',
+                npcName: document.getElementById('mazemaster_negotiate_npc_name')?.value || 'NPC',
+                description: document.getElementById('mazemaster_negotiate_description')?.value || '',
+                favorTarget: parseInt(document.getElementById('mazemaster_negotiate_favor_target')?.value) || 75,
+                startingFavor: parseInt(document.getElementById('mazemaster_negotiate_starting_favor')?.value) || 25,
+                maxTurns: parseInt(document.getElementById('mazemaster_negotiate_max_turns')?.value) || 6,
+                damage: parseInt(document.getElementById('mazemaster_negotiate_damage')?.value) || 10,
+                difficulty: parseInt(document.getElementById('mazemaster_negotiate_difficulty')?.value) || 5,
+                persuadeAvg: parseInt(document.getElementById('mazemaster_negotiate_persuade')?.value) || 12,
+                flatterAvg: parseInt(document.getElementById('mazemaster_negotiate_flatter')?.value) || 10,
+                startingMood: document.getElementById('mazemaster_negotiate_mood')?.value || 'unfriendly',
+                intimidateRisk: document.getElementById('mazemaster_negotiate_intimidate')?.value || 'medium',
+                bribeCost: document.getElementById('mazemaster_negotiate_bribe_cost')?.value || 'gold',
+                onSuccess: document.getElementById('mazemaster_negotiate_on_success')?.value || '',
+                onFail: document.getElementById('mazemaster_negotiate_on_fail')?.value || '',
+            };
+
+            saveNegotiationProfile(profileName, profileData);
+            alert(`Negotiation profile "${profileName}" saved!`);
         });
     }
 
