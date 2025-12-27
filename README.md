@@ -6,17 +6,45 @@ A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally gen
 
 ---
 
-## What's New in v1.3.0
+## What's New in v1.4.8
 
-- **6 Combat Modes** - Turn-based, QTE, Dice, Stealth, Puzzle, and Negotiation encounters
-- **HP System** - Health points with damage/heal mechanics and visual effects
-- **15 Inventory Items** - Core (key, stealth, strike, execute), Special (floorKey, portalStone, minionBane, mapFragment, timeShard, voidWalk), and HP items (potions, elixirs, revival charms)
-- **Battlebar 1-10 Difficulty** - Continuous difficulty scaling with maze multipliers
-- **Factory Defaults System** - Automatic profile updates when new defaults are added
-- **Merchant Item Pools** - Configure item pools for merchant encounters
+- **LLM Room Enhancement** - Generates unique, atmospheric room descriptions on first entry using your current LLM
+- **Session Memory System** - Persistent notes panel ("m" button) auto-populates with adventure events and influences future LLM generations
+- **Fairness/Pity Mechanics** - Configurable luck balancing: key pity after unlucky chests, healing boosts when HP is low, mercy unlock for locked chests
+- **Combat Stability Fixes** - All combat modals now properly handle async operations, preventing game freezes after encounters
 
 <details>
-<summary>v1.2.1 Changes</summary>
+<summary>v1.4.0 - v1.4.6 Changes</summary>
+
+**v1.4.6**
+- Session Notes panel for tracking adventure progress
+- Floor button UI improvements
+
+**v1.4.0**
+- BSP Dungeon Generation for all map styles
+- Themed Room Types (treasureVault, arena, library, etc.)
+- Zone Progression System - Metroidvania-style unlocks
+- Secret Passages with hint-based discovery
+- Secret Sense Item (+20% discovery chance)
+- Per-Floor Complexity Scaling
+</details>
+
+<details>
+<summary>v1.3.x Changes</summary>
+
+**v1.3.2**
+- 5 Vision Items: Torch, Lantern, Reveal Scroll, Sight Potion, Crystal Ball
+- Dynamic Fog of War with visibility buffs
+
+**v1.3.0**
+- 6 Combat Modes: Turn-based, QTE, Dice, Stealth, Puzzle, Negotiation
+- HP System with damage/heal mechanics
+- 15 Inventory Items across Core, Special, and HP categories
+- Battlebar 1-10 Difficulty scaling
+</details>
+
+<details>
+<summary>v1.2.x Changes</summary>
 
 - Isometric Renderer with Kenney sprite support
 - Multi-Floor Dungeons with staircases
@@ -88,7 +116,7 @@ When you encounter a minion in the maze, it triggers one of these behaviors:
 | **Puzzle** | Sequence or memory challenge |
 | **Negotiation** | Social encounter with Persuade/Bribe |
 
-### Items (15 Total)
+### Items (20 Total)
 
 | Category | Items |
 |----------|-------|
@@ -96,6 +124,7 @@ When you encounter a minion in the maze, it triggers one of these behaviors:
 | **Exploration** | Floor Key (stairs), Portal Stone (teleport), Map Fragment (reveal 3x3), Void Walk (phase through wall) |
 | **Combat** | Minion Bane (skip combat), Time Shard (extra move) |
 | **HP** | Healing Potion (25%), Greater Healing (50%), Elixir (100%), Revival Charm (auto-revive), Heart Crystal (+10 max HP) |
+| **Vision** | Torch (+2 visibility for 3 moves), Lantern (+1 passive), Reveal Scroll (full floor), Sight Potion (+1 permanent), Crystal Ball (reveal minions) |
 
 ### HP System
 

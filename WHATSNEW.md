@@ -1,118 +1,176 @@
 # MazeMaster - What's New
 
+## v1.4.8
+
+### LLM Room Enhancement
+- Generates unique, atmospheric room descriptions on first entry
+- Uses your current LLM to create immersive, contextual descriptions
+- Descriptions are cached and persist with saved games
+- Toggle per-profile: "Enhance Room Descriptions" checkbox (enabled by default)
+
+### Session Memory System
+- Persistent notes panel accessible via "m" button below inventory
+- Auto-populates with adventure events: encounters, loot, floor changes, combat results
+- Session notes are passed to LLM generations for contextual awareness
+- Previous events influence future room descriptions and encounters
+
+### Fairness/Pity Mechanics
+- **Key Pity** - Increased key drop chance after multiple chests without finding one
+- **Healing Pity** - Boosted healing item drops when HP is low
+- **Mercy Unlock** - Locked chests auto-unlock after skipping several with no keys
+- All thresholds configurable per-profile; enabled by default
+
+### Combat Stability Fixes
+- All combat modals now properly handle async operations
+- Fixed game freezes after stealth, puzzle, and other encounter completions
+- STScript hooks (onComplete, onCaught, onWin, onFail) now fire reliably
+
+---
+
+## v1.4.0
+
+### BSP Dungeon Generation
+- All map styles now use Binary Space Partitioning
+- Better room-and-corridor layouts with variable room sizes
+- Themed room types based on size (treasureVault, arena, library, etc.)
+
+### Zone Progression System
+- Metroidvania-style areas that unlock as you clear rooms
+- Zone gates block progression until requirements are met
+- Zone progress HUD shows current zone and clearing progress
+
+### Secret Passages
+- Hidden walls with hint-based discovery system
+- Bump walls to attempt discovery (chance based on hint level)
+- Visual hints: drafts (level 1), cracks (level 2), glowing (level 3)
+- Secret Sense item boosts discovery chance by 20%
+
+### Per-Floor Complexity Scaling
+- Deeper floors generate with more rooms and secrets
+- Enemy density increases on lower floors
+- More complex layouts as you descend
+
+---
+
+## v1.3.2
+
+### Vision Items (5 new)
+- **Torch** - +2 visibility radius for 3 moves
+- **Lantern** - +1 passive visibility (permanent while held)
+- **Reveal Scroll** - Reveals entire current floor
+- **Sight Potion** - +1 permanent visibility bonus
+- **Crystal Ball** - Reveals all minion locations on floor
+
+### Dynamic Fog of War
+- Visibility radius expands based on items and buffs
+- Line-of-sight calculations for realistic exploration
+- Temporary and permanent visibility bonuses stack
+
+---
+
+## v1.3.0
+
+### 6 Combat Modes
+- **Turn-Based** - RPG combat with Attack/Defend/Item/Flee
+- **QTE** - Quick-time event key presses
+- **Dice** - Roll against target numbers
+- **Stealth** - Sneak past with Advance/Hide/Distract/Wait
+- **Puzzle** - Sequence and memory challenges
+- **Negotiation** - Social encounters with Persuade/Intimidate/Bribe
+
+### HP System
+- Health points tracked across encounters
+- Damage from traps, failed combat, and environmental hazards
+- Healing via potions, safe rooms, rest mechanic, and victory rewards
+- Visual feedback: HP bar with damage (red) and heal (green) flash effects
+- Revival Charms auto-trigger on death
+- Difficulty tiers affect HP and damage scaling
+
+### HP Items (5 new)
+- **Healing Potion** - Restore 25% HP
+- **Greater Healing** - Restore 50% HP
+- **Elixir** - Full HP restore
+- **Revival Charm** - Auto-revive once on death
+- **Heart Crystal** - +10 max HP permanently
+
+### Rest Mechanic
+- Rest button to recover HP between encounters
+- Configurable heal percentage and cooldown
+- Optional interrupt chance with custom STScript
+
+### Battlebar 1-10 Difficulty
+- Continuous difficulty scaling (was 1-5)
+- Maze-level multipliers for difficulty and damage
+- Legacy profile auto-conversion
+
+---
+
+## v1.2.1
+
+### Isometric Renderer
+- Full 2.5D isometric view with procedural sprites
+- Kenney asset pack support for custom tiles
+- Smooth camera panning and player animation
+
+### Multi-Floor Dungeons
+- Configure 1-5 floors per maze
+- Staircases connect floors (up/down)
+- Floor Keys required for staircase use (configurable)
+- SHIFT+Arrow keys for floor navigation
+
+### Fog of War
+- Tiles reveal as you explore
+- Map Fragments reveal 3x3 areas
+- Visibility persists with saved games
+
+### Default Profiles
+- 12 pre-built maze profiles across 6 themes
+- Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action
+- Themed content packs for minions, traps, and encounters
+
+---
+
 ## v1.2.0
 
-### New Features
+### Map Styles (12 total)
+- Classic Maze, Dungeon, City Streets, Forest
+- Space Station, Outpost, College Campus, Apartment Complex
+- Neo Tokyo, Battle Arena, Hospital, Abandoned Highrise
 
-**Per-Persona Stats**
-- Stats are now tracked per SillyTavern persona
-- Global totals maintained alongside persona-specific stats
-- `{{user}}` macro support in LLM prompts for personalization
+### Room Info System
+- Each tile has themed name and description
+- Room info box shows exits, occupants, and defeated entities
 
-**Scenario Themes**
-- 9 themes: Fantasy, Horror, Sci-Fi, Action, Cyberpunk, Noir, Post-Apocalyptic, Comedy, Western
-- Themed item names (e.g., "Iron Key" vs "Access Card")
-- Themed flavor text for encounters and events
+### New Items (6)
+- Floor Key, Portal Stone, Minion Bane
+- Map Fragment, Time Shard, Void Walk
 
-**Circular D-Pad Controls**
-- New circular D-pad for touch-friendly navigation
-- Floating/draggable mode option
-- Toggle in Game tab settings
-- Floor navigation buttons appear on staircases
+### Circular D-Pad
+- Touch-friendly navigation controls
+- Optional floating/draggable mode
+- Floor buttons appear on staircases
 
-**6 New Inventory Items**
-- **Floor Key** - Required to use staircases (when enabled)
-- **Portal Stone** - Teleport to any revealed portal
-- **Minion Bane** - Auto-defeat next minion encounter
-- **Map Fragment** - Reveal 3x3 area around player
-- **Time Shard** - Slow next battlebar by 50%
-- **Void Walk** - Phase through one wall
-
-**Map Styles (12 total)**
-- **Classic Maze** - Recursive backtracking algorithm
-- **Dungeon** - BSP chamber generation with hallways
-- **City Streets** - Grid-based streets with building blocks
-- **Forest** - Organic winding paths with clearings
-- **Space Station** - Room pods connected by corridors
-- **Outpost** - Frontier settlement layout
-- **College Campus** - Academic buildings and walkways
-- **Apartment Complex** - Residential floor plans
-- **Neo Tokyo** - Cyberpunk urban sprawl
-- **Battle Arena** - Combat-focused arenas
-- **Hospital** - Medical facility wings
-- **Abandoned Highrise** - Vertical exploration
-
-**Multi-Floor Maps**
-- Configure 1-5 floors per maze profile
-- Staircases connect floors (up/down)
-- SHIFT+Arrow keys for floor navigation
-- Floor indicator in stats bar
-- Exploration tracked across all floors
-
-**New Slash Commands**
-- `/mazepersonastats persona=X` - Get stats for a persona
-- `/mazefloor` - Get current floor information
-- `/mazetheme theme=X` - Get/set maze theme
-- `/mazemapstyle style=X` - Get/set map generation style
-
-**Chat Isolation**
-- Playing a maze now closes the current ST chat
-- Prevents LLM from absorbing chat context during gameplay
-- Lorebooks/World Info disabled during LLM generation
-
-**Pluggable Renderer System**
-- Abstracted rendering into swappable renderer classes
-- `CSSGridRenderer` - Current default (CSS Grid layout)
-- `CanvasRenderer` - Sprite-based 2D rendering
-- `IsometricRenderer` - Full 2.5D isometric view with procedural sprites
-- `RendererRegistry` - Factory for switching renderers
-- Renderer dropdown in Game tab settings
-- Future-ready for custom tile/sprite asset packs
-
-**Responsive Layout System**
-- Auto-detect mobile/portrait orientation
-- Desktop (horizontal) and Mobile (vertical) layout modes
-- Layout mode dropdown in Game tab settings
-- Optimized touch targets for mobile
-- Scrollable grid on small screens
-
-**Scrolling Message Log**
-- Game messages now scroll instead of replacing
-- Full message history preserved during gameplay
-- Message log persists with saved games
-- Each saved game maintains its own message history
-
-**Room Info System**
-- Each room tile has a unique themed name and description
-- Names generated from theme + map style combination
-- Room info box displays:
-  - Room name and atmospheric description
-  - Available exits (North, South, East, West)
-  - Current occupants (active enemies)
-  - Defeated entities in the room
-- Room data persists with saved games
-- Special names for staircases, portals, treasure rooms, etc.
+### Per-Persona Stats
+- Stats tracked per SillyTavern persona
+- Global totals alongside persona-specific tracking
 
 ---
 
 ## v1.1.0
 
-- Profile rename functionality for wheel, battlebar, and maze
+- Profile rename functionality
 - Field validation for all profile types
 - Grid size validation (5-20)
-- Version sync between manifest and package.json
 
 ---
 
 ## v1.0.0
 
 - Initial release
-- Wheel of Fortune minigame
-- Battlebar timing challenge
+- Wheel of Fortune and Battlebar minigames
 - Maze exploration with fog of war
-- Inventory system (keys, stealth, pow, grandpow)
+- Inventory system
 - Minion encounters with LLM integration
-- Teleport portals
 - Quest/objective system
-- STScript hooks for extensibility
-- Difficulty tiers (easy, normal, hard, nightmare)
+- STScript hooks
+- Difficulty tiers

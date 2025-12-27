@@ -4,7 +4,7 @@ const MODULE_NAME = 'MazeMaster';
 
 // Factory defaults version - increment this when you update DEFAULT_* constants
 // and want all users to get the updated factory defaults
-const FACTORY_DEFAULTS_VERSION = 4;
+const FACTORY_DEFAULTS_VERSION = 9;
 
 // Dynamically detect the extension folder name from the script URL
 // This handles both 'MazeMaster' and 'SillyTavern-MazeMaster' folder names
@@ -1537,6 +1537,24 @@ class CSSGridRenderer extends MazeRenderer {
 }
 
 /**
+ * Get theme-based minion color for 2D rendering
+ * v1.4.2: Shared helper for theme-based minion recoloring
+ */
+function getThemeMinionColor(theme) {
+    const colors = {
+        fantasy: '#ef4444',   // Red
+        horror: '#5a5a6a',    // Gray/purple undead
+        scifi: '#06b6d4',     // Cyan
+        cyberpunk: '#ec4899', // Hot pink
+        western: '#92400e',   // Brown/rust
+        action: '#dc2626',    // Bright red
+        comedy: '#84cc16',    // Lime green
+        postapoc: '#78716c',  // Ash gray
+    };
+    return colors[theme] || colors.fantasy;
+}
+
+/**
  * Canvas Renderer - Placeholder for future sprite-based 2.5D rendering
  * Will use HTML5 Canvas for tile/sprite rendering
  */
@@ -1691,10 +1709,12 @@ class CanvasRenderer extends MazeRenderer {
                     }
 
                     if (cell.minion && !cell.minion.triggered) {
+                        // v1.4.2: Theme-based minion coloring
+                        const minionColor = getThemeMinionColor(profile?.theme);
                         if (this.sprites.minion) {
                             this.ctx.drawImage(this.sprites.minion, x * ts, y * ts, ts, ts);
                         } else {
-                            this.ctx.fillStyle = '#ef4444';
+                            this.ctx.fillStyle = minionColor;
                             this.ctx.beginPath();
                             this.ctx.arc(x * ts + ts/2, y * ts + ts/2, ts/4, 0, Math.PI * 2);
                             this.ctx.fill();
@@ -1822,6 +1842,42 @@ class IsometricRenderer extends CanvasRenderer {
             outpost: { r: 100, g: 80, b: 40, a: 0.35 },      // Dusty desert tan
         };
         return tints[mapStyle] || tints.dungeon;
+    }
+
+    /**
+     * Get aggressive CSS filter for minion sprites based on theme
+     * v1.4.2: Theme-based minion recoloring
+     */
+    getThemeMinionFilter(theme) {
+        const filters = {
+            fantasy: 'hue-rotate(0deg) saturate(1.2) brightness(1.0)',           // Default warm colors
+            horror: 'hue-rotate(270deg) saturate(0.4) brightness(0.7) contrast(1.3)',  // Desaturated purple/gray, dark
+            scifi: 'hue-rotate(180deg) saturate(1.5) brightness(1.2)',           // Cyan/teal shift
+            cyberpunk: 'hue-rotate(300deg) saturate(2.0) brightness(1.1) contrast(1.2)', // Hot pink/magenta
+            western: 'hue-rotate(30deg) saturate(0.8) sepia(0.5) brightness(1.0)', // Sepia/dusty brown
+            action: 'hue-rotate(0deg) saturate(1.4) contrast(1.3) brightness(1.1)', // High contrast, vivid
+            comedy: 'hue-rotate(60deg) saturate(2.0) brightness(1.3)',           // Bright yellow/green shift
+            postapoc: 'hue-rotate(20deg) saturate(0.5) sepia(0.4) brightness(0.8)', // Muted brown/rust
+        };
+        return filters[theme] || filters.fantasy;
+    }
+
+    /**
+     * Get minion palette colors based on theme
+     * v1.4.2: Theme-based minion recoloring for fallback sprites
+     */
+    getThemeMinionPalette(theme) {
+        const palettes = {
+            fantasy: { top: '#ef4444', light: '#f87171', dark: '#dc2626' },      // Red (default)
+            horror: { top: '#4a4a5a', light: '#6a6a7a', dark: '#2a2a3a' },        // Gray/purple undead
+            scifi: { top: '#06b6d4', light: '#22d3ee', dark: '#0891b2' },         // Cyan/teal
+            cyberpunk: { top: '#ec4899', light: '#f472b6', dark: '#db2777' },     // Hot pink
+            western: { top: '#92400e', light: '#b45309', dark: '#78350f' },       // Brown/rust
+            action: { top: '#dc2626', light: '#ef4444', dark: '#b91c1c' },        // Bright red
+            comedy: { top: '#84cc16', light: '#a3e635', dark: '#65a30d' },        // Lime green
+            postapoc: { top: '#78716c', light: '#a8a29e', dark: '#57534e' },      // Ash gray
+        };
+        return palettes[theme] || palettes.fantasy;
     }
 
     /**
@@ -2184,9 +2240,20 @@ class IsometricRenderer extends CanvasRenderer {
                     }
 
                     if (cell.minion && !cell.minion.triggered) {
+                        // v1.4.2: Apply theme-based minion tinting
+                        const theme = profile?.theme || 'fantasy';
+                        this.ctx.filter = this.getThemeMinionFilter(theme);
+
                         if (!this.drawSprite('minion', drawX, drawY, 1.0)) {
+                            // Use theme-specific palette for fallback minion
+                            const origPalette = this.palette.minion;
+                            this.palette.minion = this.getThemeMinionPalette(theme);
                             this.drawMinion(drawX, drawY);
+                            this.palette.minion = origPalette;
                         }
+
+                        // Reset filter after minion
+                        this.ctx.filter = 'none';
                     }
 
                     if (isPlayer) {
@@ -2461,6 +2528,7 @@ class IsometricRenderer extends CanvasRenderer {
 
     /**
      * Draw floating indicator above player (bouncing arrow/diamond)
+     * Flashes orange when LLM is generating, blue otherwise
      */
     drawPlayerIndicator(x, y) {
         // Animated bounce using time
@@ -2468,16 +2536,23 @@ class IsometricRenderer extends CanvasRenderer {
         const bounce = Math.sin(time) * 4;
         const indicatorY = y - this.tileHeight - 25 + bounce;
 
+        // v1.4.8: Color scheme based on LLM generation state
+        // Orange when generating, blue when idle
+        const isGenerating = isLLMGenerating;
+        const glowColor = isGenerating ? '#f97316' : '#3b82f6';      // Orange / Blue
+        const fillColor = isGenerating ? '#fb923c' : '#60a5fa';      // Light orange / Light blue
+        const highlightColor = isGenerating ? '#fdba74' : '#93c5fd'; // Lighter orange / Lighter blue
+
         // Draw glowing diamond/arrow pointing down
         this.ctx.save();
 
-        // Outer glow
-        this.ctx.shadowColor = '#3b82f6';
-        this.ctx.shadowBlur = 10;
+        // Outer glow (pulsing effect when generating)
+        this.ctx.shadowColor = glowColor;
+        this.ctx.shadowBlur = isGenerating ? 15 + Math.sin(time * 2) * 5 : 10;
 
         // Diamond shape pointing down
         const size = 8;
-        this.ctx.fillStyle = '#60a5fa';
+        this.ctx.fillStyle = fillColor;
         this.ctx.beginPath();
         this.ctx.moveTo(x, indicatorY + size * 2);  // Bottom point
         this.ctx.lineTo(x - size, indicatorY + size);
@@ -2487,7 +2562,7 @@ class IsometricRenderer extends CanvasRenderer {
         this.ctx.fill();
 
         // Inner highlight
-        this.ctx.fillStyle = '#93c5fd';
+        this.ctx.fillStyle = highlightColor;
         this.ctx.beginPath();
         this.ctx.moveTo(x, indicatorY + size * 1.5);
         this.ctx.lineTo(x - size/2, indicatorY + size);
@@ -2750,6 +2825,18 @@ const MAZE_PROFILE_DEFAULTS = {
     onDamage: '',
     onHeal: '',
     onPlayerDeath: '',
+    // v1.4.7: Fairness system (pity mechanics)
+    fairness: {
+        enabled: true,              // Enable fairness modifiers
+        keyPityThreshold: 3,        // Chests without key before boost
+        healingPityThreshold: 4,    // Chests without healing before boost
+        lowHpThreshold: 0.4,        // HP % below which healing boost activates
+        mercyUnlock: true,          // Allow locked chests to mercy-unlock
+        mercyUnlockThreshold: 2,    // Skipped locked chests before mercy unlock
+    },
+    // v1.4.8: LLM Room Enhancement
+    llmEnhanceRooms: true,          // Use LLM to enhance room descriptions on first entry
+    llmRoomPrompt: 'Describe this {{roomType}} room in 1-2 vivid sentences. Theme: {{theme}}. Context: {{sessionNotes}}',
 };
 
 /**
@@ -2942,6 +3029,8 @@ async function healPlayer(amount, isPercent = false, source = 'unknown') {
  * @param {string} source - What killed the player
  */
 async function handlePlayerDeath(source) {
+    console.log('[MazeMaster] handlePlayerDeath called, source:', source);
+
     // Check for revival charges (from revival charms)
     if (currentMaze.hp.reviveCharges > 0) {
         currentMaze.hp.reviveCharges--;
@@ -2950,25 +3039,34 @@ async function handlePlayerDeath(source) {
 
         updateHPDisplay();
         addMazeMessage('Revival', 'Your Revival Charm activates! You cheat death...');
+        addSessionNote(`Revival charm activated! Cheated death from ${source}`, 'Death');
+        console.log('[MazeMaster] Revival charm used, HP restored');
         return;
     }
+
+    // Log death to session notes
+    addSessionNote(`DEATH: Killed by ${source}`, 'Death');
 
     // Fire death hook
     await fireHook('onPlayerDeath', { source });
 
     // Handle based on profile setting
     const deathAction = currentMaze.profile?.onDeath || 'respawn';
+    console.log('[MazeMaster] Death action:', deathAction, 'Profile onDeath:', currentMaze.profile?.onDeath);
 
     switch (deathAction) {
         case 'respawn':
+            console.log('[MazeMaster] Respawning player');
             await respawnPlayerWithHP(100);
             break;
         case 'respawnPenalty':
             const respawnPercent = currentMaze.profile?.respawnHPPercent || 50;
+            console.log('[MazeMaster] Respawning with penalty:', respawnPercent + '%');
             await respawnPlayerWithHP(respawnPercent);
             break;
         case 'gameover':
         default:
+            console.log('[MazeMaster] Game over triggered');
             handleMazeLoss();
             break;
     }
@@ -2993,6 +3091,7 @@ async function respawnPlayerWithHP(hpPercent) {
 
     // Re-render
     renderMazeGrid();
+    updateDpadFloorButtons();
     addMazeMessage('Respawn', `Returned to the start with ${hpPercent}% HP...`);
 
     // Smooth pan camera back to player at start position
@@ -3284,6 +3383,269 @@ async function useHPItem(itemType) {
     }
 }
 
+/**
+ * Use a visibility item from inventory
+ * @param {string} itemType - The visibility item type
+ */
+async function useVisibilityItem(itemType) {
+    if (!currentMaze.isOpen) return;
+    if (!currentMaze.inventory[itemType] || currentMaze.inventory[itemType] <= 0) return;
+
+    // Ensure visibility object exists
+    if (!currentMaze.visibility) {
+        currentMaze.visibility = { baseRadius: 1, tempBonus: 0, tempMovesLeft: 0, permBonus: 0, floorRevealed: false };
+    }
+
+    switch (itemType) {
+        case 'torch':
+            await removeFromInventory('torch');
+            currentMaze.visibility.tempBonus = 2;
+            currentMaze.visibility.tempMovesLeft = 3;
+            addMazeMessage('Item', 'Torch lit! +2 visibility for 3 moves.');
+            break;
+
+        case 'revealScroll':
+            await removeFromInventory('revealScroll');
+            currentMaze.visibility.floorRevealed = true;
+            // Reveal all tiles on current floor
+            const size = currentMaze.grid.length;
+            const floorPrefix = `${currentMaze.currentFloor}:`;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    currentMaze.visited.add(`${floorPrefix}${x},${y}`);
+                }
+            }
+            addMazeMessage('Item', 'The scroll reveals the entire floor!');
+            break;
+
+        case 'sightPotion':
+            await removeFromInventory('sightPotion');
+            currentMaze.visibility.permBonus = (currentMaze.visibility.permBonus || 0) + 1;
+            addMazeMessage('Item', 'Your vision sharpens! Permanent +1 visibility.');
+            break;
+
+        case 'crystalBall':
+            await removeFromInventory('crystalBall');
+            // Reveal all minion positions on current floor
+            const minionsRevealed = [];
+            const gridSize = currentMaze.grid.length;
+            const currentFloorPrefix = `${currentMaze.currentFloor}:`;
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    const cell = currentMaze.grid[y][x];
+                    if (cell.minion && !cell.minion.triggered) {
+                        currentMaze.visited.add(`${currentFloorPrefix}${x},${y}`);
+                        minionsRevealed.push(cell.minion.name || 'Unknown');
+                    }
+                }
+            }
+            if (minionsRevealed.length > 0) {
+                addMazeMessage('Item', `Crystal Ball reveals ${minionsRevealed.length} minion(s)!`);
+            } else {
+                addMazeMessage('Item', 'Crystal Ball shows no minions remain on this floor.');
+            }
+            break;
+
+        case 'lantern':
+            // Lantern is passive - just inform the player
+            addMazeMessage('Info', 'Lantern provides passive +1 visibility while held.');
+            return; // Don't consume
+    }
+
+    // Re-render the maze to show updated visibility
+    renderMaze();
+}
+
+/**
+ * Calculate current visibility radius based on items and buffs
+ * @returns {number} The current visibility radius
+ */
+function getVisibilityRadius() {
+    if (!currentMaze.isOpen) return 1;
+
+    const vis = currentMaze.visibility || { baseRadius: 1, tempBonus: 0, permBonus: 0 };
+    const lanternBonus = (currentMaze.inventory?.lantern || 0) > 0 ? 1 : 0;
+
+    return vis.baseRadius + vis.tempBonus + vis.permBonus + lanternBonus;
+}
+
+/**
+ * Check if movement between two adjacent cells is blocked by walls
+ * @param {number} x1 - Start X
+ * @param {number} y1 - Start Y
+ * @param {number} x2 - End X
+ * @param {number} y2 - End Y
+ * @param {Array} grid - The maze grid
+ * @returns {boolean} True if movement is blocked
+ */
+function isWallBlocking(x1, y1, x2, y2, grid) {
+    const cell = grid[y1]?.[x1];
+    const destCell = grid[y2]?.[x2];
+    if (!cell) return true;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    // Check wall in movement direction from source cell
+    if (dx === 1 && cell.walls.right) return true;
+    if (dx === -1 && cell.walls.left) return true;
+    if (dy === 1 && cell.walls.bottom) return true;
+    if (dy === -1 && cell.walls.top) return true;
+
+    // Also check from destination cell's perspective (walls should be symmetric but sometimes aren't)
+    if (destCell) {
+        if (dx === 1 && destCell.walls.left) return true;
+        if (dx === -1 && destCell.walls.right) return true;
+        if (dy === 1 && destCell.walls.top) return true;
+        if (dy === -1 && destCell.walls.bottom) return true;
+    }
+
+    return false;
+}
+
+/**
+ * Check if there's line of sight between two cells (no walls blocking)
+ * Uses strict cell-by-cell path walking - if ANY wall blocks the path, visibility is blocked
+ * @param {number} x1 - Start X
+ * @param {number} y1 - Start Y
+ * @param {number} x2 - End X
+ * @param {number} y2 - End Y
+ * @param {Array} grid - The maze grid
+ * @returns {boolean} True if line of sight exists
+ */
+function hasLineOfSight(x1, y1, x2, y2, grid) {
+    // Same cell - always visible
+    if (x1 === x2 && y1 === y2) return true;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    const sx = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+    const sy = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+
+    // For straight lines (cardinal directions), check each cell along the path
+    if (dx === 0 || dy === 0) {
+        let cx = x1;
+        let cy = y1;
+        while (cx !== x2 || cy !== y2) {
+            const nextX = cx + sx;
+            const nextY = cy + sy;
+            if (isWallBlocking(cx, cy, nextX, nextY, grid)) {
+                return false;
+            }
+            cx = nextX;
+            cy = nextY;
+        }
+        return true;
+    }
+
+    // For diagonal/angled lines, use Bresenham's algorithm and check walls strictly
+    // We need BOTH L-shaped paths to be clear at each step for diagonal visibility
+    let cx = x1;
+    let cy = y1;
+    let err = adx - ady;
+
+    while (cx !== x2 || cy !== y2) {
+        const e2 = 2 * err;
+        let nextX = cx;
+        let nextY = cy;
+        let movedX = false;
+        let movedY = false;
+
+        if (e2 > -ady) {
+            err -= ady;
+            nextX += sx;
+            movedX = true;
+        }
+        if (e2 < adx) {
+            err += adx;
+            nextY += sy;
+            movedY = true;
+        }
+
+        // Check wall blocking based on movement type
+        if (movedX && movedY) {
+            // Diagonal movement - BOTH paths must be clear for visibility
+            // Path A: horizontal then vertical
+            const pathABlocked = isWallBlocking(cx, cy, cx + sx, cy, grid) ||
+                                 isWallBlocking(cx + sx, cy, nextX, nextY, grid);
+            // Path B: vertical then horizontal
+            const pathBBlocked = isWallBlocking(cx, cy, cx, cy + sy, grid) ||
+                                 isWallBlocking(cx, cy + sy, nextX, nextY, grid);
+            // For visibility, require at least one clear path
+            // But for strict fog-of-war, require BOTH to be blocked to block vision
+            if (pathABlocked && pathBBlocked) {
+                return false;
+            }
+        } else if (movedX) {
+            if (isWallBlocking(cx, cy, nextX, nextY, grid)) {
+                return false;
+            }
+        } else if (movedY) {
+            if (isWallBlocking(cx, cy, nextX, nextY, grid)) {
+                return false;
+            }
+        }
+
+        cx = nextX;
+        cy = nextY;
+    }
+
+    return true;
+}
+
+/**
+ * Apply visibility at a given position (reveal tiles within radius)
+ * Uses line-of-sight checking to prevent seeing through walls
+ * @param {number} x - Player X position
+ * @param {number} y - Player Y position
+ * @param {number} gridSize - Size of the grid
+ */
+function applyVisibilityAtPosition(x, y, gridSize) {
+    if (!currentMaze.isOpen) return;
+
+    const visRadius = getVisibilityRadius();
+    const floorPrefix = `${currentMaze.currentFloor}:`;
+
+    // Get the current floor's grid
+    const floorData = currentMaze.floorsData?.[currentMaze.currentFloor];
+    const grid = floorData?.grid || currentMaze.grid;
+
+    if (!grid) return;
+
+    for (let vy = Math.max(0, y - visRadius); vy <= Math.min(gridSize - 1, y + visRadius); vy++) {
+        for (let vx = Math.max(0, x - visRadius); vx <= Math.min(gridSize - 1, x + visRadius); vx++) {
+            // Use Manhattan distance for visibility range
+            if (Math.abs(vx - x) + Math.abs(vy - y) <= visRadius) {
+                // Check line of sight - don't reveal through walls
+                if (hasLineOfSight(x, y, vx, vy, grid)) {
+                    currentMaze.visited.add(`${floorPrefix}${vx},${vy}`);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Called after each move to update visibility timers
+ */
+function updateVisibilityOnMove() {
+    if (!currentMaze.visibility) return;
+
+    // Decrement temp bonus moves
+    if (currentMaze.visibility.tempMovesLeft > 0) {
+        currentMaze.visibility.tempMovesLeft--;
+        if (currentMaze.visibility.tempMovesLeft <= 0) {
+            currentMaze.visibility.tempBonus = 0;
+            addMazeMessage('Info', 'Your torch burns out.');
+        }
+    }
+
+    // Reset floor revealed flag (only lasts 1 move for display purposes)
+    currentMaze.visibility.floorRevealed = false;
+}
+
 // =============================================================================
 // STATISTICS TRACKING
 // =============================================================================
@@ -3386,6 +3748,51 @@ function updateStatsDisplay() {
     if (movesEl) movesEl.textContent = currentMaze?.stats?.moves || 0;
     if (timeEl) timeEl.textContent = getElapsedTime();
     if (exploreEl) exploreEl.textContent = `${getExplorationPercent()}%`;
+
+    // v1.4.0: Update zone display
+    updateZoneDisplay();
+}
+
+/**
+ * v1.4.0: Update the zone progress display in the maze modal
+ */
+function updateZoneDisplay() {
+    const zoneDisplayEl = document.getElementById('maze_zone_display');
+    const zoneNameEl = document.getElementById('maze_zone_name');
+    const zoneProgressEl = document.getElementById('maze_zone_progress');
+
+    if (!zoneDisplayEl) return;
+
+    const zoneProgress = getZoneProgress();
+
+    if (!zoneProgress || !currentMaze.floorsData?.[currentMaze.currentFloor]?.zones?.length) {
+        // Hide zone display if no zones or single zone
+        zoneDisplayEl.style.display = 'none';
+        return;
+    }
+
+    const floorZones = currentMaze.floorsData[currentMaze.currentFloor].zones;
+    if (floorZones.length <= 1) {
+        zoneDisplayEl.style.display = 'none';
+        return;
+    }
+
+    // Show zone display
+    zoneDisplayEl.style.display = '';
+
+    if (zoneNameEl) {
+        zoneNameEl.textContent = zoneProgress.zoneName || `Zone ${zoneProgress.zoneId + 1}`;
+    }
+
+    if (zoneProgressEl) {
+        if (zoneProgress.unlockHint) {
+            zoneProgressEl.textContent = `(${zoneProgress.clearedRooms}/${zoneProgress.totalRooms})`;
+            zoneProgressEl.title = zoneProgress.unlockHint;
+        } else {
+            zoneProgressEl.textContent = `(${zoneProgress.clearedRooms}/${zoneProgress.totalRooms})`;
+            zoneProgressEl.title = '';
+        }
+    }
 }
 
 /**
@@ -3999,6 +4406,9 @@ async function tryFloorChange(direction) {
     // Mark new position as visited (with floor prefix for proper tracking)
     currentMaze.visited.add(`${targetFloor}:${targetX},${targetY}`);
 
+    // Log floor change to session notes
+    addSessionNote(`${direction === 'up' ? 'Ascended' : 'Descended'} to Floor ${targetFloor + 1}/${currentMaze.totalFloors}`, 'Floor');
+
     // Show transition message
     const theme = SCENARIO_THEMES[currentMaze.profile?.theme] || SCENARIO_THEMES.fantasy;
     const flavorMsg = direction === 'up'
@@ -4156,6 +4566,7 @@ async function executePortalStoneTeleport(targetX, targetY) {
 
     updatePlayerPosition(true);
     renderMazeGrid();
+    updateDpadFloorButtons();
 
     currentMaze.currentMinion = {
         name: 'Portal Stone',
@@ -4460,6 +4871,7 @@ async function handleTeleport(fromX, fromY, portal) {
 
     // Update position instantly (no animation for teleport)
     updatePlayerPosition(false);
+    updateDpadFloorButtons();
 
     // Increment teleport stat
     await incrementStat('teleportsUsed', 1);
@@ -5816,7 +6228,7 @@ const DEFAULT_PUZZLE_PROFILES = {
         onCorrectMove: '',
         onWrongMove: '',
         onComplete: '/echo You solved the simple riddle!',
-        onFail: '/echo The puzzle was too complex...',
+        onFail: '/mazedamage amount=10 | /echo The puzzle was too complex...',
         keyDropChance: 15, strikeDropChance: 10, stealthDropChance: 8, executeDropChance: 2,
         healingPotionDropChance: 12, greaterHealingDropChance: 5, elixirDropChance: 1, revivalCharmDropChance: 0,
     },
@@ -5840,7 +6252,7 @@ const DEFAULT_PUZZLE_PROFILES = {
         onCorrectMove: '',
         onWrongMove: '',
         onComplete: '/echo Your memory is sharp as a blade!',
-        onFail: '/echo You couldn\'t remember the sequence...',
+        onFail: '/mazedamage amount=15 | /echo You couldn\'t remember the sequence...',
         keyDropChance: 25, strikeDropChance: 18, stealthDropChance: 15, executeDropChance: 4,
         healingPotionDropChance: 18, greaterHealingDropChance: 10, elixirDropChance: 3, revivalCharmDropChance: 1,
     },
@@ -5864,7 +6276,7 @@ const DEFAULT_PUZZLE_PROFILES = {
         onCorrectMove: '',
         onWrongMove: '',
         onComplete: '/echo You see the pattern in all things now!',
-        onFail: '/echo The pattern was beyond your comprehension...',
+        onFail: '/mazedamage amount=20 | /echo The pattern was beyond your comprehension...',
         keyDropChance: 40, strikeDropChance: 25, stealthDropChance: 22, executeDropChance: 6,
         healingPotionDropChance: 22, greaterHealingDropChance: 14, elixirDropChance: 5, revivalCharmDropChance: 2,
     },
@@ -5888,7 +6300,7 @@ const DEFAULT_PUZZLE_PROFILES = {
         onCorrectMove: '',
         onWrongMove: '',
         onComplete: '/echo Your logical mind unlocked the way!',
-        onFail: '/echo The logic was too twisted...',
+        onFail: '/mazedamage amount=25 | /echo The logic was too twisted...',
         keyDropChance: 55, strikeDropChance: 35, stealthDropChance: 30, executeDropChance: 10,
         healingPotionDropChance: 28, greaterHealingDropChance: 18, elixirDropChance: 7, revivalCharmDropChance: 3,
     },
@@ -5912,7 +6324,7 @@ const DEFAULT_PUZZLE_PROFILES = {
         onCorrectMove: '',
         onWrongMove: '',
         onComplete: '/echo Against all odds, your mind prevailed!',
-        onFail: '/echo The puzzle was beyond mortal comprehension...',
+        onFail: '/mazedamage amount=35 | /echo The puzzle was beyond mortal comprehension...',
         keyDropChance: 70, strikeDropChance: 45, stealthDropChance: 40, executeDropChance: 15,
         healingPotionDropChance: 35, greaterHealingDropChance: 22, elixirDropChance: 10, revivalCharmDropChance: 5,
     },
@@ -7132,6 +7544,8 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 4, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 30, restCooldown: 2, restInterruptChance: 0, restInterruptScript: '',
         storyConfig: { mainStory: 'You descend into a small dungeon. Perfect for adventurers just starting out...' },
+        findEarly: { radius: 5, items: ['lantern', 'torch', 'healingPotion', 'mapFragment'], itemsPerChest: 2 },
+        fairness: { enabled: true, keyPityThreshold: 3, healingPityThreshold: 4, lowHpThreshold: 0.4, mercyUnlock: true, mercyUnlockThreshold: 2 },
     },
     'Dungeon Crawl - Hard': {
         gridSize: 12, floors: 2, difficulty: 'hard', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
@@ -7161,6 +7575,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 75, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 25, restInterruptScript: '',
         storyConfig: { mainStory: 'The ancient fortress looms before you. Two floors of deadly challenges await...' },
+        findEarly: { radius: 3, items: ['torch', 'healingPotion'], itemsPerChest: 1 },
     },
     'Enchanted Forest - Medium': {
         gridSize: 10, floors: 1, difficulty: 'normal', theme: 'fantasy', mapStyle: 'forest', mapVisibility: 'fogOfWar',
@@ -7190,6 +7605,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 20, restCooldown: 3, restInterruptChance: 10, restInterruptScript: '',
         storyConfig: { mainStory: 'Ancient trees tower overhead as you enter the enchanted forest...' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'mapFragment'], itemsPerChest: 1 },
     },
     // ===== HORROR THEME =====
     'Haunted Manor - Easy': {
@@ -7219,6 +7635,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 4, safeRoomHealPercent: 100, safeRoomUseLLM: true,
         restEnabled: true, restHealPercent: 30, restCooldown: 2, restInterruptChance: 15, restInterruptScript: '',
         storyConfig: { mainStory: 'The manor door creaks open. Something draws you inside...' },
+        findEarly: { radius: 5, items: ['lantern', 'torch', 'healingPotion', 'mapFragment'], itemsPerChest: 2 },
     },
     'Haunted Manor - Nightmare': {
         gridSize: 12, floors: 3, difficulty: 'nightmare', theme: 'horror', mapStyle: 'highrise', mapVisibility: 'hideUnexplored',
@@ -7248,6 +7665,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 60, safeRoomUseLLM: true,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 40, restInterruptScript: '',
         storyConfig: { mainStory: 'Three floors of pure terror. No supplies. No mercy. Good luck...' },
+        findEarly: { radius: 2, items: ['torch'], itemsPerChest: 1 },
     },
     // ===== SCI-FI THEME =====
     'Space Station - Medium': {
@@ -7278,6 +7696,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 20, restCooldown: 3, restInterruptChance: 15, restInterruptScript: '',
         storyConfig: { mainStory: 'The station alarms blare. Find the escape pods before it\'s too late...' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'mapFragment'], itemsPerChest: 1 },
     },
     'Space Station - Hard': {
         gridSize: 14, floors: 3, difficulty: 'hard', theme: 'scifi', mapStyle: 'spacestation', mapVisibility: 'hideUnexplored',
@@ -7307,6 +7726,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 75, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 25, restInterruptScript: '',
         storyConfig: { mainStory: 'Three decks. Rogue AI. Failing life support. Move fast or die...' },
+        findEarly: { radius: 3, items: ['torch', 'healingPotion'], itemsPerChest: 1 },
     },
     // ===== CYBERPUNK THEME =====
     'Neon Streets - Medium': {
@@ -7337,6 +7757,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 20, restCooldown: 3, restInterruptChance: 20, restInterruptScript: '',
         storyConfig: { mainStory: 'Neon lights flicker overhead as you enter the dangerous megacity streets...' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'mapFragment'], itemsPerChest: 1 },
     },
     'Neon Streets - Nightmare': {
         gridSize: 14, floors: 2, difficulty: 'nightmare', theme: 'cyberpunk', mapStyle: 'city', mapVisibility: 'hideUnexplored',
@@ -7366,6 +7787,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 60, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 35, restInterruptScript: '',
         storyConfig: { mainStory: 'Two sectors of corporate hell. No gear. No backup. Pure nightmare mode...' },
+        findEarly: { radius: 2, items: ['torch'], itemsPerChest: 1 },
     },
     // ===== WESTERN THEME =====
     'Wild Frontier - Easy': {
@@ -7395,6 +7817,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 30, restCooldown: 2, restInterruptChance: 5, restInterruptScript: '',
         storyConfig: { mainStory: 'Dust swirls as you enter the frontier outpost. Adventure awaits...' },
+        findEarly: { radius: 5, items: ['lantern', 'torch', 'healingPotion', 'mapFragment'], itemsPerChest: 2 },
     },
     // ===== ACTION THEME =====
     'Tactical Ops - Hard': {
@@ -7425,6 +7848,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 75, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 30, restInterruptScript: '',
         storyConfig: { mainStory: 'Tactical insertion complete. Two floors of hostiles between you and extraction...' },
+        findEarly: { radius: 3, items: ['torch', 'healingPotion'], itemsPerChest: 1 },
     },
     // ===== COMEDY THEME =====
     'Comedy Dungeon - Easy': {
@@ -7454,6 +7878,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 5, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 50, restCooldown: 1, restInterruptChance: 0, restInterruptScript: '',
         storyConfig: { mainStory: 'Welcome to a dungeon that doesn\'t take itself too seriously. Enjoy!' },
+        findEarly: { radius: 5, items: ['lantern', 'torch', 'healingPotion', 'mapFragment'], itemsPerChest: 2 },
     },
     // ===== TURN-BASED TESTING MAZES (PRIORITY) =====
     'Turn-Based Arena - Easy': {
@@ -7484,6 +7909,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 4, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 30, restCooldown: 2, restInterruptChance: 0, restInterruptScript: '',
         storyConfig: { mainStory: 'The arena gates open. Fight your way to glory through turn-based combat!' },
+        findEarly: { radius: 5, items: ['lantern', 'torch', 'healingPotion', 'mapFragment'], itemsPerChest: 2 },
     },
     'Turn-Based Arena - Hard': {
         gridSize: 12, floors: 2, difficulty: 'hard', theme: 'fantasy', mapStyle: 'arena', mapVisibility: 'hideUnexplored',
@@ -7513,6 +7939,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 75, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 25, restInterruptScript: '',
         storyConfig: { mainStory: 'Two floors of increasingly difficult turn-based battles await. Prepare for war!' },
+        findEarly: { radius: 3, items: ['torch', 'healingPotion'], itemsPerChest: 1 },
     },
     // ===== MIXED COMBAT TESTING MAZES =====
     'Combat Gauntlet - Medium': {
@@ -7545,6 +7972,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 20, restCooldown: 3, restInterruptChance: 10, restInterruptScript: '',
         storyConfig: { mainStory: 'The Combat Gauntlet tests every skill: combat, reflexes, stealth, puzzles, and diplomacy!' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'mapFragment'], itemsPerChest: 1 },
     },
     'Cyberpunk Heist - Hard': {
         gridSize: 12, floors: 2, difficulty: 'hard', theme: 'cyberpunk', mapStyle: 'highrise', mapVisibility: 'hideUnexplored',
@@ -7575,6 +8003,7 @@ const DEFAULT_MAZE_PROFILE = {
         safeRoomCount: 2, safeRoomHealPercent: 75, safeRoomUseLLM: false,
         restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 30, restInterruptScript: '',
         storyConfig: { mainStory: 'Infiltrate the megacorp tower. Fight, hack, sneak, and negotiate your way to the data vault!' },
+        findEarly: { radius: 3, items: ['torch', 'healingPotion'], itemsPerChest: 1 },
     },
     'Horror Survival - Nightmare': {
         gridSize: 14, floors: 3, difficulty: 'nightmare', theme: 'horror', mapStyle: 'hospital', mapVisibility: 'hideUnexplored',
@@ -7584,28 +8013,149 @@ const DEFAULT_MAZE_PROFILE = {
         winImage: '',
         mainMinion: 'horror_butcher',
         mainMinionIntroMessage: 'You should not have come here. Now you will never leave.',
-        mainMinionRandomChance: 35,
+        mainMinionRandomChance: 12,
         mainMinionRandomMessages: ['I can hear your heartbeat...', 'THERE IS NO ESCAPE!', 'Your fear sustains me...'],
         mainMinionExitType: 'turnbased', mainMinionExitProfile: 'Vampire Lord',
         minionEncounters: [
-            { minionId: 'horror_wraith', percent: 4 },
-            { minionId: 'horror_butcher', percent: 3 },
-            { minionId: 'horror_crawler', percent: 4 },
-            { minionId: 'horror_stalker', percent: 4 },
+            { minionId: 'horror_wraith', percent: 3 },
+            { minionId: 'horror_butcher', percent: 2 },
+            { minionId: 'horror_crawler', percent: 3 },
+            { minionId: 'horror_stalker', percent: 3 },
             { minionId: 'horror_mirror', percent: 2 },
             { minionId: 'horror_pact', percent: 1 },
         ],
-        trapEncounters: [{ trapId: 'ghostly_grasp', percent: 4 }, { trapId: 'blood_pool', percent: 4 }, { trapId: 'cursed_mirror', percent: 3 }],
+        trapEncounters: [{ trapId: 'ghostly_grasp', percent: 3 }, { trapId: 'blood_pool', percent: 3 }, { trapId: 'cursed_mirror', percent: 2 }],
         onBattlebarLoss: 'respawn',
-        chestTilePercent: 4, chestLockedPercent: 50, chestLockedBonusPercent: 70, chestMimicPercent: 30,
-        chestLootMin: 1, chestLootMax: 1,
-        chestKeyChance: 20, chestStrikeChance: 30, chestStealthChance: 15, chestExecuteChance: 5,
-        lockedChestKeyChance: 15, lockedChestStrikeChance: 45, lockedChestStealthChance: 25, lockedChestExecuteChance: 10,
-        startingInventory: { key: 0, strike: 0, stealth: 0, execute: 0, healingPotion: 0, greaterHealing: 0, elixir: 0, revivalCharm: 0 },
-        hpEnabled: true, maxHP: 75, battlebarDamageMultiplier: 1.5, onDeath: 'gameover', respawnHPPercent: 25,
-        safeRoomCount: 2, safeRoomHealPercent: 50, safeRoomUseLLM: true,
-        restEnabled: true, restHealPercent: 10, restCooldown: 5, restInterruptChance: 45, restInterruptScript: '',
+        chestTilePercent: 8, chestLockedPercent: 40, chestLockedBonusPercent: 60, chestMimicPercent: 20,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 30, chestStrikeChance: 35, chestStealthChance: 25, chestExecuteChance: 5,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 45, lockedChestStealthChance: 30, lockedChestExecuteChance: 8,
+        startingInventory: { key: 1, strike: 0, stealth: 1, execute: 0, healingPotion: 2, greaterHealing: 0, elixir: 0, revivalCharm: 1 },
+        hpEnabled: true, maxHP: 100, battlebarDamageMultiplier: 1.3, onDeath: 'gameover', respawnHPPercent: 25,
+        safeRoomCount: 3, safeRoomHealPercent: 75, safeRoomUseLLM: true,
+        restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 35, restInterruptScript: '',
         storyConfig: { mainStory: 'Three floors of pure terror. Every corner hides something worse. Survive if you can...' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'stealth'], itemsPerChest: 1 },
+    },
+    // ===== v1.4.0 BSP ZONE TESTING =====
+    'Zone Test - Fantasy': {
+        gridSize: 10, floors: 1, difficulty: 'normal', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
+        winCommand: '/echo You cleared all zones and escaped!',
+        loseCommand: '/echo The zones remain unconquered...',
+        winMessage: 'You unlocked every zone and found the exit!',
+        winImage: '',
+        mainMinion: 'fantasy_guardian',
+        mainMinionIntroMessage: 'This dungeon is divided into zones. Clear rooms to unlock the next!',
+        mainMinionRandomChance: 15,
+        mainMinionRandomMessages: ['More rooms to clear...', 'The next zone awaits!'],
+        mainMinionExitType: 'messenger', mainMinionExitProfile: '',
+        minionEncounters: [
+            { minionId: 'fantasy_herald', percent: 5 },
+            { minionId: 'fantasy_guardian', percent: 4 },
+            { minionId: 'fantasy_knight', percent: 3 },
+        ],
+        trapEncounters: [{ trapId: 'spike_trap', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 12, chestLockedPercent: 25, chestLockedBonusPercent: 50, chestMimicPercent: 5,
+        chestLootMin: 2, chestLootMax: 3,
+        chestKeyChance: 40, chestStrikeChance: 50, chestStealthChance: 20, chestExecuteChance: 2,
+        lockedChestKeyChance: 30, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 5,
+        startingInventory: { key: 2, strike: 2, stealth: 1, execute: 0, healingPotion: 2, greaterHealing: 0, elixir: 0, revivalCharm: 0 },
+        hpEnabled: true, maxHP: 120, battlebarDamageMultiplier: 0.8, onDeath: 'respawn', respawnHPPercent: 75,
+        safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
+        restEnabled: true, restHealPercent: 25, restCooldown: 2, restInterruptChance: 0, restInterruptScript: '',
+        storyConfig: { mainStory: 'The dungeon is divided into three zones. Clear rooms in each zone to unlock the next!' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'mapFragment'], itemsPerChest: 2 },
+        bspConfig: { zoneCount: 3, secretDensity: 0, zonesRequireClear: true, secretHints: true, floorComplexityScaling: false },
+    },
+    'Secret Passage Test': {
+        gridSize: 8, floors: 1, difficulty: 'easy', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
+        winCommand: '/echo You found all the secrets!',
+        loseCommand: '/echo Some secrets remain hidden...',
+        winMessage: 'You discovered hidden passages and escaped!',
+        winImage: '',
+        mainMinion: 'fantasy_oracle',
+        mainMinionIntroMessage: 'This dungeon has many secrets. Bump into walls to find hidden passages!',
+        mainMinionRandomChance: 15,
+        mainMinionRandomMessages: ['There are secrets everywhere...', 'The walls have ears... and doors!'],
+        mainMinionExitType: 'messenger', mainMinionExitProfile: '',
+        minionEncounters: [
+            { minionId: 'fantasy_herald', percent: 3 },
+        ],
+        trapEncounters: [],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 15, chestLockedPercent: 30, chestLockedBonusPercent: 60, chestMimicPercent: 0,
+        chestLootMin: 2, chestLootMax: 4,
+        chestKeyChance: 40, chestStrikeChance: 50, chestStealthChance: 20, chestExecuteChance: 2,
+        lockedChestKeyChance: 30, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 5,
+        startingInventory: { key: 3, strike: 2, stealth: 1, execute: 0, healingPotion: 2, greaterHealing: 0, elixir: 0, revivalCharm: 0 },
+        hpEnabled: true, maxHP: 150, battlebarDamageMultiplier: 0.5, onDeath: 'respawn', respawnHPPercent: 100,
+        safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
+        restEnabled: true, restHealPercent: 50, restCooldown: 1, restInterruptChance: 0, restInterruptScript: '',
+        storyConfig: { mainStory: 'A dungeon full of secrets! Bump into walls repeatedly to discover hidden passages.' },
+        findEarly: { radius: 5, items: ['torch', 'lantern', 'mapFragment'], itemsPerChest: 2 },
+        bspConfig: { zoneCount: 1, secretDensity: 0.08, zonesRequireClear: false, secretHints: true, floorComplexityScaling: false },
+    },
+    'BSP Full Feature Test': {
+        gridSize: 12, floors: 2, difficulty: 'normal', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
+        winCommand: '/echo Complete mastery of zones and secrets!',
+        loseCommand: '/echo The dungeon remains unconquered...',
+        winMessage: 'You cleared all zones, found secrets, and conquered both floors!',
+        winImage: '',
+        mainMinion: 'fantasy_guardian',
+        mainMinionIntroMessage: 'Welcome to the ultimate test: zones, secrets, and multi-floor progression!',
+        mainMinionRandomChance: 20,
+        mainMinionRandomMessages: ['Have you found all the secrets?', 'The next zone awaits...', 'Deeper floors hold greater challenges.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'Dungeon Guardian',
+        minionEncounters: [
+            { minionId: 'fantasy_herald', percent: 3 },
+            { minionId: 'fantasy_guardian', percent: 4 },
+            { minionId: 'fantasy_knight', percent: 3 },
+            { minionId: 'fantasy_oracle', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'spike_trap', percent: 2 }, { trapId: 'poison_dart', percent: 1 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 10, chestLockedPercent: 30, chestLockedBonusPercent: 50, chestMimicPercent: 10,
+        chestLootMin: 1, chestLootMax: 3,
+        chestKeyChance: 35, chestStrikeChance: 45, chestStealthChance: 20, chestExecuteChance: 3,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 7,
+        startingInventory: { key: 2, strike: 1, stealth: 1, execute: 0, healingPotion: 2, greaterHealing: 0, elixir: 0, revivalCharm: 0 },
+        hpEnabled: true, maxHP: 100, battlebarDamageMultiplier: 1.0, onDeath: 'respawn', respawnHPPercent: 50,
+        safeRoomCount: 3, safeRoomHealPercent: 100, safeRoomUseLLM: false,
+        restEnabled: true, restHealPercent: 20, restCooldown: 3, restInterruptChance: 10, restInterruptScript: '',
+        storyConfig: { mainStory: 'Two floors with 4 zones each, secret passages, and complexity scaling. The ultimate BSP test!' },
+        findEarly: { radius: 4, items: ['torch', 'healingPotion', 'mapFragment'], itemsPerChest: 1 },
+        bspConfig: { zoneCount: 4, secretDensity: 0.05, zonesRequireClear: true, secretHints: true, floorComplexityScaling: true },
+    },
+    'Sci-Fi Zone Run': {
+        gridSize: 10, floors: 2, difficulty: 'hard', theme: 'scifi', mapStyle: 'spacestation', mapVisibility: 'hideUnexplored',
+        winCommand: '/echo EXTRACTION COMPLETE. ALL ZONES SECURED.',
+        loseCommand: '/echo CONTAINMENT FAILED. OPERATIVE LOST.',
+        winMessage: 'You cleared all security zones and reached extraction!',
+        winImage: '',
+        mainMinion: 'scifi_bot',
+        mainMinionIntroMessage: 'ALERT: Station divided into security zones. Clear hostiles to unlock progression.',
+        mainMinionRandomChance: 25,
+        mainMinionRandomMessages: ['SECTOR LOCKDOWN ACTIVE.', 'ZONE ACCESS DENIED. CLEAR MORE HOSTILES.'],
+        mainMinionExitType: 'battlebar', mainMinionExitProfile: 'System Override',
+        minionEncounters: [
+            { minionId: 'scifi_ai', percent: 4 },
+            { minionId: 'scifi_bot', percent: 4 },
+            { minionId: 'scifi_matrix', percent: 2 },
+        ],
+        trapEncounters: [{ trapId: 'laser_grid', percent: 3 }, { trapId: 'gas_leak', percent: 2 }],
+        onBattlebarLoss: 'respawn',
+        chestTilePercent: 6, chestLockedPercent: 40, chestLockedBonusPercent: 60, chestMimicPercent: 15,
+        chestLootMin: 1, chestLootMax: 2,
+        chestKeyChance: 30, chestStrikeChance: 45, chestStealthChance: 20, chestExecuteChance: 5,
+        lockedChestKeyChance: 25, lockedChestStrikeChance: 55, lockedChestStealthChance: 25, lockedChestExecuteChance: 10,
+        startingInventory: { key: 1, strike: 1, stealth: 0, execute: 0, healingPotion: 1, greaterHealing: 0, elixir: 0, revivalCharm: 0 },
+        hpEnabled: true, maxHP: 80, battlebarDamageMultiplier: 1.2, onDeath: 'respawn', respawnHPPercent: 40,
+        safeRoomCount: 2, safeRoomHealPercent: 80, safeRoomUseLLM: false,
+        restEnabled: true, restHealPercent: 15, restCooldown: 4, restInterruptChance: 20, restInterruptScript: '',
+        storyConfig: { mainStory: 'Two decks, three security zones per deck. Clear hostiles to unlock zone progression. Find hidden maintenance shafts!' },
+        findEarly: { radius: 3, items: ['torch', 'healingPotion'], itemsPerChest: 1 },
+        bspConfig: { zoneCount: 3, secretDensity: 0.03, zonesRequireClear: true, secretHints: true, floorComplexityScaling: true },
     },
 };
 
@@ -7751,6 +8301,9 @@ let currentNegotiation = {
     combatLog: [],
 };
 
+// v1.4.8: Track LLM generation state for visual indicator
+let isLLMGenerating = false;
+
 // Runtime maze state
 let currentMaze = {
     isOpen: false,
@@ -7792,6 +8345,20 @@ let currentMaze = {
         elixir: 0,
         revivalCharm: 0,
         heartCrystal: 0,
+        // v1.3.2 Visibility items
+        torch: 0,           // Temporary +2 visibility radius (3 moves)
+        lantern: 0,         // Passive +1 visibility radius while held
+        revealScroll: 0,    // Reveals entire floor for 1 move
+        sightPotion: 0,     // Permanent +1 visibility buff (consumed)
+        crystalBall: 0,     // Reveals all minions on current floor
+    },
+    // v1.3.2 Visibility system
+    visibility: {
+        baseRadius: 1,          // Default visibility radius
+        tempBonus: 0,           // From torch (decrements each move)
+        tempMovesLeft: 0,       // Moves remaining for temp bonus
+        permBonus: 0,           // From consumed sightPotion
+        floorRevealed: false,   // Reveal scroll active this move
     },
     pendingConfirmation: null,    // { type, minionId, x, y, canSlipAway }
     pendingChest: null,           // { chestData, x, y } for Open/Ignore flow
@@ -8071,6 +8638,145 @@ Write a short, atmospheric description of finding the chest (1-2 sentences, unde
     }
 
     return baseMessage;
+}
+
+/**
+ * Generate LLM-enhanced room description
+ * @param {Object} options - Room context for LLM generation
+ * @returns {Promise<string>} Enhanced description or original
+ */
+async function generateEnhancedRoomDescription(options) {
+    const { roomName, roomType, baseDescription, theme, sessionNotes } = options;
+
+    // Check if LLM generation is available
+    if (typeof generateQuietPrompt !== 'function') {
+        console.log('[MazeMaster] generateQuietPrompt not available');
+        return baseDescription;
+    }
+
+    // Check if LLM is globally enabled
+    if (extensionSettings.llmEnabled === false) {
+        return baseDescription;
+    }
+
+    // Get additional context
+    const profile = currentMaze?.profile || {};
+    const mainStory = profile.storyConfig?.mainStory || '';
+    const currentFloor = (currentMaze?.currentFloor || 0) + 1;
+    const totalFloors = currentMaze?.totalFloors || 1;
+    const playerName = getCurrentPersonaName();
+
+    // Truncate session notes to last ~500 chars for context
+    const recentNotes = sessionNotes
+        ? sessionNotes.slice(-500).split('\n').slice(-5).join('\n')
+        : '';
+
+    const prompt = `You are the narrator for a ${theme} dungeon crawler game.
+Player: ${playerName}
+Floor: ${currentFloor}/${totalFloors}
+${mainStory ? `Story: ${mainStory}\n` : ''}
+${recentNotes ? `Recent events:\n${recentNotes}\n` : ''}
+The player enters "${roomName}" (a ${roomType || 'standard'} room).
+Base description: "${baseDescription}"
+
+Write a vivid, atmospheric description (2-3 sentences max). Reference recent events if relevant. Stay in theme. Do not use quotation marks.`;
+
+    try {
+        console.log('[MazeMaster] Generating enhanced room description for:', roomName);
+
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            skipWI: true,
+            max_length: 150,
+        });
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            console.log('[MazeMaster] Enhanced description:', cleaned);
+            return cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Room description LLM failed:', error);
+    }
+
+    return baseDescription;
+}
+
+/**
+ * Enhance room description on first entry and cache it
+ * @param {number} x - Room X coordinate
+ * @param {number} y - Room Y coordinate
+ */
+async function enhanceRoomOnEntry(x, y) {
+    console.log('[MazeMaster] enhanceRoomOnEntry called:', { x, y });
+
+    if (!currentMaze?.isOpen || !currentMaze.profile) {
+        console.log('[MazeMaster] Enhancement skipped: maze not open or no profile');
+        return;
+    }
+
+    // Check if LLM enhancement is enabled for this maze
+    if (!currentMaze.profile.llmEnhanceRooms) {
+        console.log('[MazeMaster] Enhancement skipped: llmEnhanceRooms disabled in profile', currentMaze.profile.llmEnhanceRooms);
+        return;
+    }
+
+    const floor = currentMaze.currentFloor || 0;
+    const roomKey = `${floor}:${x},${y}`;
+
+    // Check if already enhanced
+    if (currentMaze.enhancedRooms?.[roomKey]) {
+        console.log('[MazeMaster] Room already enhanced:', roomKey);
+        return;
+    }
+
+    const cell = currentMaze.grid[y]?.[x];
+    if (!cell || !cell.roomInfo) {
+        console.log('[MazeMaster] Enhancement skipped: no cell or roomInfo at', { x, y, hasCell: !!cell, hasRoomInfo: !!cell?.roomInfo });
+        return;
+    }
+
+    console.log('[MazeMaster] Proceeding with room enhancement for:', roomKey);
+
+    const baseDescription = cell.roomInfo.description || '...';
+    const roomName = cell.roomInfo.name || 'Unknown Room';
+    const roomType = cell.roomInfo.type || 'standard';
+    const theme = currentMaze.profile.theme || 'fantasy';
+
+    // Show generating indicator
+    showGeneratingIndicator(true);
+
+    try {
+        const enhanced = await generateEnhancedRoomDescription({
+            roomName,
+            roomType,
+            baseDescription,
+            theme,
+            sessionNotes: currentMaze.sessionNotes || '',
+        });
+
+        // Store enhanced description
+        if (!currentMaze.enhancedRooms) currentMaze.enhancedRooms = {};
+        currentMaze.enhancedRooms[roomKey] = enhanced;
+
+        // Update cell's roomInfo for immediate display
+        cell.roomInfo.enhancedDescription = enhanced;
+
+        // Add to session notes (include enhanced description for future LLM context)
+        addSessionNote(`${roomName}: ${enhanced}`, 'Explore');
+
+        // Update room info display
+        updateRoomInfoBox();
+
+        console.log('[MazeMaster] Room enhanced and cached:', roomKey);
+    } catch (error) {
+        console.error('[MazeMaster] Room enhancement failed:', error);
+    } finally {
+        showGeneratingIndicator(false);
+    }
 }
 
 /**
@@ -9248,18 +9954,30 @@ function closeWheelModal() {
     currentWheel.isOpen = false;
 
     // Handle maze integration if this was a maze encounter
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (encounterType === 'exit_wheel') {
-            // Exit wheel completed - win the maze
-            currentMaze.exitEncounterDone = true;
-            currentMaze.isPaused = false;
-            handleMazeWin();
-        } else if (encounterType === 'wheel') {
-            // Regular wheel encounter - resume maze
-            resumeMaze();
+                if (encounterType === 'exit_wheel') {
+                    // Exit wheel completed - win the maze
+                    currentMaze.exitEncounterDone = true;
+                    currentMaze.isPaused = false;
+                    handleMazeWin();
+                    return;
+                } else if (encounterType === 'wheel') {
+                    // Regular wheel encounter - resume maze
+                    resumeMaze();
+                    return;
+                }
+            }
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeWheelModal:', err);
         }
+
+        // Fallback: ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -9740,14 +10458,19 @@ function registerSlashCommands() {
         5: 'floorKey', 6: 'portalStone', 7: 'minionBane', 8: 'mapFragment', 9: 'timeShard', 10: 'voidWalk',
         // HP items (11-15)
         11: 'healingPotion', 12: 'greaterHealing', 13: 'elixir', 14: 'revivalCharm', 15: 'heartCrystal',
+        // Visibility items (16-20)
+        16: 'torch', 17: 'lantern', 18: 'revealScroll', 19: 'sightPotion', 20: 'crystalBall',
         // Name aliases
         'key': 'key', 'stealth': 'stealth', 'strike': 'strike', 'execute': 'execute',
         'floorkey': 'floorKey', 'portalstone': 'portalStone', 'minionbane': 'minionBane',
         'mapfragment': 'mapFragment', 'timeshard': 'timeShard', 'voidwalk': 'voidWalk',
         'healingpotion': 'healingPotion', 'greaterhealing': 'greaterHealing', 'elixir': 'elixir',
         'revivalcharm': 'revivalCharm', 'heartcrystal': 'heartCrystal',
+        'torch': 'torch', 'lantern': 'lantern', 'revealscroll': 'revealScroll',
+        'sightpotion': 'sightPotion', 'crystalball': 'crystalBall',
         // Short aliases
         'hp': 'healingPotion', 'ghp': 'greaterHealing', 'potion': 'healingPotion',
+        'light': 'torch', 'scroll': 'revealScroll', 'sight': 'sightPotion', 'ball': 'crystalBall',
     };
 
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
@@ -9770,6 +10493,7 @@ function registerSlashCommands() {
                     '1=key, 2=stealth, 3=strike, 4=execute',
                     '5=floorKey, 6=portalStone, 7=minionBane, 8=mapFragment, 9=timeShard, 10=voidWalk',
                     '11=healingPotion, 12=greaterHealing, 13=elixir, 14=revivalCharm, 15=heartCrystal',
+                    '16=torch, 17=lantern, 18=revealScroll, 19=sightPotion, 20=crystalBall',
                 ];
                 return `Available items:\n${items.join('\n')}`;
             }
@@ -10749,11 +11473,13 @@ async function handleTurnBasedLoss() {
     }
 
     // Apply maze HP damage
+    let playerDied = false;
     if (currentMaze.isOpen && currentMaze.hpEnabled && currentMaze.hp) {
         const damage = profile.damage || 25;
         const mazeMultiplier = currentMaze.profile?.battlebarDamageMultiplier ?? 1.0;
         const actualDamage = Math.round(damage * mazeMultiplier);
-        await applyDamage(actualDamage, 'turnbased');
+        const survived = await applyDamage(actualDamage, 'turnbased');
+        playerDied = !survived;
     }
 
     // Store result
@@ -10763,6 +11489,12 @@ async function handleTurnBasedLoss() {
         turnsPlayed: currentTurnBased.turnCount,
         timestamp: Date.now(),
     };
+
+    // If player died, close modal and let death handling take over
+    if (playerDied) {
+        closeTurnBasedModal();
+        return;
+    }
 
     showTurnBasedResult('defeat');
 }
@@ -10791,7 +11523,7 @@ function showTurnBasedResult(result) {
     updateTurnBasedDisplay();
 }
 
-function closeTurnBasedModal() {
+async function closeTurnBasedModal() {
     const modal = document.getElementById('mazemaster_turnbased_modal');
     if (modal) modal.remove();
 
@@ -10818,31 +11550,36 @@ function closeTurnBasedModal() {
     currentTurnBased.isOpen = false;
 
     // Handle maze integration
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasVictory) {
-            if (encounterType === 'exit_turnbased') {
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
+                if (wasVictory) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    if (encounterType === 'exit_turnbased') {
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    }
+                } else if (wasDefeat) {
+                    // Player was defeated - handle maze loss if HP depleted
+                    if (isMazeEncounter && currentMaze.hp && currentMaze.hp.current <= 0) {
+                        currentMaze.pendingEncounter = null;
+                        handleMazeLoss();
+                        return; // handleMazeLoss takes over
+                    }
+                }
             }
-        } else if (wasDefeat) {
-            // Player was defeated - handle maze loss if HP depleted
-            if (isMazeEncounter && currentMaze.hp && currentMaze.hp.current <= 0) {
-                currentMaze.pendingEncounter = null;
-                handleMazeLoss();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
-            }
-        } else {
-            currentMaze.isPaused = false;
-            currentMaze.pendingEncounter = null;
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeTurnBasedModal:', err);
         }
+
+        // Always ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -11512,11 +12249,13 @@ async function handleQTEComplete() {
         }
 
         // Apply maze HP damage
+        let playerDied = false;
         if (currentMaze.isOpen && currentMaze.hpEnabled && currentMaze.hp) {
             const damage = profile.damage || 20;
             const mazeMultiplier = currentMaze.profile?.battlebarDamageMultiplier ?? 1.0;
             const actualDamage = Math.round(damage * mazeMultiplier);
-            await applyDamage(actualDamage, 'qte');
+            const survived = await applyDamage(actualDamage, 'qte');
+            playerDied = !survived;
         }
 
         // Store result
@@ -11528,6 +12267,12 @@ async function handleQTEComplete() {
             maxCombo: currentQTE.maxCombo,
             timestamp: Date.now(),
         };
+
+        // If player died, close modal and let death handling take over
+        if (playerDied) {
+            closeQTEModal();
+            return;
+        }
     }
 
     showQTEResult();
@@ -11566,7 +12311,7 @@ function showQTEResult() {
     }
 }
 
-function closeQTEModal() {
+async function closeQTEModal() {
     // Clear any pending timeout
     if (currentQTE.timeoutId) {
         clearTimeout(currentQTE.timeoutId);
@@ -11583,33 +12328,40 @@ function closeQTEModal() {
     currentQTE.isOpen = false;
 
     // Handle maze integration
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasSuccess) {
-            // Heal player on successful QTE completion (skill reward)
-            if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
-                const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
-                const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
-                const healAmount = Math.floor(maxTotal * (healPercent / 100));
-                if (currentMaze.hp.current < maxTotal && healAmount > 0) {
-                    healPlayer(healAmount, 'QTE success');
-                    addMazeLogMessage(`Quick reflexes! Recovered ${healAmount} HP.`, 'heal');
+                if (wasSuccess) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    // Heal player on successful QTE completion (skill reward)
+                    if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
+                        const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
+                        const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
+                        const healAmount = Math.floor(maxTotal * (healPercent / 100));
+                        if (currentMaze.hp.current < maxTotal && healAmount > 0) {
+                            await healPlayer(healAmount, false, 'QTE success');
+                            addMazeLogMessage(`Quick reflexes! Recovered ${healAmount} HP.`, 'heal');
+                        }
+                    }
+
+                    if (encounterType === 'exit_qte') {
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    }
                 }
             }
-
-            if (encounterType === 'exit_qte') {
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
-            }
-        } else {
-            currentMaze.isPaused = false;
-            currentMaze.pendingEncounter = null;
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeQTEModal:', err);
         }
+
+        // Always ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -12243,6 +12995,7 @@ async function finalizeDiceResult() {
         }
 
         // Apply maze HP damage
+        let playerDied = false;
         if (currentMaze.isOpen && currentMaze.hpEnabled && currentMaze.hp) {
             let damage = profile.damage || 20;
             if (currentDice.isCriticalFail) {
@@ -12250,7 +13003,8 @@ async function finalizeDiceResult() {
             }
             const mazeMultiplier = currentMaze.profile?.battlebarDamageMultiplier ?? 1.0;
             const actualDamage = Math.round(damage * mazeMultiplier);
-            await applyDamage(actualDamage, 'dice');
+            const survived = await applyDamage(actualDamage, 'dice');
+            playerDied = !survived;
         }
 
         // Store result
@@ -12262,12 +13016,18 @@ async function finalizeDiceResult() {
             isCritical: currentDice.isCriticalFail,
             timestamp: Date.now(),
         };
+
+        // If player died, close modal and let death handling take over
+        if (playerDied) {
+            closeDiceModal();
+            return;
+        }
     }
 
     finalPanel.style.display = 'block';
 }
 
-function closeDiceModal() {
+async function closeDiceModal() {
     const modal = document.getElementById('mazemaster_dice_modal');
     if (modal) modal.remove();
 
@@ -12275,22 +13035,29 @@ function closeDiceModal() {
     currentDice.isOpen = false;
 
     // Handle maze integration
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasSuccess) {
-            if (encounterType === 'exit_dice') {
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
+                if (wasSuccess) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    if (encounterType === 'exit_dice') {
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    }
+                }
             }
-        } else {
-            currentMaze.isPaused = false;
-            currentMaze.pendingEncounter = null;
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeDiceModal:', err);
         }
+
+        // Always ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -12804,13 +13571,13 @@ async function handleStealthAction(action) {
 
     // Check for caught
     if (currentStealth.detection >= currentStealth.detectionThreshold) {
-        handleStealthCaught();
+        await handleStealthCaught();
         return;
     }
 
     // Check for success
     if (currentStealth.currentSection >= currentStealth.sectionsToPass) {
-        handleStealthSuccess();
+        await handleStealthSuccess();
     }
 }
 
@@ -12869,11 +13636,13 @@ async function handleStealthCaught() {
     }
 
     // Apply maze HP damage
+    let playerDied = false;
     if (currentMaze.isOpen && currentMaze.hpEnabled && currentMaze.hp) {
         const damage = profile.damage || 25;
         const mazeMultiplier = currentMaze.profile?.battlebarDamageMultiplier ?? 1.0;
         const actualDamage = Math.round(damage * mazeMultiplier);
-        await applyDamage(actualDamage, 'stealth');
+        const survived = await applyDamage(actualDamage, 'stealth');
+        playerDied = !survived;
     }
 
     // Store result
@@ -12884,6 +13653,12 @@ async function handleStealthCaught() {
         finalDetection: currentStealth.detection,
         timestamp: Date.now(),
     };
+
+    // If player died, close stealth modal and let death handling take over
+    if (playerDied) {
+        closeStealthModal();
+        return;
+    }
 
     showStealthResult();
 }
@@ -12907,7 +13682,7 @@ function showStealthResult() {
     }
 }
 
-function closeStealthModal() {
+async function closeStealthModal() {
     const modal = document.getElementById('mazemaster_stealth_modal');
     if (modal) modal.remove();
 
@@ -12915,33 +13690,40 @@ function closeStealthModal() {
     currentStealth.isOpen = false;
 
     // Handle maze integration
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasSuccess) {
-            // Heal player on successful stealth completion (skill reward)
-            if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
-                const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
-                const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
-                const healAmount = Math.floor(maxTotal * (healPercent / 100));
-                if (currentMaze.hp.current < maxTotal && healAmount > 0) {
-                    healPlayer(healAmount, 'Stealth success');
-                    addMazeLogMessage(`Silent and deadly! Recovered ${healAmount} HP.`, 'heal');
+                if (wasSuccess) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    // Heal player on successful stealth completion (skill reward)
+                    if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
+                        const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
+                        const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
+                        const healAmount = Math.floor(maxTotal * (healPercent / 100));
+                        if (currentMaze.hp.current < maxTotal && healAmount > 0) {
+                            await healPlayer(healAmount, false, 'Stealth success');
+                            addMazeLogMessage(`Silent and deadly! Recovered ${healAmount} HP.`, 'heal');
+                        }
+                    }
+
+                    if (encounterType === 'exit_stealth') {
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    }
                 }
             }
-
-            if (encounterType === 'exit_stealth') {
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
-            }
-        } else {
-            currentMaze.isPaused = false;
-            currentMaze.pendingEncounter = null;
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeStealthModal:', err);
         }
+
+        // Always ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -13583,17 +14365,9 @@ async function handlePuzzleFail() {
 
     const profile = currentPuzzle.profile;
 
-    // Execute fail hook
+    // Execute fail hook - STScript handles any damage/consequences
     if (profile.onFail) {
         await executeWithTimeout(profile.onFail);
-    }
-
-    // Apply maze HP damage
-    if (currentMaze.isOpen && currentMaze.hpEnabled && currentMaze.hp) {
-        const damage = profile.damage || 25;
-        const mazeMultiplier = currentMaze.profile?.battlebarDamageMultiplier ?? 1.0;
-        const actualDamage = Math.round(damage * mazeMultiplier);
-        await applyDamage(actualDamage, 'puzzle');
     }
 
     // Store result
@@ -13653,7 +14427,7 @@ function addPuzzleLogEntry(message) {
     }
 }
 
-function closePuzzleModal() {
+async function closePuzzleModal() {
     if (currentPuzzle.timerInterval) {
         clearInterval(currentPuzzle.timerInterval);
     }
@@ -13665,33 +14439,40 @@ function closePuzzleModal() {
     currentPuzzle.isOpen = false;
 
     // Handle maze integration
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasSuccess) {
-            // Heal player on successful puzzle completion (skill reward)
-            if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
-                const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
-                const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
-                const healAmount = Math.floor(maxTotal * (healPercent / 100));
-                if (currentMaze.hp.current < maxTotal && healAmount > 0) {
-                    healPlayer(healAmount, 'Puzzle success');
-                    addMazeLogMessage(`Brilliant mind! Recovered ${healAmount} HP.`, 'heal');
+                if (wasSuccess) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    // Heal player on successful puzzle completion (skill reward)
+                    if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
+                        const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
+                        const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
+                        const healAmount = Math.floor(maxTotal * (healPercent / 100));
+                        if (currentMaze.hp.current < maxTotal && healAmount > 0) {
+                            await healPlayer(healAmount, false, 'Puzzle success');
+                            addMazeLogMessage(`Brilliant mind! Recovered ${healAmount} HP.`, 'heal');
+                        }
+                    }
+
+                    if (encounterType === 'exit_puzzle') {
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    }
                 }
             }
-
-            if (encounterType === 'exit_puzzle') {
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
-            }
-        } else {
-            currentMaze.isPaused = false;
-            currentMaze.pendingEncounter = null;
+        } catch (err) {
+            console.error('[MazeMaster] Error in closePuzzleModal:', err);
         }
+
+        // Always ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -14297,11 +15078,13 @@ async function handleNegotiationFail() {
     }
 
     // Apply maze HP damage
+    let playerDied = false;
     if (currentMaze.isOpen && currentMaze.hpEnabled && currentMaze.hp) {
         const damage = profile.damage || 25;
         const mazeMultiplier = currentMaze.profile?.battlebarDamageMultiplier ?? 1.0;
         const actualDamage = Math.round(damage * mazeMultiplier);
-        await applyDamage(actualDamage, 'negotiation');
+        const survived = await applyDamage(actualDamage, 'negotiation');
+        playerDied = !survived;
     }
 
     // Store result
@@ -14312,6 +15095,12 @@ async function handleNegotiationFail() {
         turnsUsed: currentNegotiation.turnsUsed,
         timestamp: Date.now(),
     };
+
+    // If player died, close modal and let death handling take over
+    if (playerDied) {
+        closeNegotiationModal();
+        return;
+    }
 
     showNegotiationResult();
 }
@@ -14335,7 +15124,7 @@ function showNegotiationResult() {
     }
 }
 
-function closeNegotiationModal() {
+async function closeNegotiationModal() {
     const modal = document.getElementById('mazemaster_negotiation_modal');
     if (modal) modal.remove();
 
@@ -14343,33 +15132,40 @@ function closeNegotiationModal() {
     currentNegotiation.isOpen = false;
 
     // Handle maze integration
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasSuccess) {
-            // Heal player on successful negotiation completion (skill reward)
-            if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
-                const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
-                const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
-                const healAmount = Math.floor(maxTotal * (healPercent / 100));
-                if (currentMaze.hp.current < maxTotal && healAmount > 0) {
-                    healPlayer(healAmount, 'Negotiation success');
-                    addMazeLogMessage(`Smooth talker! Recovered ${healAmount} HP.`, 'heal');
+                if (wasSuccess) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    // Heal player on successful negotiation completion (skill reward)
+                    if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
+                        const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
+                        const maxTotal = currentMaze.hp.max + (currentMaze.hp.maxBonus || 0);
+                        const healAmount = Math.floor(maxTotal * (healPercent / 100));
+                        if (currentMaze.hp.current < maxTotal && healAmount > 0) {
+                            await healPlayer(healAmount, false, 'Negotiation success');
+                            addMazeLogMessage(`Smooth talker! Recovered ${healAmount} HP.`, 'heal');
+                        }
+                    }
+
+                    if (encounterType === 'exit_negotiation') {
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    }
                 }
             }
-
-            if (encounterType === 'exit_negotiation') {
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                currentMaze.isPaused = false;
-                currentMaze.pendingEncounter = null;
-            }
-        } else {
-            currentMaze.isPaused = false;
-            currentMaze.pendingEncounter = null;
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeNegotiationModal:', err);
         }
+
+        // Always ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -15176,7 +15972,7 @@ function handleExecuteButton(e) {
     handleBattlebarWin();
 }
 
-function closeBattlebarModal() {
+async function closeBattlebarModal() {
     const wasVictory = currentBattlebar.isVictory;
     const wasDefeat = currentBattlebar.isDefeat;
 
@@ -15193,45 +15989,61 @@ function closeBattlebarModal() {
     currentBattlebar.isDefeat = false;
 
     // Handle maze integration if this was a maze encounter
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        const encounterType = currentMaze.pendingEncounter.type;
+    if (currentMaze.isOpen) {
+        try {
+            if (currentMaze.pendingEncounter) {
+                const encounterType = currentMaze.pendingEncounter.type;
 
-        if (wasVictory) {
-            if (encounterType === 'exit_battlebar') {
-                // Exit boss defeated - win the maze
-                currentMaze.exitEncounterDone = true;
-                currentMaze.isPaused = false;
-                handleMazeWin();
-            } else {
-                // Regular encounter - resume maze
-                resumeMaze();
-            }
-        } else if (wasDefeat) {
-            const lossAction = currentMaze.profile.onBattlebarLoss || 'continue';
-
-            if (encounterType === 'exit_battlebar') {
-                // Exit boss loss - always respawn or game over (can't continue past exit)
-                if (lossAction === 'gameover') {
-                    handleMazeLoss();
-                } else {
-                    respawnPlayer();
-                }
-            } else {
-                // Regular encounter loss
-                switch (lossAction) {
-                    case 'gameover':
-                        handleMazeLoss();
-                        break;
-                    case 'respawn':
-                        respawnPlayer();
-                        break;
-                    case 'continue':
-                    default:
+                if (wasVictory) {
+                    // v1.4.0: Mark room as cleared for zone progression
+                    await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+                    if (encounterType === 'exit_battlebar') {
+                        // Exit boss defeated - win the maze
+                        currentMaze.exitEncounterDone = true;
+                        currentMaze.isPaused = false;
+                        handleMazeWin();
+                        return; // handleMazeWin takes over
+                    } else {
+                        // Regular encounter - resume maze
                         resumeMaze();
-                        break;
+                        return;
+                    }
+                } else if (wasDefeat) {
+                    const lossAction = currentMaze.profile.onBattlebarLoss || 'continue';
+
+                    if (encounterType === 'exit_battlebar') {
+                        // Exit boss loss - always respawn or game over (can't continue past exit)
+                        if (lossAction === 'gameover') {
+                            handleMazeLoss();
+                            return;
+                        } else {
+                            respawnPlayer();
+                            return;
+                        }
+                    } else {
+                        // Regular encounter loss
+                        switch (lossAction) {
+                            case 'gameover':
+                                handleMazeLoss();
+                                return;
+                            case 'respawn':
+                                respawnPlayer();
+                                return;
+                            case 'continue':
+                            default:
+                                resumeMaze();
+                                return;
+                        }
+                    }
                 }
             }
+        } catch (err) {
+            console.error('[MazeMaster] Error in closeBattlebarModal:', err);
         }
+
+        // Fallback: ensure maze is unpaused and encounter is cleared
+        currentMaze.isPaused = false;
+        currentMaze.pendingEncounter = null;
     }
 }
 
@@ -15440,6 +16252,15 @@ async function handleBattlebarWin() {
         timestamp: Date.now(),
     };
 
+    // Log to session notes
+    if (currentMaze?.isOpen) {
+        addSessionNote(`Battlebar victory: ${currentBattlebar.profile?.mainTitle || profileName}`, 'Combat');
+        // v1.4.7: Reset combat loss streak on win
+        if (currentMaze.fairness) {
+            currentMaze.fairness.combatLossStreak = 0;
+        }
+    }
+
     // Set victory state
     currentBattlebar.isVictory = true;
 
@@ -15553,6 +16374,16 @@ async function handleBattlebarLoss() {
         timestamp: Date.now(),
     };
 
+    // Log to session notes
+    if (currentMaze?.isOpen) {
+        addSessionNote(`Battlebar defeat: ${currentBattlebar.profile?.mainTitle || profileName}`, 'Combat');
+        // v1.4.7: Increment combat loss streak
+        if (currentMaze.fairness) {
+            currentMaze.fairness.combatLossStreak++;
+            console.log(`[MazeMaster] Fairness: Combat loss streak: ${currentMaze.fairness.combatLossStreak}`);
+        }
+    }
+
     // Set defeat state
     currentBattlebar.isDefeat = true;
 
@@ -15633,6 +16464,1277 @@ async function handleBattlebarLoss() {
 
 // =============================================================================
 // MAZE LOGIC
+// =============================================================================
+
+// =============================================================================
+// v1.4.0 BSP GENERATION SYSTEM - Data Structures
+// =============================================================================
+
+/**
+ * Theme-specific room type pools
+ * Each theme has rooms categorized by size: small (2x2), medium (3x3), large (4x4+), special
+ */
+const THEMED_ROOM_TYPES = {
+    fantasy: {
+        small: ['alcove', 'guardPost', 'shrine', 'cell', 'storeroom'],
+        medium: ['treasureVault', 'library', 'armory', 'chapel', 'barracks'],
+        large: ['throneRoom', 'arena', 'crypt', 'greatHall', 'dungeon'],
+        special: ['bossLair', 'dragonDen', 'wizardTower']
+    },
+    scifi: {
+        small: ['airlock', 'terminal', 'cryoPod', 'storageUnit', 'junction'],
+        medium: ['lab', 'serverRoom', 'medbay', 'armory', 'quarters'],
+        large: ['hangar', 'reactor', 'bridge', 'hydroponics', 'cargo'],
+        special: ['aiCore', 'alienNest', 'escapePod']
+    },
+    horror: {
+        small: ['closet', 'cell', 'ritualNook', 'crawlspace', 'alcove'],
+        medium: ['morgue', 'cultRoom', 'tortureChamber', 'nursery', 'study'],
+        large: ['cathedral', 'asylumWard', 'abattoir', 'ritualHall', 'crypt'],
+        special: ['finalGate', 'elderShrine', 'heartOfDarkness']
+    },
+    western: {
+        small: ['storeroom', 'jailCell', 'stall', 'privy', 'closet'],
+        medium: ['saloon', 'sheriffOffice', 'bankVault', 'generalStore', 'hotel'],
+        large: ['townSquare', 'ranchHouse', 'goldMine', 'trainStation', 'church'],
+        special: ['showdownStreet', 'outlawHideout', 'ghostTownCenter']
+    },
+    action: {
+        small: ['checkpoint', 'ammoCache', 'commsRoom', 'bunker', 'vent'],
+        medium: ['warRoom', 'armory', 'interrogation', 'motorPool', 'barracks'],
+        large: ['hangar', 'trainingGround', 'commandCenter', 'missileSilo', 'prison'],
+        special: ['bossArena', 'extractionZone', 'doomsdayDevice']
+    },
+    comedy: {
+        small: ['broomCloset', 'vendingCorner', 'awkwardBathroom', 'supplyRoom', 'cubicle'],
+        medium: ['breakRoom', 'conferenceDisaster', 'printerGraveyard', 'itDungeon', 'mailRoom'],
+        large: ['cafeteria', 'ballPit', 'karaokeHall', 'escapeRoomInception', 'openOffice'],
+        special: ['finalBossOffice', 'plotTwistRoom', 'creditsRoom']
+    },
+    cyberpunk: {
+        small: ['jackPoint', 'stash', 'corpoCloset', 'vendingAlcove', 'maintenance'],
+        medium: ['netrunnerDen', 'chopShop', 'blackMarket', 'ripperdoc', 'flophouse'],
+        large: ['megacorpFloor', 'club', 'dataFortress', 'gangHQ', 'bazaar'],
+        special: ['aiCore', 'finalUpload', 'skyGarden']
+    }
+};
+
+/**
+ * Room mechanics define special behaviors for room types
+ */
+const ROOM_MECHANICS = {
+    // Treasure rooms
+    treasureVault: { guaranteedChest: true, chestQuality: 'rare', trapDensity: 1.5, minionGuard: true },
+    bankVault: { guaranteedChest: true, chestQuality: 'rare', trapDensity: 2.0, minionGuard: true },
+
+    // Combat rooms
+    arena: { waveBattle: true, waveCount: { min: 2, max: 4 }, noRetreat: true, rewardOnClear: 'special' },
+    bossArena: { bossEncounter: true, lockedUntilCleared: true, specialLoot: true },
+    bossLair: { bossEncounter: true, lockedUntilCleared: true, specialLoot: true },
+    trainingGround: { waveBattle: true, waveCount: { min: 1, max: 2 }, noRetreat: false },
+
+    // Knowledge rooms
+    library: { revealMapOnEnter: true, revealRadius: 3, scholarNPC: true },
+    serverRoom: { revealMapOnEnter: true, revealRadius: 4 },
+    terminal: { revealMapOnEnter: true, revealRadius: 2 },
+
+    // Safe havens
+    shrine: { noEnemies: true, healPercent: 25 },
+    chapel: { noEnemies: true, healPercent: 50, savePoint: true },
+    medbay: { noEnemies: true, fullHeal: true, savePoint: true },
+    ripperdoc: { noEnemies: true, fullHeal: true, merchantNPC: true },
+
+    // Special mechanics
+    crypt: { undeadOnly: true, trapDensity: 1.5 },
+    reactor: { hazardDamage: 5, noRest: true },
+    crawlspace: { stealthBonus: true, noLargeEnemies: true },
+
+    // Default for unlisted types
+    default: { }
+};
+
+/**
+ * BSP style-specific configurations
+ */
+const BSP_STYLE_CONFIGS = {
+    dungeon: {
+        minRoomSize: 2,
+        maxRoomSize: 3,
+        minSplitSize: 2,
+        splitVariance: 0.3,
+        corridorWidth: 1,
+        roomPadding: 0,
+        extraConnections: 0.5,
+        branchChance: 0.4,
+        preferSquareRooms: false
+    },
+    maze: {
+        minRoomSize: 2,
+        maxRoomSize: 2,
+        minSplitSize: 2,
+        splitVariance: 0.3,
+        corridorWidth: 1,
+        roomPadding: 0,
+        extraConnections: 0.6,
+        addDeadEnds: true,
+        branchChance: 0.5,
+        preferSquareRooms: true
+    },
+    city: {
+        minRoomSize: 2,
+        maxRoomSize: 3,
+        minSplitSize: 2,
+        splitVariance: 0.25,
+        corridorWidth: 1,
+        roomPadding: 0,
+        gridAlign: true,
+        extraConnections: 0.6,
+        branchChance: 0.4,
+        preferSquareRooms: false
+    },
+    forest: {
+        minRoomSize: 2,
+        maxRoomSize: 3,
+        minSplitSize: 2,
+        splitVariance: 0.35,
+        corridorWidth: 1,
+        roomPadding: 0,
+        windingCorridors: true,
+        extraConnections: 0.5,
+        branchChance: 0.5,
+        preferSquareRooms: false
+    },
+    spaceship: {
+        minRoomSize: 2,
+        maxRoomSize: 3,
+        minSplitSize: 2,
+        splitVariance: 0.2,
+        corridorWidth: 1,
+        roomPadding: 0,
+        extraConnections: 0.5,
+        modularRooms: true,
+        branchChance: 0.4,
+        preferSquareRooms: true
+    },
+    arena: {
+        minRoomSize: 2,
+        maxRoomSize: 3,
+        minSplitSize: 2,
+        splitVariance: 0.3,
+        corridorWidth: 1,
+        roomPadding: 0,
+        extraConnections: 0.5,
+        branchChance: 0.4,
+        preferSquareRooms: true
+    },
+    hospital: {
+        minRoomSize: 2,
+        maxRoomSize: 3,
+        minSplitSize: 2,
+        splitVariance: 0.2,
+        corridorWidth: 1,
+        roomPadding: 0,
+        gridAlign: true,
+        extraConnections: 0.5,
+        branchChance: 0.4,
+        preferSquareRooms: false
+    }
+};
+
+// Map style aliases to BSP configs
+const STYLE_TO_BSP_CONFIG = {
+    'dungeon': 'dungeon',
+    'maze': 'maze',
+    'city': 'city',
+    'neotokyo': 'city',
+    'forest': 'forest',
+    'spaceship': 'spaceship',
+    'spacestation': 'spaceship',
+    'arena': 'arena',
+    'outpost': 'dungeon',
+    'college': 'hospital',
+    'apartment': 'city',
+    'hospital': 'hospital',
+    'highrise': 'city'
+};
+
+// =============================================================================
+// v1.4.0 BSP GENERATION ALGORITHM
+// =============================================================================
+
+/**
+ * Generate a BSP tree for dungeon layout
+ * @param {number} x - Start X coordinate
+ * @param {number} y - Start Y coordinate
+ * @param {number} width - Area width
+ * @param {number} height - Area height
+ * @param {number} depth - Current recursion depth
+ * @param {object} config - BSP configuration
+ * @returns {object} BSP node
+ */
+function generateBSPTree(x, y, width, height, depth, config) {
+    const node = {
+        x, y, width, height,
+        left: null,
+        right: null,
+        room: null,
+        splitHorizontal: null
+    };
+
+    // Check if we should stop splitting - use minSplitSize directly, not doubled
+    const minSize = config.minSplitSize || 2;
+    const maxDepth = config.maxDepth || 8;
+
+    // More aggressive splitting - only stop if we truly can't split
+    // Need at least minSize+1 to split (e.g., 3 cells -> 1+2 or 2+1)
+    const canSplitWidth = width >= minSize + 1;
+    const canSplitHeight = height >= minSize + 1;
+
+    if (depth >= maxDepth || (!canSplitWidth && !canSplitHeight)) {
+        // This is a leaf node - generate a room here
+        node.room = generateRoomInNode(node, config);
+        return node;
+    }
+
+    // Decide split direction based on what's possible and aspect ratio
+    const aspectRatio = width / height;
+    let splitHorizontal;
+
+    if (!canSplitWidth) {
+        splitHorizontal = true; // Can only split horizontally
+    } else if (!canSplitHeight) {
+        splitHorizontal = false; // Can only split vertically
+    } else if (aspectRatio > 1.5) {
+        splitHorizontal = false; // Split vertically (too wide)
+    } else if (aspectRatio < 0.67) {
+        splitHorizontal = true; // Split horizontally (too tall)
+    } else {
+        // For square-ish areas, alternate or randomize
+        splitHorizontal = Math.random() < 0.5;
+    }
+
+    node.splitHorizontal = splitHorizontal;
+
+    // Calculate split position with variance - allow asymmetric splits
+    const variance = config.splitVariance || 0.3;
+    const minRatio = Math.max(0.25, 0.5 - variance);
+    const maxRatio = Math.min(0.75, 0.5 + variance);
+    const splitRatio = minRatio + Math.random() * (maxRatio - minRatio);
+
+    if (splitHorizontal) {
+        // Split horizontally (top/bottom)
+        const splitY = Math.max(minSize, Math.min(height - minSize, Math.floor(height * splitRatio)));
+        if (splitY < 1 || height - splitY < 1) {
+            node.room = generateRoomInNode(node, config);
+            return node;
+        }
+        node.left = generateBSPTree(x, y, width, splitY, depth + 1, config);
+        node.right = generateBSPTree(x, y + splitY, width, height - splitY, depth + 1, config);
+    } else {
+        // Split vertically (left/right)
+        const splitX = Math.max(minSize, Math.min(width - minSize, Math.floor(width * splitRatio)));
+        if (splitX < 1 || width - splitX < 1) {
+            node.room = generateRoomInNode(node, config);
+            return node;
+        }
+        node.left = generateBSPTree(x, y, splitX, height, depth + 1, config);
+        node.right = generateBSPTree(x + splitX, y, width - splitX, height, depth + 1, config);
+    }
+
+    return node;
+}
+
+/**
+ * Generate a room within a BSP leaf node
+ * @param {object} node - BSP leaf node
+ * @param {object} config - Room generation config
+ * @returns {object} Room data
+ */
+function generateRoomInNode(node, config) {
+    const padding = config.roomPadding || 1;
+    const minSize = config.minRoomSize || 2;
+    const maxSize = config.maxRoomSize || 5;
+
+    // Calculate available space for room
+    const availWidth = node.width - padding * 2;
+    const availHeight = node.height - padding * 2;
+
+    if (availWidth < minSize || availHeight < minSize) {
+        // Not enough space for a room
+        return null;
+    }
+
+    // Determine room size
+    let roomWidth = Math.min(maxSize, availWidth);
+    let roomHeight = Math.min(maxSize, availHeight);
+
+    // Add some variance to room size
+    roomWidth = Math.max(minSize, Math.floor(roomWidth * (0.7 + Math.random() * 0.3)));
+    roomHeight = Math.max(minSize, Math.floor(roomHeight * (0.7 + Math.random() * 0.3)));
+
+    // Prefer square rooms if configured
+    if (config.preferSquareRooms) {
+        const minDim = Math.min(roomWidth, roomHeight);
+        roomWidth = minDim;
+        roomHeight = minDim;
+    }
+
+    // Position room within node (with some randomness)
+    const maxOffsetX = availWidth - roomWidth;
+    const maxOffsetY = availHeight - roomHeight;
+    const offsetX = maxOffsetX > 0 ? Math.floor(Math.random() * maxOffsetX) : 0;
+    const offsetY = maxOffsetY > 0 ? Math.floor(Math.random() * maxOffsetY) : 0;
+
+    const roomX = node.x + padding + offsetX;
+    const roomY = node.y + padding + offsetY;
+
+    return {
+        x: roomX,
+        y: roomY,
+        width: roomWidth,
+        height: roomHeight,
+        centerX: Math.floor(roomX + roomWidth / 2),
+        centerY: Math.floor(roomY + roomHeight / 2),
+        type: 'common', // Will be assigned later based on theme
+        zoneId: null,
+        isCleared: false,
+        connections: []
+    };
+}
+
+/**
+ * Collect all rooms from a BSP tree
+ * @param {object} node - BSP tree root
+ * @returns {array} Array of rooms
+ */
+function collectRoomsFromBSP(node) {
+    if (!node) return [];
+
+    if (node.room) {
+        return [node.room];
+    }
+
+    return [
+        ...collectRoomsFromBSP(node.left),
+        ...collectRoomsFromBSP(node.right)
+    ];
+}
+
+/**
+ * Find the nearest room in a BSP subtree to a given point
+ * @param {object} node - BSP node
+ * @param {number} targetX - Target X coordinate
+ * @param {number} targetY - Target Y coordinate
+ * @returns {object} Nearest room
+ */
+function findNearestRoom(node, targetX, targetY) {
+    if (!node) return null;
+
+    if (node.room) {
+        return node.room;
+    }
+
+    const leftRoom = findNearestRoom(node.left, targetX, targetY);
+    const rightRoom = findNearestRoom(node.right, targetX, targetY);
+
+    if (!leftRoom) return rightRoom;
+    if (!rightRoom) return leftRoom;
+
+    const leftDist = Math.abs(leftRoom.centerX - targetX) + Math.abs(leftRoom.centerY - targetY);
+    const rightDist = Math.abs(rightRoom.centerX - targetX) + Math.abs(rightRoom.centerY - targetY);
+
+    return leftDist < rightDist ? leftRoom : rightRoom;
+}
+
+/**
+ * Connect rooms in BSP tree via corridors
+ * @param {object} node - BSP node (internal)
+ * @param {array} grid - Map grid
+ * @param {number} size - Grid size
+ * @param {object} config - Configuration
+ */
+function connectBSPChildren(node, grid, size, config) {
+    if (!node || !node.left || !node.right) return;
+
+    // Recursively connect children first
+    connectBSPChildren(node.left, grid, size, config);
+    connectBSPChildren(node.right, grid, size, config);
+
+    // Find rooms to connect from each child
+    const leftRoom = findNearestRoom(node.left, node.x + node.width / 2, node.y + node.height / 2);
+    const rightRoom = findNearestRoom(node.right, node.x + node.width / 2, node.y + node.height / 2);
+
+    if (leftRoom && rightRoom) {
+        // Create corridor between room centers
+        carveCorridor(grid, size,
+            leftRoom.centerX, leftRoom.centerY,
+            rightRoom.centerX, rightRoom.centerY,
+            config);
+
+        // Track connection
+        leftRoom.connections.push(rightRoom);
+        rightRoom.connections.push(leftRoom);
+    }
+}
+
+/**
+ * Carve a corridor between two points (L-shaped or straight)
+ * @param {array} grid - Map grid
+ * @param {number} size - Grid size
+ * @param {number} x1 - Start X
+ * @param {number} y1 - Start Y
+ * @param {number} x2 - End X
+ * @param {number} y2 - End Y
+ * @param {object} config - Configuration
+ */
+function carveCorridor(grid, size, x1, y1, x2, y2, config) {
+    const width = config.corridorWidth || 1;
+
+    // Randomly choose horizontal-first or vertical-first
+    const horizontalFirst = Math.random() < 0.5;
+
+    if (config.windingCorridors && Math.random() < 0.3) {
+        // Add a midpoint for more interesting corridors
+        const midX = Math.floor((x1 + x2) / 2) + Math.floor((Math.random() - 0.5) * 4);
+        const midY = Math.floor((y1 + y2) / 2) + Math.floor((Math.random() - 0.5) * 4);
+        carveCorridor(grid, size, x1, y1, midX, midY, { ...config, windingCorridors: false });
+        carveCorridor(grid, size, midX, midY, x2, y2, { ...config, windingCorridors: false });
+        return;
+    }
+
+    if (horizontalFirst) {
+        // Horizontal then vertical
+        carveHorizontalCorridor(grid, size, x1, x2, y1, width);
+        carveVerticalCorridor(grid, size, y1, y2, x2, width);
+    } else {
+        // Vertical then horizontal
+        carveVerticalCorridor(grid, size, y1, y2, x1, width);
+        carveHorizontalCorridor(grid, size, x1, x2, y2, width);
+    }
+}
+
+/**
+ * Carve a horizontal corridor
+ */
+function carveHorizontalCorridor(grid, size, x1, x2, y, width) {
+    const startX = Math.min(x1, x2);
+    const endX = Math.max(x1, x2);
+
+    for (let x = startX; x <= endX; x++) {
+        for (let w = 0; w < width; w++) {
+            const yPos = y + w;
+            if (x >= 0 && x < size && yPos >= 0 && yPos < size) {
+                const cell = grid[yPos][x];
+                cell.corridorType = 'main';
+
+                // Remove walls for passage
+                if (x > startX) cell.walls.left = false;
+                if (x < endX) cell.walls.right = false;
+                if (x > 0 && x - 1 >= startX) grid[yPos][x - 1].walls.right = false;
+                if (x < size - 1 && x + 1 <= endX) grid[yPos][x + 1].walls.left = false;
+            }
+        }
+    }
+}
+
+/**
+ * Carve a vertical corridor
+ */
+function carveVerticalCorridor(grid, size, y1, y2, x, width) {
+    const startY = Math.min(y1, y2);
+    const endY = Math.max(y1, y2);
+
+    for (let y = startY; y <= endY; y++) {
+        for (let w = 0; w < width; w++) {
+            const xPos = x + w;
+            if (xPos >= 0 && xPos < size && y >= 0 && y < size) {
+                const cell = grid[y][xPos];
+                cell.corridorType = 'main';
+
+                // Remove walls for passage
+                if (y > startY) cell.walls.top = false;
+                if (y < endY) cell.walls.bottom = false;
+                if (y > 0 && y - 1 >= startY) grid[y - 1][xPos].walls.bottom = false;
+                if (y < size - 1 && y + 1 <= endY) grid[y + 1][xPos].walls.top = false;
+            }
+        }
+    }
+}
+
+/**
+ * Carve a room into the grid (remove interior walls)
+ * @param {array} grid - Map grid
+ * @param {object} room - Room data
+ * @param {number} roomId - Room ID to assign
+ */
+function carveRoomIntoGrid(grid, room, roomId) {
+    for (let y = room.y; y < room.y + room.height; y++) {
+        for (let x = room.x; x < room.x + room.width; x++) {
+            if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
+                const cell = grid[y][x];
+                cell.roomId = roomId;
+                cell.isRoomInterior = true;
+
+                // Remove interior walls (keep perimeter)
+                if (x > room.x) cell.walls.left = false;
+                if (x < room.x + room.width - 1) cell.walls.right = false;
+                if (y > room.y) cell.walls.top = false;
+                if (y < room.y + room.height - 1) cell.walls.bottom = false;
+
+                // Also update adjacent cells' walls
+                if (x > room.x && x > 0) grid[y][x - 1].walls.right = false;
+                if (x < room.x + room.width - 1 && x < grid[0].length - 1) grid[y][x + 1].walls.left = false;
+                if (y > room.y && y > 0) grid[y - 1][x].walls.bottom = false;
+                if (y < room.y + room.height - 1 && y < grid.length - 1) grid[y + 1][x].walls.top = false;
+            }
+        }
+    }
+}
+
+/**
+ * Assign themed room types based on size and theme
+ * @param {array} rooms - Array of rooms
+ * @param {string} theme - Map theme
+ */
+function assignRoomTypes(rooms, theme) {
+    const themeRooms = THEMED_ROOM_TYPES[theme] || THEMED_ROOM_TYPES.fantasy;
+
+    // Ensure at least one special room for larger dungeons
+    const hasSpecial = rooms.length > 5;
+    let specialAssigned = false;
+
+    rooms.forEach((room, index) => {
+        const area = room.width * room.height;
+
+        // Determine size category
+        let sizeCategory;
+        if (area <= 4) {
+            sizeCategory = 'small';
+        } else if (area <= 9) {
+            sizeCategory = 'medium';
+        } else {
+            sizeCategory = 'large';
+        }
+
+        // Chance for special room (last room or random)
+        if (hasSpecial && !specialAssigned && (index === rooms.length - 1 || Math.random() < 0.1)) {
+            room.type = themeRooms.special[Math.floor(Math.random() * themeRooms.special.length)];
+            specialAssigned = true;
+        } else {
+            const typePool = themeRooms[sizeCategory];
+            room.type = typePool[Math.floor(Math.random() * typePool.length)];
+        }
+
+        // Assign mechanics
+        room.mechanics = ROOM_MECHANICS[room.type] || ROOM_MECHANICS.default;
+    });
+}
+
+/**
+ * Generate a complete BSP-based grid
+ * @param {number} size - Grid size
+ * @param {string} mapStyle - Map style name
+ * @param {string} theme - Theme name
+ * @param {object} overrideConfig - Optional config overrides
+ * @returns {object} { grid, rooms }
+ */
+function generateBSPGrid(size, mapStyle, theme, overrideConfig = {}) {
+    // Get style-specific config
+    const configName = STYLE_TO_BSP_CONFIG[mapStyle] || 'dungeon';
+    const baseConfig = BSP_STYLE_CONFIGS[configName] || BSP_STYLE_CONFIGS.dungeon;
+    const config = { ...baseConfig, ...overrideConfig };
+
+    // Calculate max depth based on size - more aggressive splitting for denser mazes
+    config.maxDepth = Math.max(4, Math.floor(Math.log2(size) * 1.5));
+
+    // Initialize grid with all walls
+    const grid = [];
+    for (let y = 0; y < size; y++) {
+        grid[y] = [];
+        for (let x = 0; x < size; x++) {
+            grid[y][x] = {
+                walls: { top: true, right: true, bottom: true, left: true },
+                visited: false,
+                minion: null,
+                trap: null,
+                // v1.4.0 BSP properties
+                roomId: null,
+                zoneId: null,
+                isRoomInterior: false,
+                secretPassage: null,
+                corridorType: null
+            };
+        }
+    }
+
+    // Generate BSP tree
+    const root = generateBSPTree(0, 0, size, size, 0, config);
+
+    // Collect rooms from tree
+    const rooms = collectRoomsFromBSP(root).filter(r => r !== null);
+
+    // Carve rooms into grid
+    rooms.forEach((room, index) => {
+        room.id = index;
+        carveRoomIntoGrid(grid, room, index);
+    });
+
+    // Connect rooms via corridors
+    connectBSPChildren(root, grid, size, config);
+
+    // Assign themed room types
+    assignRoomTypes(rooms, theme);
+
+    // Add extra connections for variety
+    if (config.extraConnections > 0) {
+        addExtraBSPConnections(grid, rooms, size, config);
+    }
+
+    // Add dead ends if configured (for maze style)
+    if (config.addDeadEnds) {
+        addBSPDeadEnds(grid, rooms, size, config);
+    }
+
+    // Ensure start and exit are accessible
+    ensureConnected(grid, size, 0, 0, size - 1, size - 1);
+
+    // Ensure multiple directions from start position for interesting exploration
+    ensureMultipleStartDirections(grid, rooms, size, config);
+
+    return { grid, rooms };
+}
+
+/**
+ * Ensure the start position (0,0) has multiple direction options
+ * This prevents boring linear corridors from the start
+ */
+function ensureMultipleStartDirections(grid, rooms, size, config) {
+    const startCell = grid[0][0];
+    const directions = [];
+
+    // Count current available directions
+    if (!startCell.walls.right) directions.push('east');
+    if (!startCell.walls.bottom) directions.push('south');
+    // Note: start is at (0,0) so no north or west possible
+
+    // If we already have 2 directions, we're good
+    if (directions.length >= 2) return;
+
+    // Find nearby rooms to connect to
+    const nearbyRooms = rooms.filter(r => {
+        const dist = Math.abs(r.centerX) + Math.abs(r.centerY);
+        return dist > 0 && dist < size / 2;
+    }).sort((a, b) => {
+        const distA = Math.abs(a.centerX) + Math.abs(a.centerY);
+        const distB = Math.abs(b.centerX) + Math.abs(b.centerY);
+        return distA - distB;
+    });
+
+    // Try to open both east and south directions if possible
+    if (!directions.includes('east') && size > 1) {
+        // Open east - find a room to the east or just open the path
+        const eastRoom = nearbyRooms.find(r => r.centerX > 0);
+        if (eastRoom) {
+            // Carve corridor from (0,0) to a point going east then to room
+            let x = 0;
+            const targetX = Math.min(3, eastRoom.centerX);
+            while (x < targetX && x < size - 1) {
+                grid[0][x].walls.right = false;
+                grid[0][x + 1].walls.left = false;
+                x++;
+            }
+            // Now connect to the room
+            carveCorridor(grid, size, x, 0, eastRoom.centerX, eastRoom.centerY, config);
+        } else {
+            // Just open a short path east
+            grid[0][0].walls.right = false;
+            if (size > 1) grid[0][1].walls.left = false;
+        }
+    }
+
+    if (!directions.includes('south') && size > 1) {
+        // Open south - find a room to the south or just open the path
+        const southRoom = nearbyRooms.find(r => r.centerY > 0 && r.centerX < size / 3);
+        if (southRoom) {
+            // Carve corridor from (0,0) going south then to room
+            let y = 0;
+            const targetY = Math.min(3, southRoom.centerY);
+            while (y < targetY && y < size - 1) {
+                grid[y][0].walls.bottom = false;
+                grid[y + 1][0].walls.top = false;
+                y++;
+            }
+            // Now connect to the room
+            carveCorridor(grid, size, 0, y, southRoom.centerX, southRoom.centerY, config);
+        } else {
+            // Just open a short path south
+            grid[0][0].walls.bottom = false;
+            if (size > 1) grid[1][0].walls.top = false;
+        }
+    }
+}
+
+/**
+ * Add extra random connections between rooms
+ */
+function addExtraBSPConnections(grid, rooms, size, config) {
+    // Add room-to-room connections
+    const extraCount = Math.floor(rooms.length * config.extraConnections);
+
+    for (let i = 0; i < extraCount; i++) {
+        const room1 = rooms[Math.floor(Math.random() * rooms.length)];
+        const room2 = rooms[Math.floor(Math.random() * rooms.length)];
+
+        if (room1 !== room2 && !room1.connections.includes(room2)) {
+            carveCorridor(grid, size,
+                room1.centerX, room1.centerY,
+                room2.centerX, room2.centerY,
+                config);
+            room1.connections.push(room2);
+            room2.connections.push(room1);
+        }
+    }
+
+    // Add corridor intersections to create more branch points
+    addCorridorIntersections(grid, size, config);
+}
+
+/**
+ * Add intersection points along corridors to create more direction options
+ */
+function addCorridorIntersections(grid, size, config) {
+    const intersectionCount = Math.floor(size * 1.5); // More intersections for larger maps
+
+    for (let i = 0; i < intersectionCount; i++) {
+        // Find a corridor cell (not a room interior, not on edge)
+        const x = 2 + Math.floor(Math.random() * (size - 4));
+        const y = 2 + Math.floor(Math.random() * (size - 4));
+
+        const cell = grid[y][x];
+
+        // Skip room interiors
+        if (cell.isRoomInterior) continue;
+
+        // Count current open directions
+        let openDirs = 0;
+        if (!cell.walls.top) openDirs++;
+        if (!cell.walls.right) openDirs++;
+        if (!cell.walls.bottom) openDirs++;
+        if (!cell.walls.left) openDirs++;
+
+        // If this is a corridor cell (1-2 open directions), open more directions
+        if (openDirs >= 1 && openDirs <= 2) {
+            // Open 1-2 additional random directions
+            const closedDirs = [];
+            if (cell.walls.top && y > 0) closedDirs.push('top');
+            if (cell.walls.right && x < size - 1) closedDirs.push('right');
+            if (cell.walls.bottom && y < size - 1) closedDirs.push('bottom');
+            if (cell.walls.left && x > 0) closedDirs.push('left');
+
+            // Shuffle and pick 1-2 to open
+            const toOpen = Math.min(closedDirs.length, 1 + Math.floor(Math.random() * 2));
+            for (let j = 0; j < toOpen; j++) {
+                const idx = Math.floor(Math.random() * closedDirs.length);
+                const dir = closedDirs.splice(idx, 1)[0];
+
+                switch (dir) {
+                    case 'top':
+                        cell.walls.top = false;
+                        grid[y - 1][x].walls.bottom = false;
+                        break;
+                    case 'right':
+                        cell.walls.right = false;
+                        grid[y][x + 1].walls.left = false;
+                        break;
+                    case 'bottom':
+                        cell.walls.bottom = false;
+                        grid[y + 1][x].walls.top = false;
+                        break;
+                    case 'left':
+                        cell.walls.left = false;
+                        grid[y][x - 1].walls.right = false;
+                        break;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Add dead-end branches for maze-like feel
+ */
+function addBSPDeadEnds(grid, rooms, size, config) {
+    const deadEndCount = Math.floor(rooms.length * 0.5);
+
+    for (let i = 0; i < deadEndCount; i++) {
+        const room = rooms[Math.floor(Math.random() * rooms.length)];
+
+        // Pick a random direction from room center
+        const directions = [
+            { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+        ];
+        const dir = directions[Math.floor(Math.random() * directions.length)];
+
+        // Carve a short dead-end branch
+        const length = 2 + Math.floor(Math.random() * 3);
+        let x = room.centerX + dir.dx * (Math.floor(room.width / 2) + 1);
+        let y = room.centerY + dir.dy * (Math.floor(room.height / 2) + 1);
+
+        for (let step = 0; step < length; step++) {
+            if (x >= 0 && x < size && y >= 0 && y < size) {
+                const cell = grid[y][x];
+                cell.corridorType = 'branch';
+
+                // Remove wall in direction of travel
+                if (dir.dx > 0 && x < size - 1) {
+                    cell.walls.right = false;
+                    grid[y][x + 1].walls.left = false;
+                } else if (dir.dx < 0 && x > 0) {
+                    cell.walls.left = false;
+                    grid[y][x - 1].walls.right = false;
+                } else if (dir.dy > 0 && y < size - 1) {
+                    cell.walls.bottom = false;
+                    grid[y + 1][x].walls.top = false;
+                } else if (dir.dy < 0 && y > 0) {
+                    cell.walls.top = false;
+                    grid[y - 1][x].walls.bottom = false;
+                }
+
+                x += dir.dx;
+                y += dir.dy;
+            }
+        }
+    }
+}
+
+// =============================================================================
+// v1.4.0 ZONE SYSTEM
+// =============================================================================
+
+/**
+ * Generate zones from rooms
+ * @param {array} rooms - Array of rooms
+ * @param {number} zoneCount - Number of zones to create
+ * @param {string} theme - Theme for zone naming
+ * @returns {array} Array of zones
+ */
+function generateZones(rooms, zoneCount, theme) {
+    if (zoneCount <= 1 || rooms.length <= 1) {
+        // No zones - all rooms unlocked
+        rooms.forEach(room => { room.zoneId = 0; });
+        return [{
+            id: 0,
+            name: 'Main Area',
+            rooms: rooms.map((_, i) => i),
+            isUnlocked: true,
+            unlockCondition: null,
+            gatePositions: []
+        }];
+    }
+
+    // Sort rooms by distance from start (0,0)
+    const sortedRooms = [...rooms].sort((a, b) => {
+        const distA = a.centerX + a.centerY;
+        const distB = b.centerX + b.centerY;
+        return distA - distB;
+    });
+
+    // Divide rooms into zones
+    const roomsPerZone = Math.ceil(sortedRooms.length / zoneCount);
+    const zones = [];
+
+    for (let z = 0; z < zoneCount; z++) {
+        const startIdx = z * roomsPerZone;
+        const endIdx = Math.min(startIdx + roomsPerZone, sortedRooms.length);
+        const zoneRooms = sortedRooms.slice(startIdx, endIdx);
+
+        zoneRooms.forEach(room => { room.zoneId = z; });
+
+        zones.push({
+            id: z,
+            name: getZoneName(z, zoneCount, theme),
+            rooms: zoneRooms.map(r => r.id),
+            isUnlocked: z === 0, // First zone always unlocked
+            unlockCondition: z === 0 ? null : {
+                type: 'clear',
+                targetZoneId: z - 1,
+                requiredClears: Math.max(1, Math.floor(zoneRooms.length * 0.6))
+            },
+            gatePositions: []
+        });
+    }
+
+    return zones;
+}
+
+/**
+ * Get a themed name for a zone
+ */
+function getZoneName(zoneIndex, totalZones, theme) {
+    const zoneNames = {
+        fantasy: ['Entrance Hall', 'The Depths', 'Ancient Crypt', 'Dragon\'s Domain', 'Throne of Shadows', 'Final Sanctum'],
+        scifi: ['Docking Bay', 'Crew Quarters', 'Engineering', 'Research Labs', 'Command Deck', 'Core Systems'],
+        horror: ['Foyer', 'Patient Ward', 'Basement', 'Ritual Chamber', 'The Abyss', 'Heart of Darkness'],
+        cyberpunk: ['Street Level', 'Lower Floors', 'Corporate Zone', 'Executive Suite', 'Server Core', 'Penthouse'],
+        western: ['Town Entrance', 'Main Street', 'Back Alleys', 'Mine Tunnels', 'Hideout', 'Final Showdown'],
+        action: ['Insertion Point', 'Outer Perimeter', 'Inner Complex', 'High Security', 'Command Center', 'Extraction Zone'],
+        comedy: ['Lobby', 'Open Office', 'Break Room Hell', 'Management Floor', 'IT Dungeon', 'CEO\'s Lair']
+    };
+
+    const names = zoneNames[theme] || zoneNames.fantasy;
+    return names[Math.min(zoneIndex, names.length - 1)];
+}
+
+/**
+ * Apply zones to grid cells
+ */
+function applyZonesToGrid(grid, zones, rooms) {
+    // Mark cells with zone IDs based on room assignments
+    rooms.forEach(room => {
+        for (let y = room.y; y < room.y + room.height; y++) {
+            for (let x = room.x; x < room.x + room.width; x++) {
+                if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
+                    grid[y][x].zoneId = room.zoneId;
+                }
+            }
+        }
+    });
+
+    // Mark corridors with zone IDs (use nearest room's zone)
+    for (let y = 0; y < grid.length; y++) {
+        for (let x = 0; x < grid[0].length; x++) {
+            const cell = grid[y][x];
+            if (cell.corridorType && cell.zoneId === null) {
+                // Find nearest room and use its zone
+                let nearestRoom = null;
+                let nearestDist = Infinity;
+                rooms.forEach(room => {
+                    const dist = Math.abs(room.centerX - x) + Math.abs(room.centerY - y);
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestRoom = room;
+                    }
+                });
+                if (nearestRoom) {
+                    cell.zoneId = nearestRoom.zoneId;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * v1.4.0: Mark a room as cleared and check zone unlocks
+ * Called when player defeats a minion in a room
+ * @param {number} x - Player x position
+ * @param {number} y - Player y position
+ */
+async function markRoomCleared(x, y) {
+    if (!currentMaze || !currentMaze.floorsData) return;
+
+    const floorData = currentMaze.floorsData[currentMaze.currentFloor];
+    if (!floorData || !floorData.rooms) return;
+
+    const cell = currentMaze.grid[y]?.[x];
+    if (!cell || cell.roomId === undefined || cell.roomId === null) return;
+
+    // Find the room
+    const room = floorData.rooms.find(r => r.id === cell.roomId);
+    if (!room || room.isCleared) return;
+
+    // Mark as cleared
+    room.isCleared = true;
+    console.log(`[MazeMaster] Room ${room.id} (${room.type}) cleared`);
+
+    // Fire room clear hook
+    await fireHook('onRoomClear', { roomId: room.id, roomType: room.type, x, y });
+
+    // Check zone unlock conditions
+    await checkZoneUnlocks();
+}
+
+/**
+ * v1.4.0: Check if any zones should be unlocked
+ */
+async function checkZoneUnlocks() {
+    if (!currentMaze || !currentMaze.floorsData) return;
+
+    const floorData = currentMaze.floorsData[currentMaze.currentFloor];
+    if (!floorData || !floorData.zones || !floorData.rooms) return;
+
+    for (const zone of floorData.zones) {
+        if (zone.isUnlocked) continue;
+
+        const condition = zone.unlockCondition;
+        if (!condition) continue;
+
+        let shouldUnlock = false;
+
+        switch (condition.type) {
+            case 'clear':
+                // Count cleared rooms in the target zone (or previous zone)
+                const targetZoneId = condition.targetZoneId ?? (zone.id - 1);
+                const targetZoneRooms = floorData.rooms.filter(r => r.zoneId === targetZoneId);
+                const clearedCount = targetZoneRooms.filter(r => r.isCleared).length;
+                const requiredClears = condition.requiredClears || 1;
+                shouldUnlock = clearedCount >= requiredClears;
+                break;
+
+            case 'boss':
+                // Check if boss room in target zone is cleared
+                const bossRoom = floorData.rooms.find(r =>
+                    r.zoneId === (condition.targetZoneId ?? (zone.id - 1)) &&
+                    (r.type === 'bossLair' || r.type === 'boss-arena')
+                );
+                shouldUnlock = bossRoom?.isCleared === true;
+                break;
+
+            case 'key':
+                // Check if player has zone key (future implementation)
+                shouldUnlock = false; // TODO: implement zone keys
+                break;
+
+            case 'start':
+                // Starting zone is always unlocked
+                shouldUnlock = true;
+                break;
+        }
+
+        if (shouldUnlock) {
+            zone.isUnlocked = true;
+            console.log(`[MazeMaster] Zone ${zone.id} (${zone.name}) unlocked!`);
+            addMazeMessage('Zone Unlocked', `${zone.name} is now accessible!`);
+            await fireHook('onZoneUnlock', { zoneId: zone.id, zoneName: zone.name });
+        }
+    }
+}
+
+/**
+ * v1.4.0: Get current zone progress for HUD display
+ * @returns {object} Zone progress info
+ */
+function getZoneProgress() {
+    if (!currentMaze || !currentMaze.floorsData) return null;
+
+    const floorData = currentMaze.floorsData[currentMaze.currentFloor];
+    if (!floorData || !floorData.zones) return null;
+
+    // Find current zone based on player position
+    const cell = currentMaze.grid[currentMaze.playerY]?.[currentMaze.playerX];
+    const currentZoneId = cell?.zoneId ?? 0;
+    const currentZone = floorData.zones[currentZoneId];
+
+    if (!currentZone) return null;
+
+    // Count cleared rooms in current zone
+    const zoneRooms = floorData.rooms.filter(r => r.zoneId === currentZoneId);
+    const clearedRooms = zoneRooms.filter(r => r.isCleared).length;
+
+    // Find next locked zone and its unlock requirement
+    const nextLockedZone = floorData.zones.find(z => !z.isUnlocked);
+    let unlockHint = null;
+
+    if (nextLockedZone) {
+        const condition = nextLockedZone.unlockCondition;
+        if (condition?.type === 'clear') {
+            const targetZoneRooms = floorData.rooms.filter(r => r.zoneId === (condition.targetZoneId ?? (nextLockedZone.id - 1)));
+            const targetCleared = targetZoneRooms.filter(r => r.isCleared).length;
+            unlockHint = `Clear ${condition.requiredClears - targetCleared} more room(s) to unlock ${nextLockedZone.name}`;
+        }
+    }
+
+    return {
+        zoneName: currentZone.name,
+        zoneId: currentZoneId,
+        totalRooms: zoneRooms.length,
+        clearedRooms,
+        isUnlocked: currentZone.isUnlocked,
+        unlockHint
+    };
+}
+
+// =============================================================================
+// v1.4.0 SECRET PASSAGES
+// =============================================================================
+
+/**
+ * Generate secret passages in the grid
+ * @param {array} grid - Map grid
+ * @param {number} size - Grid size
+ * @param {object} config - Secret passage configuration
+ */
+function generateSecretPassages(grid, size, config) {
+    const density = config.secretDensity || 0.02;
+    const secretCount = Math.max(1, Math.floor(size * size * density));
+
+    let placed = 0;
+    let attempts = 0;
+    const maxAttempts = secretCount * 10;
+
+    while (placed < secretCount && attempts < maxAttempts) {
+        attempts++;
+
+        // Pick a random cell
+        const x = Math.floor(Math.random() * size);
+        const y = Math.floor(Math.random() * size);
+        const cell = grid[y][x];
+
+        // Skip if already has a secret or is special
+        if (cell.secretPassage || cell.staircase || cell.portal) continue;
+
+        // Find walls that could become secrets
+        const wallDirections = [];
+        if (cell.walls.top && y > 0) wallDirections.push('top');
+        if (cell.walls.right && x < size - 1) wallDirections.push('right');
+        if (cell.walls.bottom && y < size - 1) wallDirections.push('bottom');
+        if (cell.walls.left && x > 0) wallDirections.push('left');
+
+        if (wallDirections.length === 0) continue;
+
+        // Pick a random wall direction
+        const direction = wallDirections[Math.floor(Math.random() * wallDirections.length)];
+
+        // Get target cell
+        let targetX = x, targetY = y;
+        if (direction === 'top') targetY--;
+        if (direction === 'bottom') targetY++;
+        if (direction === 'left') targetX--;
+        if (direction === 'right') targetX++;
+
+        const targetCell = grid[targetY]?.[targetX];
+        if (!targetCell) continue;
+
+        // Don't create secrets to start or exit areas
+        if ((x === 0 && y === 0) || (targetX === 0 && targetY === 0)) continue;
+        if ((x === size - 1 && y === size - 1) || (targetX === size - 1 && targetY === size - 1)) continue;
+
+        // Create secret passage
+        const hintLevel = config.secretHints ? Math.floor(Math.random() * 4) : 0;
+
+        cell.secretPassage = {
+            direction,
+            revealed: false,
+            hintLevel,
+            targetCell: { x: targetX, y: targetY }
+        };
+
+        placed++;
+    }
+
+    console.log(`[MazeMaster] Placed ${placed} secret passages`);
+}
+
+/**
+ * Attempt to discover a secret passage
+ * @param {object} cell - Cell to check
+ * @param {string} direction - Direction to check
+ * @param {string} method - Discovery method: 'tap', 'item', 'passive'
+ * @param {object} inventory - Player inventory
+ * @returns {object} { found, revealed, hint }
+ */
+function attemptSecretDiscovery(cell, direction, method, inventory) {
+    const secret = cell.secretPassage;
+
+    if (!secret || secret.direction !== direction || secret.revealed) {
+        return { found: false };
+    }
+
+    // Calculate discovery chance
+    let chance = 0;
+    switch (method) {
+        case 'tap':
+            chance = 0.1 + (secret.hintLevel * 0.15);
+            break;
+        case 'item':
+            chance = 0.8 + (secret.hintLevel * 0.05);
+            break;
+        case 'passive':
+            chance = secret.hintLevel >= 3 ? 0.5 : 0;
+            break;
+    }
+
+    // Bonus from Secret Sense item
+    if (inventory?.secretSense > 0) {
+        chance += 0.2;
+    }
+
+    chance = Math.min(chance, 1.0);
+
+    if (Math.random() < chance) {
+        return { found: true, revealed: true };
+    }
+
+    // Return hint if available
+    if (secret.hintLevel > 0 && method === 'tap') {
+        return { found: false, hint: true, hintLevel: secret.hintLevel };
+    }
+
+    return { found: false };
+}
+
+/**
+ * Reveal a secret passage
+ */
+function revealSecretPassage(grid, x, y, direction) {
+    const cell = grid[y][x];
+    if (!cell.secretPassage || cell.secretPassage.direction !== direction) return false;
+
+    cell.secretPassage.revealed = true;
+    cell.walls[direction] = false;
+
+    // Open corresponding wall on target cell
+    const target = cell.secretPassage.targetCell;
+    const oppositeDir = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }[direction];
+    if (grid[target.y]?.[target.x]) {
+        grid[target.y][target.x].walls[oppositeDir] = false;
+    }
+
+    return true;
+}
+
+/**
+ * v1.4.0: Try to discover a secret when bumping into a wall
+ * Called from tryMazeMove when player walks into a wall
+ */
+function trySecretDiscovery(cell, direction) {
+    if (!cell.secretPassage || cell.secretPassage.direction !== direction) {
+        return { found: false, attempted: false };
+    }
+
+    if (cell.secretPassage.revealed) {
+        return { found: false, attempted: false };
+    }
+
+    // Use the attemptSecretDiscovery function with 'tap' method
+    const inventory = currentMaze?.inventory;
+    const result = attemptSecretDiscovery(cell, direction, 'tap', inventory);
+
+    if (result.found) {
+        return { found: true, attempted: true };
+    }
+
+    // Provide hints based on hint level
+    let message = 'The wall feels solid...';
+    if (result.hint) {
+        switch (result.hintLevel) {
+            case 1:
+                message = 'You notice something unusual about this wall...';
+                break;
+            case 2:
+                message = 'There\'s a faint crack here. Try again?';
+                break;
+            case 3:
+                message = 'This section of wall seems hollow!';
+                break;
+        }
+    }
+
+    return { found: false, attempted: true, message };
+}
+
+// =============================================================================
+// ORIGINAL MAZE GENERATION (preserved for compatibility)
 // =============================================================================
 
 function generateMaze(size) {
@@ -16036,8 +18138,30 @@ function generateDungeonGrid(size) {
 
 /**
  * Generate grid based on map style
+ * v1.4.0: Now uses BSP generation for all styles
+ * @param {number} size - Grid size
+ * @param {string} mapStyle - Map style name
+ * @param {string} theme - Theme for room typing (default: 'fantasy')
+ * @param {object} bspConfig - Optional BSP configuration overrides
+ * @returns {object} { grid, rooms } - Grid and room data
  */
-function generateGridByStyle(size, mapStyle) {
+function generateGridByStyle(size, mapStyle, theme = 'fantasy', bspConfig = {}) {
+    // v1.4.0: Use BSP generation for all styles
+    console.log(`[MazeMaster] Generating BSP grid: size=${size}, style=${mapStyle}, theme=${theme}`);
+
+    const result = generateBSPGrid(size, mapStyle, theme, bspConfig);
+
+    // Log generation stats
+    console.log(`[MazeMaster] Generated ${result.rooms.length} rooms`);
+
+    return result;
+}
+
+/**
+ * Legacy wrapper for backward compatibility
+ * Returns just the grid (used by old code paths)
+ */
+function generateGridByStyleLegacy(size, mapStyle) {
     switch (mapStyle) {
         case 'city':
         case 'neotokyo':
@@ -16051,13 +18175,11 @@ function generateGridByStyle(size, mapStyle) {
             return generateDungeonGrid(size);
         case 'outpost':
         case 'arena':
-            // Use dungeon style for outposts and arenas (open rooms with corridors)
             return generateDungeonGrid(size);
         case 'college':
         case 'apartment':
         case 'hospital':
         case 'highrise':
-            // Use city style for building interiors (grid-like layout)
             return generateCityGrid(size);
         case 'maze':
         default:
@@ -16212,24 +18334,117 @@ function ensureConnected(grid, size, startX, startY, endX, endY) {
         }
     }
 
-    // Not connected - carve a direct path
+    // Not connected - carve a winding path with multiple turns
+    // Create 2-4 waypoints for a more interesting route
+    const waypoints = [];
+    const numWaypoints = 2 + Math.floor(Math.random() * 3);
+
+    for (let i = 1; i <= numWaypoints; i++) {
+        const t = i / (numWaypoints + 1);
+        // Add randomness to waypoint positions
+        const baseX = startX + Math.floor((endX - startX) * t);
+        const baseY = startY + Math.floor((endY - startY) * t);
+        const offsetX = Math.floor((Math.random() - 0.5) * size * 0.4);
+        const offsetY = Math.floor((Math.random() - 0.5) * size * 0.4);
+        waypoints.push({
+            x: Math.max(0, Math.min(size - 1, baseX + offsetX)),
+            y: Math.max(0, Math.min(size - 1, baseY + offsetY))
+        });
+    }
+
+    // Carve path through waypoints
     let x = startX, y = startY;
-    while (x !== endX || y !== endY) {
-        if (x < endX) {
-            grid[y][x].walls.right = false;
-            grid[y][x + 1].walls.left = false;
-            x++;
-        } else if (y < endY) {
-            grid[y][x].walls.bottom = false;
-            grid[y + 1][x].walls.top = false;
-            y++;
-        } else break;
+    const allPoints = [...waypoints, { x: endX, y: endY }];
+
+    for (const target of allPoints) {
+        // Randomly choose horizontal-first or vertical-first for each segment
+        const horizontalFirst = Math.random() < 0.5;
+
+        if (horizontalFirst) {
+            // Move horizontally first
+            while (x !== target.x) {
+                const nx = x < target.x ? x + 1 : x - 1;
+                if (nx >= 0 && nx < size) {
+                    if (x < target.x) { grid[y][x].walls.right = false; grid[y][nx].walls.left = false; }
+                    else { grid[y][x].walls.left = false; grid[y][nx].walls.right = false; }
+                    x = nx;
+                } else break;
+            }
+            // Then vertically
+            while (y !== target.y) {
+                const ny = y < target.y ? y + 1 : y - 1;
+                if (ny >= 0 && ny < size) {
+                    if (y < target.y) { grid[y][x].walls.bottom = false; grid[ny][x].walls.top = false; }
+                    else { grid[y][x].walls.top = false; grid[ny][x].walls.bottom = false; }
+                    y = ny;
+                } else break;
+            }
+        } else {
+            // Move vertically first
+            while (y !== target.y) {
+                const ny = y < target.y ? y + 1 : y - 1;
+                if (ny >= 0 && ny < size) {
+                    if (y < target.y) { grid[y][x].walls.bottom = false; grid[ny][x].walls.top = false; }
+                    else { grid[y][x].walls.top = false; grid[ny][x].walls.bottom = false; }
+                    y = ny;
+                } else break;
+            }
+            // Then horizontally
+            while (x !== target.x) {
+                const nx = x < target.x ? x + 1 : x - 1;
+                if (nx >= 0 && nx < size) {
+                    if (x < target.x) { grid[y][x].walls.right = false; grid[y][nx].walls.left = false; }
+                    else { grid[y][x].walls.left = false; grid[y][nx].walls.right = false; }
+                    x = nx;
+                } else break;
+            }
+        }
     }
 }
 
 /**
  * Add staircases connecting multiple floors
  */
+/**
+ * Check if a cell is reachable from a start point using BFS
+ */
+function isCellReachable(grid, size, startX, startY, targetX, targetY) {
+    if (startX === targetX && startY === targetY) return true;
+
+    const visited = new Set([`${startX},${startY}`]);
+    const queue = [{ x: startX, y: startY }];
+
+    while (queue.length > 0) {
+        const { x, y } = queue.shift();
+        if (x === targetX && y === targetY) return true;
+
+        if (!grid[y][x].walls.top && y > 0 && !visited.has(`${x},${y - 1}`)) {
+            visited.add(`${x},${y - 1}`);
+            queue.push({ x, y: y - 1 });
+        }
+        if (!grid[y][x].walls.right && x < size - 1 && !visited.has(`${x + 1},${y}`)) {
+            visited.add(`${x + 1},${y}`);
+            queue.push({ x: x + 1, y });
+        }
+        if (!grid[y][x].walls.bottom && y < size - 1 && !visited.has(`${x},${y + 1}`)) {
+            visited.add(`${x},${y + 1}`);
+            queue.push({ x, y: y + 1 });
+        }
+        if (!grid[y][x].walls.left && x > 0 && !visited.has(`${x - 1},${y}`)) {
+            visited.add(`${x - 1},${y}`);
+            queue.push({ x: x - 1, y });
+        }
+    }
+    return false;
+}
+
+/**
+ * Check if a cell has at least one open wall (is accessible)
+ */
+function hasOpenWall(cell) {
+    return !cell.walls.top || !cell.walls.right || !cell.walls.bottom || !cell.walls.left;
+}
+
 function addStaircasesToFloors(floors, size, requireFloorKey, exitX, exitY) {
     const totalFloors = floors.length;
 
@@ -16237,7 +18452,7 @@ function addStaircasesToFloors(floors, size, requireFloorKey, exitX, exitY) {
         const lowerFloor = floors[f];
         const upperFloor = floors[f + 1];
 
-        // Find suitable positions for stairs (not on start, exit, or existing features)
+        // Find suitable positions for stairs - must be reachable and have open walls
         const validPositions = [];
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
@@ -16248,6 +18463,10 @@ function addStaircasesToFloors(floors, size, requireFloorKey, exitX, exitY) {
                 const upperCell = upperFloor[y][x];
                 if (lowerCell.minion || lowerCell.trap || lowerCell.chest) continue;
                 if (upperCell.minion || upperCell.trap || upperCell.chest) continue;
+                // Must have at least one open wall on both floors
+                if (!hasOpenWall(lowerCell) || !hasOpenWall(upperCell)) continue;
+                // Must be reachable from start on lower floor
+                if (!isCellReachable(lowerFloor, size, 0, 0, x, y)) continue;
                 validPositions.push({ x, y });
             }
         }
@@ -16281,8 +18500,67 @@ function addStaircasesToFloors(floors, size, requireFloorKey, exitX, exitY) {
                 targetY: pos.y,
                 requireKey: false, // Going down doesn't require key
             };
+
+            // Ensure the staircase position on upper floor is connected to that floor's exit
+            ensureConnected(upperFloor, size, pos.x, pos.y, exitX, exitY);
+            console.log(`[MazeMaster] Staircase placed at (${pos.x}, ${pos.y}) connecting floor ${f} to ${f + 1}`);
         }
     }
+}
+
+/**
+ * Guarantee floor keys are available on floors that need them
+ * For each floor with an ascending staircase that requires a key,
+ * ensure at least one chest on that floor will drop a floor key.
+ * Returns the number of keys that couldn't be placed in chests (to add to starting inventory)
+ * @param {Array} floors - Array of floor grids
+ * @param {number} size - Grid size
+ * @returns {number} Number of floor keys to add to starting inventory
+ */
+function guaranteeFloorKeys(floors, size) {
+    let keysNeededInInventory = 0;
+
+    for (let f = 0; f < floors.length; f++) {
+        const floor = floors[f];
+
+        // Check if this floor has an ascending staircase that requires a key
+        let needsKey = false;
+        for (let y = 0; y < size && !needsKey; y++) {
+            for (let x = 0; x < size && !needsKey; x++) {
+                const cell = floor[y][x];
+                if (cell.staircase?.direction === 'up' && cell.staircase?.requireKey) {
+                    needsKey = true;
+                }
+            }
+        }
+
+        if (!needsKey) continue;
+
+        // Find chests on this floor to guarantee a floor key
+        const chestsOnFloor = [];
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const cell = floor[y][x];
+                if (cell.chest && !cell.chest.guaranteedFloorKey) {
+                    chestsOnFloor.push({ x, y, cell });
+                }
+            }
+        }
+
+        if (chestsOnFloor.length > 0) {
+            // Pick a random chest to guarantee the floor key
+            const chosenIdx = Math.floor(Math.random() * chestsOnFloor.length);
+            const chosen = chestsOnFloor[chosenIdx];
+            chosen.cell.chest.guaranteedFloorKey = true;
+            console.log(`[MazeMaster] Floor ${f}: Guaranteed floor key in chest at (${chosen.x}, ${chosen.y})`);
+        } else {
+            // No chest available - need to add to starting inventory
+            keysNeededInInventory++;
+            console.log(`[MazeMaster] Floor ${f}: No chest found - adding floor key to starting inventory`);
+        }
+    }
+
+    return keysNeededInInventory;
 }
 
 /**
@@ -16527,7 +18805,61 @@ function placeTiles(grid, profile, size) {
 
     console.log(`[MazeMaster] Placed ${distribution.chestCount} chests, ${minionCount} minions, ${trapCount} traps`);
 
+    // v1.3.2: Apply "Find Early" guaranteed items to nearby chests
+    applyFindEarlyItems(grid, profile, size);
+
     return { placedPortals: placedPortals || [] };
+}
+
+/**
+ * Apply "Find Early" guaranteed items to chests near the starting position
+ * @param {Array} grid - The maze grid
+ * @param {Object} profile - Maze profile with findEarly config
+ * @param {number} size - Grid size
+ */
+function applyFindEarlyItems(grid, profile, size) {
+    const findEarly = profile.findEarly;
+    if (!findEarly || !findEarly.items || findEarly.items.length === 0) return;
+
+    const radius = findEarly.radius || 4;  // Manhattan distance from start (0,0)
+    const items = [...findEarly.items];     // Copy to avoid mutation
+
+    // Find all chests within radius of start (0,0)
+    const nearbyChests = [];
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const manhattanDist = x + y;  // Distance from (0,0)
+            if (manhattanDist <= radius && manhattanDist > 0) {
+                const cell = grid[y][x];
+                if (cell.chest && !cell.chest.opened) {
+                    nearbyChests.push({ x, y, dist: manhattanDist });
+                }
+            }
+        }
+    }
+
+    // Sort by distance (closest first)
+    nearbyChests.sort((a, b) => a.dist - b.dist);
+
+    // Distribute guaranteed items across nearby chests
+    let itemIndex = 0;
+    for (const chestPos of nearbyChests) {
+        if (itemIndex >= items.length) break;
+
+        const chest = grid[chestPos.y][chestPos.x].chest;
+        if (!chest.guaranteedItems) chest.guaranteedItems = [];
+
+        // Add 1-2 items per chest depending on config
+        const itemsPerChest = findEarly.itemsPerChest || 1;
+        for (let i = 0; i < itemsPerChest && itemIndex < items.length; i++) {
+            chest.guaranteedItems.push(items[itemIndex]);
+            itemIndex++;
+        }
+    }
+
+    if (itemIndex > 0) {
+        console.log(`[MazeMaster] Find Early: Assigned ${itemIndex} guaranteed items to ${nearbyChests.length} nearby chests`);
+    }
 }
 
 /**
@@ -16561,7 +18893,7 @@ function getCellSize(gridSize) {
 }
 
 function startMaze(profileName) {
-    const profile = getMazeProfile(profileName);
+    const profile = getMazeProfileWithDefaults(profileName);
     if (!profile) {
         console.error(`[MazeMaster] Maze profile "${profileName}" not found`);
         return { error: `Profile "${profileName}" not found` };
@@ -16621,19 +18953,62 @@ function startMaze(profileName) {
         exitY = size - 1;
     }
 
+    // v1.4.0: Store all floor data including BSP rooms
+    const floorsData = [];
+
     for (let f = 0; f < totalFloors; f++) {
-        const floorGrid = generateGridByStyle(size, mapStyle);
+        // v1.4.0: Get BSP configuration from profile
+        const bspConfig = profile.bspConfig || {};
+
+        // v1.4.0: Per-floor complexity scaling
+        if (bspConfig.floorComplexityScaling !== false && totalFloors > 1) {
+            const depthRatio = f / Math.max(1, totalFloors - 1);
+            bspConfig.maxDepth = (bspConfig.maxDepth || 4) + Math.floor(depthRatio * 2);
+            bspConfig.secretDensity = (bspConfig.secretDensity || 0.02) * (1 + depthRatio);
+        }
+
+        // v1.4.0: Generate BSP grid with rooms
+        const theme = profile.theme || 'fantasy';
+        const bspResult = generateGridByStyle(size, mapStyle, theme, bspConfig);
+        const floorGrid = bspResult.grid;
+        const floorRooms = bspResult.rooms;
+
+        // v1.4.0: Generate zones if enabled
+        const zoneCount = bspConfig.zoneCount || 1;
+        const floorZones = generateZones(floorRooms, zoneCount, theme);
+        applyZonesToGrid(floorGrid, floorZones, floorRooms);
+
+        // v1.4.0: Add secret passages if enabled
+        if (bspConfig.secretDensity > 0) {
+            generateSecretPassages(floorGrid, size, {
+                secretDensity: bspConfig.secretDensity,
+                secretHints: bspConfig.secretHints !== false
+            });
+        }
+
         // Ensure wall consistency (both sides of each wall match)
         enforceWallConsistency(floorGrid, size);
         placeTiles(floorGrid, profile, size);
         // v1.2.1: Generate room names for each cell
         generateRoomInfoForGrid(floorGrid, profile, size, exitX, exitY);
+
         floors.push(floorGrid);
+        floorsData.push({
+            grid: floorGrid,
+            rooms: floorRooms,
+            zones: floorZones
+        });
     }
 
     // Add staircases between floors
+    let guaranteedFloorKeysNeeded = 0;
     if (totalFloors > 1) {
         addStaircasesToFloors(floors, size, profile.requireFloorKey || false, exitX, exitY);
+
+        // Guarantee floor keys are available when requireFloorKey is enabled
+        if (profile.requireFloorKey) {
+            guaranteedFloorKeysNeeded = guaranteeFloorKeys(floors, size);
+        }
 
         // For multi-floor mazes: Block the exit area on floor 0 to force stair usage
         // Add walls around the exit on the starting floor
@@ -16657,8 +19032,8 @@ function startMaze(profileName) {
         stealth: Math.floor((baseStartInv.stealth || 0) * invMult),
         strike: Math.floor((baseStartInv.strike || 0) * invMult),
         execute: Math.floor((baseStartInv.execute || 0) * invMult),
-        // v1.2.0 new items
-        floorKey: Math.floor((baseStartInv.floorKey || 0) * invMult),
+        // v1.2.0 new items - add guaranteed floor keys if chests weren't available
+        floorKey: Math.floor((baseStartInv.floorKey || 0) * invMult) + guaranteedFloorKeysNeeded,
         portalStone: Math.floor((baseStartInv.portalStone || 0) * invMult),
         minionBane: Math.floor((baseStartInv.minionBane || 0) * invMult),
         mapFragment: Math.floor((baseStartInv.mapFragment || 0) * invMult),
@@ -16726,6 +19101,22 @@ function startMaze(profileName) {
             elixir: 0,
             revivalCharm: 0,
             heartCrystal: 0,
+            // v1.3.2 Visibility items
+            torch: 0,
+            lantern: 0,
+            revealScroll: 0,
+            sightPotion: 0,
+            crystalBall: 0,
+            // v1.4.0 Secret detection item
+            secretSense: 0,
+        },
+        // v1.3.2 Visibility system
+        visibility: {
+            baseRadius: 1,
+            tempBonus: 0,
+            tempMovesLeft: 0,
+            permBonus: 0,
+            floorRevealed: false,
         },
         // Story milestones
         shownMilestones: new Set(),
@@ -16744,18 +19135,39 @@ function startMaze(profileName) {
         currentFloor: 0,
         totalFloors: totalFloors,
         floors: floors,
+        floorsData: floorsData,  // v1.4.0: BSP rooms, zones per floor
         voidWalkActive: false,
         messageLog: [],  // v1.2.1: Persistent message history
         // v1.3.0 HP System
         hpEnabled: profile.hpEnabled !== false,
         hp: initHP(profile),
         restCooldown: 0,
+        // v1.4.6: Session Notes (auto-populated adventure log)
+        sessionNotes: '',
+        // v1.4.7: Fairness system - tracks luck for pity mechanics
+        fairness: {
+            chestsWithoutKey: 0,        // Chests opened without finding a key
+            combatLossStreak: 0,        // Consecutive combat losses
+            chestsWithoutHealing: 0,    // Chests without healing items
+            lockedChestsSkipped: 0,     // Locked chests skipped due to no key
+            lastHealingFoundFloor: 0,   // Floor where last healing was found
+        },
+        // v1.4.8: LLM Enhanced Room Descriptions
+        enhancedRooms: {},  // Map of "floor:x,y" -> enhanced description
     };
+
+    // Add initial session note
+    addSessionNote(`Adventure begins: ${profileName}`);
+    addSessionNote(`Floor 1/${profile.floors || 1} - ${size}x${size} ${profile.theme || 'fantasy'} ${profile.mapStyle || 'dungeon'}`);
 
     // Initialize moving minions after maze state is created
     currentMaze.movingMinions = initMovingMinions(grid, size);
 
     showMazeModal();
+
+    // v1.3.2: Apply initial visibility radius at spawn
+    applyVisibilityAtPosition(0, 0, size);
+
     renderMazeGrid();
     updatePlayerPosition(false); // Set initial position without animation
     updateMazeHero();
@@ -16772,6 +19184,9 @@ function startMaze(profileName) {
     updateDpadFloorButtons();
 
     document.addEventListener('keydown', handleMazeKeydown, { capture: true });
+
+    // v1.4.8: Enhance starting room description
+    enhanceRoomOnEntry(0, 0);
 
     console.log(`[MazeMaster] Maze "${profileName}" started (${size}x${size}, ${totalFloors} floor${totalFloors > 1 ? 's' : ''})`);
     return { success: true };
@@ -16838,6 +19253,11 @@ function showMazeModal() {
                             <div class="stats-item maze-floor-indicator" title="Current Floor" style="${currentMaze.totalFloors <= 1 ? 'display:none;' : ''}">
                                 <i class="fa-solid fa-layer-group"></i>
                                 <span><span id="maze_floor_current">${currentMaze.currentFloor + 1}</span>/<span id="maze_floor_total">${currentMaze.totalFloors}</span></span>
+                            </div>
+                            <div class="stats-item maze-zone-indicator" id="maze_zone_display" title="Current Zone" style="display: none;">
+                                <i class="fa-solid fa-map-pin"></i>
+                                <span id="maze_zone_name">Zone 1</span>
+                                <span id="maze_zone_progress" style="font-size: 0.8em; opacity: 0.7;"></span>
                             </div>
                         </div>
                     </div>
@@ -16973,8 +19393,59 @@ function showMazeModal() {
                                 <span class="item-count" id="maze_inv_heartCrystal">${currentMaze.inventory.heartCrystal}</span>
                             </div>
                         </div>
+                        <!-- Visibility Items (v1.3.2) -->
+                        <div class="inventory-menu-section vis-items-section">
+                            <div class="inventory-menu-header">Vision & Awareness</div>
+                            <div class="inventory-menu-item" data-item="torch" data-usable="true" data-vis-item="torch" title="Temporary +2 visibility (3 moves)">
+                                <i class="fa-solid fa-fire" style="color: #f39c12;"></i>
+                                <span class="item-name">Torch</span>
+                                <span class="item-count" id="maze_inv_torch">${currentMaze.inventory.torch}</span>
+                            </div>
+                            <div class="inventory-menu-item" data-item="lantern" title="Passive +1 visibility while held">
+                                <i class="fa-solid fa-lightbulb" style="color: #f1c40f;"></i>
+                                <span class="item-name">Lantern</span>
+                                <span class="item-count" id="maze_inv_lantern">${currentMaze.inventory.lantern}</span>
+                            </div>
+                            <div class="inventory-menu-item" data-item="revealScroll" data-usable="true" data-vis-item="revealScroll" title="Reveals entire floor for 1 move">
+                                <i class="fa-solid fa-scroll" style="color: #9b59b6;"></i>
+                                <span class="item-name">Reveal Scroll</span>
+                                <span class="item-count" id="maze_inv_revealScroll">${currentMaze.inventory.revealScroll}</span>
+                            </div>
+                            <div class="inventory-menu-item" data-item="sightPotion" data-usable="true" data-vis-item="sightPotion" title="Permanent +1 visibility">
+                                <i class="fa-solid fa-eye" style="color: #3498db;"></i>
+                                <span class="item-name">Sight Potion</span>
+                                <span class="item-count" id="maze_inv_sightPotion">${currentMaze.inventory.sightPotion}</span>
+                            </div>
+                            <div class="inventory-menu-item" data-item="crystalBall" data-usable="true" data-vis-item="crystalBall" title="Reveals all minions on floor">
+                                <i class="fa-solid fa-circle" style="color: #8e44ad;"></i>
+                                <span class="item-name">Crystal Ball</span>
+                                <span class="item-count" id="maze_inv_crystalBall">${currentMaze.inventory.crystalBall}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Session Memory Button (below inventory button) -->
+                <div class="maze-memory-wrapper" id="maze_memory_wrapper">
+                    <button id="maze_memory_btn" class="maze-memory-btn" title="Session Notes">
+                        m
+                    </button>
+                </div>
+
+                <!-- Session Memory Panel -->
+                <div id="maze_memory_panel" class="maze-memory-panel" style="display: none;">
+                    <div class="maze-memory-header">
+                        <h3>Session Notes</h3>
+                        <button id="maze_memory_close" class="maze-memory-close">&times;</button>
+                    </div>
+                    <div class="maze-memory-content">
+                        <textarea id="maze_memory_textarea" class="maze-memory-textarea" placeholder="Write notes about your adventure...&#10;&#10;These notes are saved with this maze session."></textarea>
+                    </div>
+                    <div class="maze-memory-footer">
+                        <button id="maze_memory_save" class="maze-memory-save-btn">Save Notes</button>
+                    </div>
+                </div>
+                <div id="maze_memory_backdrop" class="maze-memory-backdrop" style="display: none;"></div>
 
                 <!-- Encounter Actions (shows when needed) -->
                 <div id="maze_encounter_confirm" class="maze-action-buttons">
@@ -17063,6 +19534,27 @@ function showMazeModal() {
                             <div class="inv-overlay-item hp-item" data-item="heartCrystal" title="Heart Crystal" style="${currentMaze.hpEnabled ? '' : 'display:none;'}">
                                 <i class="fa-solid fa-gem" style="color: #e91e63;"></i>
                                 <span id="maze_ov_heartCrystal">${currentMaze.inventory.heartCrystal}</span>
+                            </div>
+                            <!-- Visibility Items -->
+                            <div class="inv-overlay-item vis-item" data-item="torch" data-usable="true" title="Torch: +2 visibility for 3 moves">
+                                <i class="fa-solid fa-fire" style="color: #f39c12;"></i>
+                                <span id="maze_ov_torch">${currentMaze.inventory.torch}</span>
+                            </div>
+                            <div class="inv-overlay-item vis-item" data-item="lantern" title="Lantern: Passive +1 visibility">
+                                <i class="fa-solid fa-lightbulb" style="color: #f1c40f;"></i>
+                                <span id="maze_ov_lantern">${currentMaze.inventory.lantern}</span>
+                            </div>
+                            <div class="inv-overlay-item vis-item" data-item="revealScroll" data-usable="true" title="Reveal Scroll: Shows entire floor">
+                                <i class="fa-solid fa-scroll" style="color: #9b59b6;"></i>
+                                <span id="maze_ov_revealScroll">${currentMaze.inventory.revealScroll}</span>
+                            </div>
+                            <div class="inv-overlay-item vis-item" data-item="sightPotion" data-usable="true" title="Sight Potion: Permanent +1 visibility">
+                                <i class="fa-solid fa-eye" style="color: #3498db;"></i>
+                                <span id="maze_ov_sightPotion">${currentMaze.inventory.sightPotion}</span>
+                            </div>
+                            <div class="inv-overlay-item vis-item" data-item="crystalBall" data-usable="true" title="Crystal Ball: Reveals all minions">
+                                <i class="fa-solid fa-crystal-ball" style="color: #8e44ad;"></i>
+                                <span id="maze_ov_crystalBall">${currentMaze.inventory.crystalBall}</span>
                             </div>
                         </div>
 
@@ -17309,6 +19801,166 @@ function showMazeModal() {
             .maze-inventory-info-wrapper.open .maze-info-btn {
                 background: #f1c40f;
                 color: #1a1a2e;
+            }
+
+            /* Session Memory Button - Below Inventory Button */
+            .maze-memory-wrapper {
+                position: absolute;
+                top: 124px;
+                right: 10px;
+                z-index: 200;
+            }
+
+            .maze-memory-btn {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 2px solid #5dade2;
+                background: rgba(93, 173, 226, 0.2);
+                color: #5dade2;
+                font-size: 20px;
+                font-weight: bold;
+                font-family: 'Georgia', serif;
+                font-style: italic;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+
+            .maze-memory-btn:hover {
+                background: #5dade2;
+                color: #1a1a2e;
+                transform: scale(1.1);
+            }
+
+            .maze-memory-btn.active {
+                background: #5dade2;
+                color: #1a1a2e;
+            }
+
+            /* Session Memory Panel */
+            .maze-memory-panel {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 90%;
+                max-width: 500px;
+                max-height: 80vh;
+                background: rgba(20, 25, 35, 0.98);
+                border: 2px solid #5dade2;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+                z-index: 10200;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .maze-memory-panel.hidden {
+                display: none;
+            }
+
+            .maze-memory-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                border-bottom: 1px solid rgba(93, 173, 226, 0.3);
+                background: rgba(93, 173, 226, 0.1);
+                border-radius: 10px 10px 0 0;
+            }
+
+            .maze-memory-header h3 {
+                margin: 0;
+                color: #5dade2;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .maze-memory-close {
+                background: none;
+                border: none;
+                color: #888;
+                font-size: 20px;
+                cursor: pointer;
+                padding: 4px 8px;
+                transition: color 0.2s;
+            }
+
+            .maze-memory-close:hover {
+                color: #e74c3c;
+            }
+
+            .maze-memory-content {
+                flex: 1;
+                padding: 16px;
+                overflow-y: auto;
+            }
+
+            .maze-memory-textarea {
+                width: 100%;
+                height: 300px;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(93, 173, 226, 0.3);
+                border-radius: 8px;
+                color: #e0e0e0;
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                font-size: 14px;
+                line-height: 1.5;
+                padding: 12px;
+                resize: vertical;
+            }
+
+            .maze-memory-textarea:focus {
+                outline: none;
+                border-color: #5dade2;
+            }
+
+            .maze-memory-textarea::placeholder {
+                color: #666;
+                font-style: italic;
+            }
+
+            .maze-memory-footer {
+                padding: 12px 16px;
+                border-top: 1px solid rgba(93, 173, 226, 0.2);
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            .maze-memory-save-btn {
+                background: linear-gradient(135deg, #5dade2 0%, #3498db 100%);
+                border: none;
+                color: white;
+                padding: 8px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .maze-memory-save-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
+            }
+
+            .maze-memory-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 10199;
+            }
+
+            .maze-memory-backdrop.hidden {
+                display: none;
             }
 
             /* Inventory Dropdown from Info Button */
@@ -18222,27 +20874,54 @@ function showMazeModal() {
                 border: 2px solid #34495e;
             }
 
-            /* Floor navigation buttons */
+            /* Floor navigation buttons - appear on LEFT side of D-pad when on stairs */
             .dpad-floor-up, .dpad-floor-down {
-                width: 50px;
+                position: absolute;
+                width: 36px;
                 height: 36px;
                 border-radius: 8px;
                 font-size: 0.65em;
                 background: linear-gradient(to bottom, #27ae60, #1e8449);
-                border-color: #2ecc71;
+                border: 2px solid #2ecc71;
                 flex-direction: column;
-                gap: 2px;
+                gap: 1px;
+                z-index: 10;
+                box-shadow: 0 2px 8px rgba(46, 204, 113, 0.5);
+                left: -50px;
             }
 
-            .dpad-floor-up { top: 50%; left: -58px; transform: translateY(-50%); }
-            .dpad-floor-up:hover { transform: translateY(-50%) scale(1.1); }
-            .dpad-floor-up:active { transform: translateY(-50%) scale(0.95); }
-            .dpad-floor-down { top: 50%; right: -58px; transform: translateY(-50%); }
-            .dpad-floor-down:hover { transform: translateY(-50%) scale(1.1); }
-            .dpad-floor-down:active { transform: translateY(-50%) scale(0.95); }
+            .dpad-floor-up {
+                top: 15px;
+            }
+            .dpad-floor-up:hover {
+                transform: scale(1.1);
+                box-shadow: 0 4px 12px rgba(46, 204, 113, 0.7);
+            }
+            .dpad-floor-up:active {
+                transform: scale(0.95);
+            }
+
+            .dpad-floor-down {
+                bottom: 15px;
+                background: linear-gradient(to bottom, #e67e22, #d35400);
+                border-color: #f39c12;
+                box-shadow: 0 2px 8px rgba(243, 156, 18, 0.5);
+            }
+            .dpad-floor-down:hover {
+                transform: scale(1.1);
+                box-shadow: 0 4px 12px rgba(243, 156, 18, 0.7);
+            }
+            .dpad-floor-down:active {
+                transform: scale(0.95);
+            }
 
             .dpad-floor-up.hidden, .dpad-floor-down.hidden {
-                display: none;
+                display: none !important;
+            }
+
+            .dpad-floor-up span, .dpad-floor-down span {
+                font-size: 0.65em;
+                font-weight: bold;
             }
 
             .dpad-drag-handle {
@@ -18684,6 +21363,8 @@ function showMazeModal() {
                 await useMapFragment();
             } else if (itemType === 'voidWalk') {
                 activateVoidWalk();
+            } else if (item.dataset.visItem) {
+                await useVisibilityItem(item.dataset.visItem);
             }
 
             // Close menu after use
@@ -18710,6 +21391,53 @@ function showMazeModal() {
         showSaveDialog();
     };
     document.getElementById('maze_power_btn')?.addEventListener('click', powerHandler);
+
+    // Session Memory button handler (v1.4.6)
+    const memoryBtn = document.getElementById('maze_memory_btn');
+    const memoryPanel = document.getElementById('maze_memory_panel');
+    const memoryBackdrop = document.getElementById('maze_memory_backdrop');
+    const memoryTextarea = document.getElementById('maze_memory_textarea');
+    const memorySaveBtn = document.getElementById('maze_memory_save');
+    const memoryCloseBtn = document.getElementById('maze_memory_close');
+
+    const openMemoryPanel = () => {
+        if (memoryPanel && memoryBackdrop && memoryTextarea) {
+            // Load current notes into textarea
+            memoryTextarea.value = currentMaze.sessionNotes || '';
+            memoryPanel.style.display = 'flex';
+            memoryBackdrop.style.display = 'block';
+            memoryBtn?.classList.add('active');
+            memoryTextarea.focus();
+        }
+    };
+
+    const closeMemoryPanel = (save = false) => {
+        if (save && memoryTextarea) {
+            currentMaze.sessionNotes = memoryTextarea.value;
+            // Auto-save on close
+            saveMazeProgress();
+            console.log('[MazeMaster] Session notes saved');
+        }
+        if (memoryPanel) memoryPanel.style.display = 'none';
+        if (memoryBackdrop) memoryBackdrop.style.display = 'none';
+        memoryBtn?.classList.remove('active');
+    };
+
+    memoryBtn?.addEventListener('click', openMemoryPanel);
+    memoryCloseBtn?.addEventListener('click', () => closeMemoryPanel(true)); // Save on close
+    memoryBackdrop?.addEventListener('click', () => closeMemoryPanel(true)); // Save on backdrop click
+    memorySaveBtn?.addEventListener('click', () => {
+        if (memoryTextarea) {
+            currentMaze.sessionNotes = memoryTextarea.value;
+            saveMazeProgress();
+            console.log('[MazeMaster] Session notes saved');
+            // Flash the button to indicate save
+            memorySaveBtn.textContent = 'Saved!';
+            setTimeout(() => {
+                memorySaveBtn.textContent = 'Save Notes';
+            }, 1500);
+        }
+    });
 }
 
 /**
@@ -18776,6 +21504,38 @@ function renderMazeGrid() {
     // Delegate to the pluggable renderer system
     const renderer = RendererRegistry.getRenderer();
     renderer.render(currentMaze);
+}
+
+/**
+ * Add an entry to the session notes (auto-populated adventure log)
+ * @param {string} entry - The log entry text
+ * @param {string} category - Optional category for the entry (encounter, item, story, etc.)
+ */
+function addSessionNote(entry, category = '') {
+    if (!currentMaze || !entry) return;
+
+    // Format timestamp as HH:MM
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    // Format the entry with optional category prefix
+    const prefix = category ? `[${category}] ` : '';
+    const formattedEntry = `${time} - ${prefix}${entry}`;
+
+    // Append to session notes
+    if (currentMaze.sessionNotes) {
+        currentMaze.sessionNotes += '\n' + formattedEntry;
+    } else {
+        currentMaze.sessionNotes = formattedEntry;
+    }
+
+    // Update textarea if panel is open
+    const textarea = document.getElementById('maze_memory_textarea');
+    if (textarea && document.getElementById('maze_memory_panel')?.style.display !== 'none') {
+        textarea.value = currentMaze.sessionNotes;
+        // Auto-scroll to bottom
+        textarea.scrollTop = textarea.scrollHeight;
+    }
 }
 
 /**
@@ -18862,11 +21622,20 @@ function updateMazeHero() {
 
 /**
  * Show or hide the LLM generating indicator
+ * Also updates the player gem indicator color (orange when generating)
  */
 function showGeneratingIndicator(show) {
     const indicator = document.getElementById('maze_generating_indicator');
     if (indicator) {
         indicator.classList.toggle('active', show);
+    }
+
+    // v1.4.8: Update global state for player gem indicator
+    isLLMGenerating = show;
+
+    // Trigger re-render to update player gem color
+    if (currentMaze?.isOpen) {
+        renderMazeGrid();
     }
 }
 
@@ -18884,7 +21653,30 @@ function updateRoomInfoBox() {
     const nameEl = document.getElementById('room_info_name');
     const descEl = document.getElementById('room_info_desc');
     if (nameEl) nameEl.textContent = cell.roomInfo?.name || 'Unknown Room';
-    if (descEl) descEl.textContent = cell.roomInfo?.description || '...';
+
+    // v1.4.8: Use enhanced description if available, otherwise fall back to base
+    const floor = currentMaze.currentFloor || 0;
+    const roomKey = `${floor}:${playerX},${playerY}`;
+    const enhancedDesc = currentMaze.enhancedRooms?.[roomKey] || cell.roomInfo?.enhancedDescription;
+    let description = enhancedDesc || cell.roomInfo?.description || '...';
+
+    // v1.4.1: Add secret passage hints based on hint level
+    if (cell.secretPassage && !cell.secretPassage.revealed) {
+        const hintLevel = cell.secretPassage.hintLevel || 0;
+        const direction = cell.secretPassage.direction;
+        const dirName = direction === 'top' ? 'north' : direction === 'bottom' ? 'south' :
+                        direction === 'left' ? 'west' : 'east';
+
+        if (hintLevel >= 3) {
+            description += ` <span style="color: #ffcc00;"><i class="fa-solid fa-eye"></i> A hidden passage is clearly visible to the ${dirName}!</span>`;
+        } else if (hintLevel >= 2) {
+            description += ` <span style="color: #aaaaaa;"><i class="fa-solid fa-question"></i> The ${dirName} wall has suspicious cracks...</span>`;
+        } else if (hintLevel >= 1) {
+            description += ` <span style="color: #666666;"><i class="fa-solid fa-wind"></i> A faint draft from the ${dirName}...</span>`;
+        }
+    }
+
+    if (descEl) descEl.innerHTML = description;
 
     // Update exits based on walls - show direction and room name
     const exitsEl = document.getElementById('room_info_exits');
@@ -18915,6 +21707,22 @@ function updateRoomInfoBox() {
             const westCell = grid[playerY]?.[playerX - 1];
             const roomName = westCell?.roomInfo?.name || 'Unknown';
             exits.push(`West → ${roomName}`);
+        }
+
+        // Up/Down staircases
+        if (cell.staircase) {
+            const targetFloor = cell.staircase.targetFloor;
+            const targetX = cell.staircase.targetX;
+            const targetY = cell.staircase.targetY;
+            const targetGrid = currentMaze.floorsData?.[targetFloor]?.grid || currentMaze.floors?.[targetFloor];
+            const targetCell = targetGrid?.[targetY]?.[targetX];
+            const targetRoomName = targetCell?.roomInfo?.name || `Floor ${targetFloor + 1}`;
+
+            if (cell.staircase.direction === 'up') {
+                exits.push(`<i class="fa-solid fa-stairs"></i> Up → ${targetRoomName}`);
+            } else if (cell.staircase.direction === 'down') {
+                exits.push(`<i class="fa-solid fa-stairs"></i> Down → ${targetRoomName}`);
+            }
         }
 
         exitsEl.innerHTML = exits.length ? exits.join('<br>') : 'None';
@@ -19010,11 +21818,36 @@ async function tryMazeMove(dx, dy) {
             await consumeVoidWalk();
             blockedByWall = false;
         } else {
-            return; // Normal block
+            // v1.4.0: Try secret discovery when bumping a wall
+            const direction = dx === 1 ? 'right' : dx === -1 ? 'left' : dy === 1 ? 'bottom' : 'top';
+            const discoveryResult = trySecretDiscovery(currentCell, direction);
+            if (discoveryResult.found) {
+                // Secret was discovered! Open the passage
+                revealSecretPassage(grid, playerX, playerY, direction);
+                addMazeMessage('Secret Found!', 'You discovered a hidden passage!');
+                await fireHook('onSecretFound', { x: playerX, y: playerY, direction });
+                blockedByWall = false;
+            } else if (discoveryResult.attempted) {
+                addMazeMessage('Wall', discoveryResult.message || 'The wall seems solid...');
+                return;
+            } else {
+                return; // Normal block
+            }
         }
     } else if (currentMaze.voidWalkActive) {
         // If Void Walk is active but no wall was encountered, cancel it
         cancelVoidWalk();
+    }
+
+    // v1.4.0: Check zone blocking
+    const targetCell = grid[newY][newX];
+    if (targetCell.zoneId !== undefined && targetCell.zoneId !== null) {
+        const floorData = currentMaze.floorsData?.[currentMaze.currentFloor];
+        const zone = floorData?.zones?.[targetCell.zoneId];
+        if (zone && !zone.isUnlocked) {
+            addMazeMessage('Zone Locked', zone.lockedMessage || `${zone.name} is sealed. Clear more rooms to unlock.`);
+            return;
+        }
     }
 
     // Determine direction for hook and sprite facing
@@ -19026,8 +21859,14 @@ async function tryMazeMove(dx, dy) {
     currentMaze.playerX = newX;
     currentMaze.playerY = newY;
     currentMaze.playerDirection = compassDirection;
-    currentMaze.visited.add(`${currentMaze.currentFloor}:${newX},${newY}`);
+
+    // Reveal tiles within visibility radius (with line-of-sight checking)
+    const gridSize = currentMaze.grid.length;
+    applyVisibilityAtPosition(newX, newY, gridSize);
     currentMaze.moveCount++;
+
+    // Update visibility timers (torch burnout, etc.)
+    updateVisibilityOnMove();
 
     // Track move stat
     await incrementStat('moves', 1);
@@ -19040,6 +21879,9 @@ async function tryMazeMove(dx, dy) {
 
     // Update stats display
     updateStatsDisplay();
+
+    // Update floor buttons based on current tile (staircase check)
+    updateDpadFloorButtons();
 
     // Check for exploration complete
     checkExplorationComplete();
@@ -19120,6 +21962,9 @@ async function tryMazeMove(dx, dy) {
 
     // Check story milestones
     checkStoryMilestones();
+
+    // v1.4.8: Enhance room description on first entry (async, non-blocking for movement)
+    enhanceRoomOnEntry(newX, newY);
 
     // Process moving minions after player's move
     await processMinionMovement();
@@ -19305,8 +22150,11 @@ async function triggerMinionEncounter(minionId, x, y) {
     cell.minion.triggered = true;
     console.log(`[MazeMaster] Marked minion at ${x},${y} as triggered`);
 
-    // v1.2.0: Check for Minion Bane - auto-defeat non-messenger minions
+    // Log encounter to session notes
     const minionType = minion.type || 'messenger';
+    addSessionNote(`Encountered ${minion.name} (${minionType})`, 'Encounter');
+
+    // v1.2.0: Check for Minion Bane - auto-defeat non-messenger minions
     if (minionType !== 'messenger' && currentMaze.inventory.minionBane > 0) {
         const baneUsed = await checkMinionBane();
         if (baneUsed) {
@@ -19314,6 +22162,8 @@ async function triggerMinionEncounter(minionId, x, y) {
             cell.minion.defeated = true;
             await incrementStat('encountersWon', 1);
             await updateObjectiveProgress('defeat', minionId, 1);
+            // v1.4.0: Mark room as cleared for zone progression
+            await markRoomCleared(x, y);
             renderMazeGrid();
 
             // Brief pause then resume
@@ -19424,6 +22274,9 @@ async function triggerTrapEncounter(trapId, x, y) {
     // Mark as triggered
     currentMaze.grid[y][x].trap.triggered = true;
     renderMazeGrid();
+
+    // Log to session notes
+    addSessionNote(`Triggered trap: ${trap.name}`, 'Trap');
 
     // Track trap stat
     await incrementStat('trapsTriggered', 1);
@@ -19599,6 +22452,13 @@ function updateInventoryDisplay() {
         const value = currentMaze.inventory[item] || 0;
         updateItemElement(`maze_inv_${item}`, value, `maze_ov_${item}`);
     }
+
+    // v1.3.2 Visibility items
+    const visItems = ['torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall'];
+    for (const item of visItems) {
+        const value = currentMaze.inventory[item] || 0;
+        updateItemElement(`maze_inv_${item}`, value, `maze_ov_${item}`);
+    }
 }
 
 /**
@@ -19653,14 +22513,26 @@ async function triggerChestEncounter(chestData, x, y) {
     // Store pending chest for button handlers
     currentMaze.pendingChest = { chestData, x, y };
 
-    // Show chest in hero section
-    const isLocked = chestData.type === 'locked';
+    // v1.4.7: Check for mercy unlock (fairness system)
+    let isLocked = chestData.type === 'locked';
+    let mercyUnlocked = false;
+    if (isLocked && currentMaze.inventory.key === 0 && shouldMercyUnlock(currentMaze.profile)) {
+        isLocked = false;
+        mercyUnlocked = true;
+        chestData.mercyUnlocked = true; // Mark so we give locked chest loot
+    }
+
     const hasKey = currentMaze.inventory.key > 0;
 
     // Get base message
-    const baseMessage = isLocked
-        ? (hasKey ? 'A locked chest! Use a key to open it?' : 'A locked chest! You need a Key to open it.')
-        : 'You found a chest!';
+    let baseMessage;
+    if (mercyUnlocked) {
+        baseMessage = 'The lock on this chest is broken! Lucky you!';
+    } else if (isLocked) {
+        baseMessage = hasKey ? 'A locked chest! Use a key to open it?' : 'A locked chest! You need a Key to open it.';
+    } else {
+        baseMessage = 'You found a chest!';
+    }
 
     // Set initial display with base message
     currentMaze.currentMinion = {
@@ -19745,6 +22617,12 @@ function handleChestOpen() {
         return;
     }
 
+    // v1.4.7: If mercy unlocked, give locked chest loot (better rewards)
+    if (chestData.mercyUnlocked) {
+        openLockedChest(x, y);
+        return;
+    }
+
     // Normal chest - give loot
     openNormalChest(x, y);
 }
@@ -19780,6 +22658,15 @@ function handleChestUnlock() {
  */
 function handleChestIgnore() {
     hideActionPopup();
+
+    // v1.4.7: Track locked chests skipped (for fairness system)
+    if (currentMaze?.pendingChest?.chestData?.type === 'locked' && currentMaze.inventory.key === 0) {
+        if (currentMaze.fairness) {
+            currentMaze.fairness.lockedChestsSkipped++;
+            console.log(`[MazeMaster] Fairness: Locked chest skipped (total: ${currentMaze.fairness.lockedChestsSkipped})`);
+        }
+    }
+
     currentMaze.pendingChest = null;
     resumeMaze();
 }
@@ -19954,9 +22841,35 @@ function handleSafeRoomIgnore() {
 async function openNormalChest(x, y) {
     currentMaze.pendingChest = null;
     const profile = currentMaze.profile;
+    const chestData = currentMaze.grid[y][x].chest;
     const loot = generateChestLoot(profile, false);
+
+    // v1.3.2: Add guaranteed items from Find Early
+    if (chestData.guaranteedItems && chestData.guaranteedItems.length > 0) {
+        for (const item of chestData.guaranteedItems) {
+            if (loot[item] !== undefined) {
+                loot[item]++;
+            } else {
+                loot[item] = 1;  // Handle new item types
+            }
+        }
+    }
+
+    // v1.4.1: Add guaranteed floor key for multi-floor progression
+    if (chestData.guaranteedFloorKey) {
+        loot.floorKey = (loot.floorKey || 0) + 1;
+        console.log(`[MazeMaster] Chest at (${x}, ${y}) gave guaranteed floor key`);
+    }
+
     awardLoot(loot);
     showChestLootMessage(loot, "Chest");
+
+    // v1.4.7: Update fairness counters
+    updateFairnessCounters(loot);
+
+    // Log to session notes
+    const lootItems = Object.entries(loot).filter(([k, v]) => v > 0).map(([k, v]) => `${k}x${v}`);
+    addSessionNote(`Opened chest: ${lootItems.length > 0 ? lootItems.join(', ') : 'empty'}`, 'Loot');
 
     // Track stats and fire hook
     await incrementStat('chestsOpened', 1);
@@ -19973,9 +22886,35 @@ async function openNormalChest(x, y) {
 async function openLockedChest(x, y) {
     currentMaze.pendingChest = null;
     const profile = currentMaze.profile;
+    const chestData = currentMaze.grid[y][x].chest;
     const loot = generateChestLoot(profile, true);
+
+    // v1.3.2: Add guaranteed items from Find Early
+    if (chestData.guaranteedItems && chestData.guaranteedItems.length > 0) {
+        for (const item of chestData.guaranteedItems) {
+            if (loot[item] !== undefined) {
+                loot[item]++;
+            } else {
+                loot[item] = 1;  // Handle new item types
+            }
+        }
+    }
+
+    // v1.4.1: Add guaranteed floor key for multi-floor progression
+    if (chestData.guaranteedFloorKey) {
+        loot.floorKey = (loot.floorKey || 0) + 1;
+        console.log(`[MazeMaster] Locked chest at (${x}, ${y}) gave guaranteed floor key`);
+    }
+
     awardLoot(loot);
     showChestLootMessage(loot, "Locked Chest");
+
+    // v1.4.7: Update fairness counters
+    updateFairnessCounters(loot);
+
+    // Log to session notes
+    const lootItems = Object.entries(loot).filter(([k, v]) => v > 0).map(([k, v]) => `${k}x${v}`);
+    addSessionNote(`Opened locked chest: ${lootItems.length > 0 ? lootItems.join(', ') : 'empty'}`, 'Loot');
 
     // Track stats and fire hook
     await incrementStat('chestsOpened', 1);
@@ -19984,6 +22923,56 @@ async function openLockedChest(x, y) {
         loot: JSON.stringify(loot),
         x, y
     });
+}
+
+/**
+ * v1.4.7: Update fairness counters based on loot received
+ */
+function updateFairnessCounters(loot) {
+    if (!currentMaze?.fairness) return;
+
+    const f = currentMaze.fairness;
+
+    // Track key drops
+    if (loot.key > 0) {
+        f.chestsWithoutKey = 0; // Reset counter
+    } else {
+        f.chestsWithoutKey++;
+    }
+
+    // Track healing drops
+    const hasHealing = loot.healingPotion > 0 || loot.greaterHealing > 0 || loot.elixir > 0;
+    if (hasHealing) {
+        f.chestsWithoutHealing = 0;
+        f.lastHealingFoundFloor = currentMaze.currentFloor;
+    } else {
+        f.chestsWithoutHealing++;
+    }
+}
+
+/**
+ * v1.4.7: Check if a locked chest should be mercy-unlocked
+ * Returns true if the chest should be treated as unlocked
+ */
+function shouldMercyUnlock(profile) {
+    if (!currentMaze?.fairness) return false;
+
+    const fairnessConfig = profile?.fairness || {};
+    if (fairnessConfig.enabled === false) return false;
+    if (fairnessConfig.mercyUnlock === false) return false;
+
+    const f = currentMaze.fairness;
+    const mercyThreshold = fairnessConfig.mercyUnlockThreshold || 2;
+
+    // Mercy unlock if player has no keys AND has skipped multiple locked chests
+    if (currentMaze.inventory.key === 0 && f.lockedChestsSkipped >= mercyThreshold) {
+        console.log(`[MazeMaster] Fairness: Mercy unlock triggered (${f.lockedChestsSkipped} locked chests skipped)`);
+        f.lockedChestsSkipped = 0; // Reset counter
+        addSessionNote('Lucky break: Found the chest already unlocked!', 'Fairness');
+        return true;
+    }
+
+    return false;
 }
 
 /**
@@ -19996,7 +22985,9 @@ function generateChestLoot(profile, isLocked) {
         // v1.2.0 new items
         floorKey: 0, portalStone: 0, minionBane: 0, mapFragment: 0, timeShard: 0, voidWalk: 0,
         // v1.3.0 HP System items
-        healingPotion: 0, greaterHealing: 0, elixir: 0, revivalCharm: 0, heartCrystal: 0
+        healingPotion: 0, greaterHealing: 0, elixir: 0, revivalCharm: 0, heartCrystal: 0,
+        // v1.3.2 Vision items
+        torch: 0, lantern: 0, revealScroll: 0, sightPotion: 0, crystalBall: 0
     };
     const min = profile.chestLootMin || 1;
     const max = profile.chestLootMax || 2;
@@ -20038,6 +23029,15 @@ function generateChestLoot(profile, isLocked) {
         heartCrystal: (isLocked ? 2 : 0.5) * lootMult,    // +10 max HP permanent
     } : null;
 
+    // v1.3.2 Vision item chances
+    const visionItemChances = {
+        torch: (isLocked ? 18 : 10) * lootMult,           // +2 visibility for 3 moves
+        lantern: (isLocked ? 8 : 4) * lootMult,           // +1 passive visibility
+        revealScroll: (isLocked ? 6 : 3) * lootMult,      // Reveal entire floor
+        sightPotion: (isLocked ? 4 : 2) * lootMult,       // Permanent +1 visibility
+        crystalBall: (isLocked ? 5 : 2) * lootMult,       // Reveal all minions
+    };
+
     // Apply locked bonus multiplier
     if (isLocked) {
         const bonus = 1 + (profile.chestLockedBonusPercent || 50) / 100;
@@ -20053,6 +23053,43 @@ function generateChestLoot(profile, isLocked) {
         if (hpItemChances) {
             for (const item of Object.keys(hpItemChances)) {
                 hpItemChances[item] = Math.min(100, hpItemChances[item] * bonus);
+            }
+        }
+        // Apply bonus to vision items (v1.3.2)
+        for (const item of Object.keys(visionItemChances)) {
+            visionItemChances[item] = Math.min(100, visionItemChances[item] * bonus);
+        }
+    }
+
+    // v1.4.7: Apply fairness modifiers (pity system)
+    const fairnessConfig = profile.fairness || {};
+    if (fairnessConfig.enabled !== false && currentMaze?.fairness) {
+        const f = currentMaze.fairness;
+
+        // Key pity: Boost key chance after multiple chests without one
+        if (f.chestsWithoutKey >= (fairnessConfig.keyPityThreshold || 3)) {
+            const keyBoost = Math.min(50, f.chestsWithoutKey * 15); // +15% per chest, max +50%
+            chances.key = Math.min(100, chances.key + keyBoost);
+            console.log(`[MazeMaster] Fairness: Key pity active (+${keyBoost}% key chance)`);
+        }
+
+        // Healing pity: Boost healing when HP is low or haven't found healing recently
+        if (hpItemChances && currentMaze.hpEnabled && currentMaze.hp) {
+            const hpPercent = currentMaze.hp.current / (currentMaze.hp.max + currentMaze.hp.maxBonus);
+            const lowHpThreshold = fairnessConfig.lowHpThreshold || 0.4;
+
+            if (hpPercent <= lowHpThreshold) {
+                const healBoost = Math.round((1 - hpPercent) * 40); // Up to +40% when near death
+                hpItemChances.healingPotion = Math.min(100, hpItemChances.healingPotion + healBoost);
+                hpItemChances.greaterHealing = Math.min(100, hpItemChances.greaterHealing + healBoost / 2);
+                console.log(`[MazeMaster] Fairness: Low HP pity (+${healBoost}% healing chance)`);
+            }
+
+            // Extra boost if many chests without healing
+            if (f.chestsWithoutHealing >= (fairnessConfig.healingPityThreshold || 4)) {
+                const healStreakBoost = Math.min(30, f.chestsWithoutHealing * 8);
+                hpItemChances.healingPotion = Math.min(100, hpItemChances.healingPotion + healStreakBoost);
+                console.log(`[MazeMaster] Fairness: Healing drought pity (+${healStreakBoost}%)`);
             }
         }
     }
@@ -20078,6 +23115,12 @@ function generateChestLoot(profile, isLocked) {
             if (Math.random() * 100 < hpItemChances.revivalCharm) loot.revivalCharm++;
             if (Math.random() * 100 < hpItemChances.heartCrystal) loot.heartCrystal++;
         }
+        // Roll for vision items (v1.3.2)
+        if (Math.random() * 100 < visionItemChances.torch) loot.torch++;
+        if (Math.random() * 100 < visionItemChances.lantern) loot.lantern++;
+        if (Math.random() * 100 < visionItemChances.revealScroll) loot.revealScroll++;
+        if (Math.random() * 100 < visionItemChances.sightPotion) loot.sightPotion++;
+        if (Math.random() * 100 < visionItemChances.crystalBall) loot.crystalBall++;
     }
 
     return loot;
@@ -20104,6 +23147,12 @@ function awardLoot(loot) {
     if (loot.elixir > 0) addToInventory('elixir', loot.elixir);
     if (loot.revivalCharm > 0) addToInventory('revivalCharm', loot.revivalCharm);
     if (loot.heartCrystal > 0) addToInventory('heartCrystal', loot.heartCrystal);
+    // v1.3.2 Vision items
+    if (loot.torch > 0) addToInventory('torch', loot.torch);
+    if (loot.lantern > 0) addToInventory('lantern', loot.lantern);
+    if (loot.revealScroll > 0) addToInventory('revealScroll', loot.revealScroll);
+    if (loot.sightPotion > 0) addToInventory('sightPotion', loot.sightPotion);
+    if (loot.crystalBall > 0) addToInventory('crystalBall', loot.crystalBall);
 }
 
 /**
@@ -20135,6 +23184,18 @@ function showChestLootMessage(loot, chestType) {
     if (loot.mapFragment > 0) items.push(`${loot.mapFragment} Map Fragment${loot.mapFragment > 1 ? 's' : ''}`);
     if (loot.timeShard > 0) items.push(`${loot.timeShard} Time Shard${loot.timeShard > 1 ? 's' : ''}`);
     if (loot.voidWalk > 0) items.push(`${loot.voidWalk} Void Walk${loot.voidWalk > 1 ? 's' : ''}`);
+    // v1.3.0 HP items
+    if (loot.healingPotion > 0) items.push(`${loot.healingPotion} Healing Potion${loot.healingPotion > 1 ? 's' : ''}`);
+    if (loot.greaterHealing > 0) items.push(`${loot.greaterHealing} Greater Healing${loot.greaterHealing > 1 ? 's' : ''}`);
+    if (loot.elixir > 0) items.push(`${loot.elixir} Elixir${loot.elixir > 1 ? 's' : ''}`);
+    if (loot.revivalCharm > 0) items.push(`${loot.revivalCharm} Revival Charm${loot.revivalCharm > 1 ? 's' : ''}`);
+    if (loot.heartCrystal > 0) items.push(`${loot.heartCrystal} Heart Crystal${loot.heartCrystal > 1 ? 's' : ''}`);
+    // v1.3.2 Vision items
+    if (loot.torch > 0) items.push(`${loot.torch} Torch${loot.torch > 1 ? 'es' : ''}`);
+    if (loot.lantern > 0) items.push(`${loot.lantern} Lantern${loot.lantern > 1 ? 's' : ''}`);
+    if (loot.revealScroll > 0) items.push(`${loot.revealScroll} Reveal Scroll${loot.revealScroll > 1 ? 's' : ''}`);
+    if (loot.sightPotion > 0) items.push(`${loot.sightPotion} Sight Potion${loot.sightPotion > 1 ? 's' : ''}`);
+    if (loot.crystalBall > 0) items.push(`${loot.crystalBall} Crystal Ball${loot.crystalBall > 1 ? 's' : ''}`);
 
     const message = items.length > 0
         ? `You found: ${items.join(', ')}!`
@@ -20522,6 +23583,9 @@ function checkStoryMilestones() {
             // Mark as shown
             currentMaze.shownMilestones.add(milestone.percent);
 
+            // Log to session notes
+            addSessionNote(`Milestone ${milestone.percent}%: ${milestone.storyUpdate?.substring(0, 50)}...`, 'Story');
+
             // Show milestone message
             const mainMinion = profile.mainMinion ? getMinion(profile.mainMinion) : null;
             currentMaze.currentMinion = {
@@ -20543,6 +23607,9 @@ function checkStoryMilestones() {
 function handleMazeLoss() {
     currentMaze.isVictory = false;
     currentMaze.isPaused = true;
+
+    // Log to session notes
+    addSessionNote(`DEFEAT! Adventure ended.`, 'End');
 
     // Stop stats timer
     stopStatsTimer();
@@ -20585,6 +23652,7 @@ function respawnPlayer() {
     currentMaze.isPaused = false;
     currentMaze.pendingEncounter = null;
     renderMazeGrid();
+    updateDpadFloorButtons();
 
     // Show respawn message from main minion
     const profile = currentMaze.profile;
@@ -20608,6 +23676,9 @@ function respawnPlayer() {
 
 async function handleMazeWin() {
     currentMaze.isVictory = true;
+
+    // Log to session notes
+    addSessionNote(`VICTORY! Maze completed.`, 'End');
 
     // Stop stats timer
     stopStatsTimer();
@@ -21235,12 +24306,12 @@ function getPanelHtml() {
 
                             <div class="mazemaster-section">
                                 <label class="mazemaster-label">Allowed Keys</label>
-                                <div class="mazemaster-checkbox-row">
-                                    <label><input type="checkbox" id="mazemaster_qte_key_w" checked> W</label>
-                                    <label><input type="checkbox" id="mazemaster_qte_key_a" checked> A</label>
-                                    <label><input type="checkbox" id="mazemaster_qte_key_s" checked> S</label>
-                                    <label><input type="checkbox" id="mazemaster_qte_key_d" checked> D</label>
-                                    <label><input type="checkbox" id="mazemaster_qte_key_space" checked> SPACE</label>
+                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                    <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="mazemaster_qte_key_w" checked> W</label>
+                                    <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="mazemaster_qte_key_a" checked> A</label>
+                                    <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="mazemaster_qte_key_s" checked> S</label>
+                                    <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="mazemaster_qte_key_d" checked> D</label>
+                                    <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="mazemaster_qte_key_space" checked> SPACE</label>
                                 </div>
                             </div>
 
@@ -21825,6 +24896,61 @@ function getPanelHtml() {
                             </div>
                         </div>
 
+                        <!-- v1.4.0 BSP Configuration -->
+                        <div class="mazemaster-collapsible ${currentMazeData.bspConfig?.zoneCount > 1 || currentMazeData.bspConfig?.secretDensity > 0 ? 'expanded' : ''}">
+                            <button class="mazemaster-collapsible-header" data-target="bsp_config_section">
+                                <i class="fa-solid fa-chevron-right mazemaster-collapse-icon"></i>
+                                <span>Zone & Secret Settings</span>
+                                <span class="mazemaster-collapse-hint">(BSP dungeon generation)</span>
+                            </button>
+                            <div id="bsp_config_section" class="mazemaster-collapsible-content" style="display: ${currentMazeData.bspConfig?.zoneCount > 1 || currentMazeData.bspConfig?.secretDensity > 0 ? 'block' : 'none'};">
+                                <div class="mazemaster-flex-row" style="gap: 10px;">
+                                    <div class="mazemaster-section mazemaster-flex-1">
+                                        <label class="mazemaster-label">Zone Count</label>
+                                        <select id="mazemaster_bsp_zone_count" class="mazemaster-select">
+                                            <option value="1" ${(currentMazeData.bspConfig?.zoneCount || 1) === 1 ? 'selected' : ''}>1 (No zones)</option>
+                                            <option value="2" ${(currentMazeData.bspConfig?.zoneCount || 1) === 2 ? 'selected' : ''}>2 Zones</option>
+                                            <option value="3" ${(currentMazeData.bspConfig?.zoneCount || 1) === 3 ? 'selected' : ''}>3 Zones</option>
+                                            <option value="4" ${(currentMazeData.bspConfig?.zoneCount || 1) === 4 ? 'selected' : ''}>4 Zones</option>
+                                            <option value="5" ${(currentMazeData.bspConfig?.zoneCount || 1) === 5 ? 'selected' : ''}>5 Zones</option>
+                                        </select>
+                                    </div>
+                                    <div class="mazemaster-section mazemaster-flex-1">
+                                        <label class="mazemaster-label">Secret Passages</label>
+                                        <select id="mazemaster_bsp_secret_density" class="mazemaster-select">
+                                            <option value="0" ${(currentMazeData.bspConfig?.secretDensity || 0) === 0 ? 'selected' : ''}>None</option>
+                                            <option value="0.02" ${(currentMazeData.bspConfig?.secretDensity || 0) == 0.02 ? 'selected' : ''}>Low (2%)</option>
+                                            <option value="0.05" ${(currentMazeData.bspConfig?.secretDensity || 0) == 0.05 ? 'selected' : ''}>Medium (5%)</option>
+                                            <option value="0.08" ${(currentMazeData.bspConfig?.secretDensity || 0) == 0.08 ? 'selected' : ''}>High (8%)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mazemaster-flex-row" style="gap: 10px; margin-top: 8px;">
+                                    <div class="mazemaster-section mazemaster-flex-1">
+                                        <label class="mazemaster-checkbox-label">
+                                            <input type="checkbox" id="mazemaster_bsp_zones_require_clear" ${currentMazeData.bspConfig?.zonesRequireClear !== false ? 'checked' : ''}>
+                                            <span>Zones require room clearing</span>
+                                        </label>
+                                    </div>
+                                    <div class="mazemaster-section mazemaster-flex-1">
+                                        <label class="mazemaster-checkbox-label">
+                                            <input type="checkbox" id="mazemaster_bsp_secret_hints" ${currentMazeData.bspConfig?.secretHints !== false ? 'checked' : ''}>
+                                            <span>Show secret hints</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mazemaster-flex-row" style="gap: 10px; margin-top: 8px;">
+                                    <div class="mazemaster-section mazemaster-flex-1">
+                                        <label class="mazemaster-checkbox-label">
+                                            <input type="checkbox" id="mazemaster_bsp_floor_scaling" ${currentMazeData.bspConfig?.floorComplexityScaling !== false ? 'checked' : ''}>
+                                            <span>Scale complexity per floor</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mazemaster-help-small" style="margin-top: 6px;"><small>Zones create Metroidvania-style progression. Clear rooms to unlock the next zone. Secrets are hidden passages found by bumping walls.</small></div>
+                            </div>
+                        </div>
+
                         <!-- COLLAPSIBLE: Teleport Portals -->
                         <div class="mazemaster-collapsible ${(currentMazeData.portals && currentMazeData.portals.length > 0) ? 'expanded' : ''}">
                             <button class="mazemaster-collapsible-header" data-target="portals_section">
@@ -22201,6 +25327,37 @@ function getPanelHtml() {
                             </div>
                         </div>
 
+                        <!-- COLLAPSIBLE: Find Early Items -->
+                        <div class="mazemaster-collapsible">
+                            <button class="mazemaster-collapsible-header" data-target="find_early_section">
+                                <i class="fa-solid fa-chevron-right mazemaster-collapse-icon"></i>
+                                <span>Find Early Items</span>
+                            </button>
+                            <div id="find_early_section" class="mazemaster-collapsible-content" style="display: none;">
+                                <div class="mazemaster-help-small"><small>Guarantee items in chests near the starting position. Great for ensuring vision or healing items are available early.</small></div>
+                                <div class="mazemaster-section">
+                                    <div class="mazemaster-grid-3col" style="margin-bottom: 8px;">
+                                        <div class="mazemaster-row"><label>Search Radius</label><input type="number" id="mazemaster_findearly_radius" class="mazemaster-input-small" min="1" max="10" value="${currentMazeData.findEarly?.radius || 4}" title="Manhattan distance from start to search for chests"></div>
+                                        <div class="mazemaster-row"><label>Items/Chest</label><input type="number" id="mazemaster_findearly_perchest" class="mazemaster-input-small" min="1" max="5" value="${currentMazeData.findEarly?.itemsPerChest || 1}" title="Max guaranteed items per chest"></div>
+                                        <div></div>
+                                    </div>
+                                    <label class="mazemaster-label">Items to Place Near Start</label>
+                                    <div class="mazemaster-grid-5col" style="gap: 4px;">
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_torch" ${currentMazeData.findEarly?.items?.includes('torch') ? 'checked' : ''}><i class="fa-solid fa-fire" style="color:#f39c12;"></i> Torch</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_lantern" ${currentMazeData.findEarly?.items?.includes('lantern') ? 'checked' : ''}><i class="fa-solid fa-lightbulb" style="color:#f1c40f;"></i> Lantern</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_mapFragment" ${currentMazeData.findEarly?.items?.includes('mapFragment') ? 'checked' : ''}><i class="fa-solid fa-map" style="color:#3498db;"></i> Map</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_healingPotion" ${currentMazeData.findEarly?.items?.includes('healingPotion') ? 'checked' : ''}><i class="fa-solid fa-flask" style="color:#e74c3c;"></i> Potion</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_greaterHealing" ${currentMazeData.findEarly?.items?.includes('greaterHealing') ? 'checked' : ''}><i class="fa-solid fa-flask" style="color:#9b59b6;"></i> Greater</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_revealScroll" ${currentMazeData.findEarly?.items?.includes('revealScroll') ? 'checked' : ''}><i class="fa-solid fa-scroll" style="color:#9b59b6;"></i> Reveal</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_sightPotion" ${currentMazeData.findEarly?.items?.includes('sightPotion') ? 'checked' : ''}><i class="fa-solid fa-eye" style="color:#1abc9c;"></i> Sight</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_key" ${currentMazeData.findEarly?.items?.includes('key') ? 'checked' : ''}><i class="fa-solid fa-key" style="color:#f1c40f;"></i> Key</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_strike" ${currentMazeData.findEarly?.items?.includes('strike') ? 'checked' : ''}><i class="fa-solid fa-bolt" style="color:#e67e22;"></i> Strike</label>
+                                        <label class="mazemaster-checkbox-label"><input type="checkbox" id="mazemaster_findearly_stealth" ${currentMazeData.findEarly?.items?.includes('stealth') ? 'checked' : ''}><i class="fa-solid fa-user-ninja" style="color:#2ecc71;"></i> Stealth</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- COLLAPSIBLE: HP System Settings -->
                         <div class="mazemaster-collapsible">
                             <button class="mazemaster-collapsible-header" data-target="hp_settings_section">
@@ -22240,6 +25397,15 @@ function getPanelHtml() {
                                                 <span>LLM Messages</span>
                                             </label>
                                         </div>
+                                    </div>
+
+                                    <label style="font-size: 0.8em; color: var(--SmartThemeEmColor); margin-top: 12px;">LLM Enhancement</label>
+                                    <div class="mazemaster-row" style="margin-bottom: 4px;">
+                                        <label style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox" id="mazemaster_llm_enhance_rooms" ${currentMazeData.llmEnhanceRooms !== false ? 'checked' : ''}>
+                                            <span>Enhance Room Descriptions</span>
+                                        </label>
+                                        <small style="color: var(--SmartThemeEmColor); margin-left: 24px;">LLM generates unique descriptions on first entry</small>
                                     </div>
 
                                     <label style="font-size: 0.8em; color: var(--SmartThemeEmColor); margin-top: 12px;">Rest Mechanic</label>
@@ -22614,6 +25780,7 @@ function getPanelHtml() {
                                     <div class="mazemaster-item-ref"><span class="item-num">1-4</span> <strong>Core:</strong> key, stealth, strike, execute</div>
                                     <div class="mazemaster-item-ref"><span class="item-num">5-10</span> <strong>Special:</strong> floorKey, portalStone, minionBane, mapFragment, timeShard, voidWalk</div>
                                     <div class="mazemaster-item-ref"><span class="item-num">11-15</span> <strong>HP:</strong> healingPotion (25%), greaterHealing (50%), elixir (100%), revivalCharm, heartCrystal (+10 max)</div>
+                                    <div class="mazemaster-item-ref"><span class="item-num">16-20</span> <strong>Vision:</strong> torch (+2 for 3 moves), lantern (+1 passive), revealScroll (full floor), sightPotion (+1 perm), crystalBall (show minions)</div>
                                 </div>
                             </div>
 
@@ -23858,6 +27025,33 @@ function getPanelHtml() {
 
             .mazemaster-grid-4col .mazemaster-input-small {
                 width: 100%;
+            }
+
+            /* 5-column grid (for Find Early checkboxes) */
+            .mazemaster-grid-5col {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 6px;
+            }
+
+            .mazemaster-checkbox-label {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.8em;
+                padding: 4px 6px;
+                background: rgba(0, 0, 0, 0.15);
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+            .mazemaster-checkbox-label:hover {
+                background: rgba(0, 0, 0, 0.25);
+            }
+
+            .mazemaster-checkbox-label input[type="checkbox"] {
+                margin: 0;
             }
 
             /* Collapsible Sections */
@@ -25193,6 +28387,10 @@ function updateMazeSettings() {
     const safeRoomLLM = document.getElementById('mazemaster_safe_room_llm');
     if (safeRoomLLM) safeRoomLLM.checked = profile.safeRoomUseLLM || false;
 
+    // LLM Enhancement settings
+    const llmEnhanceRooms = document.getElementById('mazemaster_llm_enhance_rooms');
+    if (llmEnhanceRooms) llmEnhanceRooms.checked = profile.llmEnhanceRooms !== false;
+
     // Rest settings
     const restEnabled = document.getElementById('mazemaster_rest_enabled');
     if (restEnabled) restEnabled.checked = profile.restEnabled !== false;
@@ -25231,6 +28429,23 @@ function updateMazeSettings() {
 
     renderMazeEncountersList(minionEncounters);
     renderMazeTrapEncountersList(trapEncounters);
+
+    // Find Early settings (v1.3.2)
+    const findEarly = profile.findEarly || {};
+    const findEarlyRadius = document.getElementById('mazemaster_findearly_radius');
+    if (findEarlyRadius) findEarlyRadius.value = findEarly.radius || 4;
+
+    const findEarlyPerChest = document.getElementById('mazemaster_findearly_perchest');
+    if (findEarlyPerChest) findEarlyPerChest.value = findEarly.itemsPerChest || 1;
+
+    // Set checkboxes for Find Early items
+    const findEarlyItems = findEarly.items || [];
+    const itemTypes = ['torch', 'lantern', 'mapFragment', 'healingPotion', 'greaterHealing',
+                       'revealScroll', 'sightPotion', 'key', 'strike', 'stealth'];
+    for (const item of itemTypes) {
+        const checkbox = document.getElementById(`mazemaster_findearly_${item}`);
+        if (checkbox) checkbox.checked = findEarlyItems.includes(item);
+    }
 }
 
 function updateExitProfileDropdown(exitType, selectedProfile) {
@@ -25465,6 +28680,8 @@ function collectMazeDataFromUI() {
         safeRoomCount: parseInt(document.getElementById('mazemaster_saferoom_count')?.value) ?? 3,
         safeRoomHealPercent: parseInt(document.getElementById('mazemaster_saferoom_heal')?.value) ?? 100,
         safeRoomUseLLM: document.getElementById('mazemaster_saferoom_llm')?.checked || false,
+        // LLM Enhancement settings
+        llmEnhanceRooms: document.getElementById('mazemaster_llm_enhance_rooms')?.checked !== false,
         // Rest mechanic settings
         restEnabled: document.getElementById('mazemaster_rest_enabled')?.checked !== false,
         restHealPercent: parseInt(document.getElementById('mazemaster_rest_heal')?.value) ?? 20,
@@ -25473,6 +28690,14 @@ function collectMazeDataFromUI() {
         restInterruptScript: document.getElementById('mazemaster_rest_interrupt_script')?.value || '',
         // Portals
         portals: collectPortalsFromUI(),
+        // v1.4.0 BSP Configuration
+        bspConfig: {
+            zoneCount: parseInt(document.getElementById('mazemaster_bsp_zone_count')?.value) || 1,
+            secretDensity: parseFloat(document.getElementById('mazemaster_bsp_secret_density')?.value) || 0,
+            zonesRequireClear: document.getElementById('mazemaster_bsp_zones_require_clear')?.checked !== false,
+            secretHints: document.getElementById('mazemaster_bsp_secret_hints')?.checked !== false,
+            floorComplexityScaling: document.getElementById('mazemaster_bsp_floor_scaling')?.checked !== false,
+        },
         // Objectives
         objectives: collectObjectivesFromUI(),
         // STScript Hooks
@@ -25491,7 +28716,36 @@ function collectMazeDataFromUI() {
         onStatUpdate: document.getElementById('mazemaster_hook_onStatUpdate')?.value || '',
         // Preserve story config
         storyConfig: existingProfile.storyConfig || { mainStory: '', milestones: [] },
+        // Find Early items (v1.3.2)
+        findEarly: collectFindEarlyFromUI(),
     };
+}
+
+/**
+ * Collect Find Early configuration from UI checkboxes
+ */
+function collectFindEarlyFromUI() {
+    const radius = parseInt(document.getElementById('mazemaster_findearly_radius')?.value) || 4;
+    const itemsPerChest = parseInt(document.getElementById('mazemaster_findearly_perchest')?.value) || 1;
+
+    // Collect checked items
+    const items = [];
+    const itemTypes = ['torch', 'lantern', 'mapFragment', 'healingPotion', 'greaterHealing',
+                       'revealScroll', 'sightPotion', 'key', 'strike', 'stealth'];
+
+    for (const item of itemTypes) {
+        const checkbox = document.getElementById(`mazemaster_findearly_${item}`);
+        if (checkbox?.checked) {
+            items.push(item);
+        }
+    }
+
+    // Only return findEarly config if items are selected
+    if (items.length === 0) {
+        return null;
+    }
+
+    return { radius, items, itemsPerChest };
 }
 
 /**
@@ -26570,6 +29824,12 @@ function saveMazeProgress() {
         hpEnabled: currentMaze.hpEnabled,
         hp: currentMaze.hp ? { ...currentMaze.hp } : null,
         restCooldown: currentMaze.restCooldown || 0,
+        // v1.4.6: Session Notes
+        sessionNotes: currentMaze.sessionNotes || '',
+        // v1.4.7: Fairness System
+        fairness: currentMaze.fairness || {},
+        // v1.4.8: LLM Enhanced Room Descriptions
+        enhancedRooms: currentMaze.enhancedRooms || {},
         timestamp: Date.now(),
     };
 
@@ -26686,6 +29946,18 @@ function loadMazeProgress(profileName) {
             reviveCharges: saveState.hp.reviveCharges ?? 0,
         } : initHP(profile),
         restCooldown: saveState.restCooldown || 0,
+        // v1.4.6: Session Notes
+        sessionNotes: saveState.sessionNotes || '',
+        // v1.4.7: Fairness System
+        fairness: saveState.fairness || {
+            chestsWithoutKey: 0,
+            combatLossStreak: 0,
+            chestsWithoutHealing: 0,
+            lockedChestsSkipped: 0,
+            lastHealingFoundFloor: 0,
+        },
+        // v1.4.8: LLM Enhanced Room Descriptions
+        enhancedRooms: saveState.enhancedRooms || {},
     };
 
     // Sanity check: ensure current HP doesn't exceed max
@@ -27811,6 +31083,7 @@ function setupEventHandlers() {
         qteProfileSelect.addEventListener('change', (e) => {
             extensionSettings.currentQteProfile = e.target.value;
             saveSettingsDebounced();
+            loadQteProfileIntoUI(e.target.value);
         });
     }
 
@@ -27959,6 +31232,39 @@ function setupEventHandlers() {
         });
     }
 
+    // Helper to load QTE profile data into UI
+    function loadQteProfileIntoUI(profileName) {
+        const profile = getQteProfile(profileName) || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+        setVal('mazemaster_qte_main_title', profile.mainTitle);
+        setVal('mazemaster_qte_description', profile.description);
+        setVal('mazemaster_qte_seq_min', profile.sequenceLengthMin || 3);
+        setVal('mazemaster_qte_seq_max', profile.sequenceLengthMax || 5);
+        setVal('mazemaster_qte_time_base', profile.timeWindowBase || 1500);
+        setVal('mazemaster_qte_time_min', profile.timeWindowMin || 800);
+        setVal('mazemaster_qte_difficulty', profile.difficulty || 5);
+        setVal('mazemaster_qte_damage', profile.damage || 10);
+        setVal('mazemaster_qte_perfect', profile.perfectWindowPercent || 30);
+        setVal('mazemaster_qte_on_complete', profile.onComplete);
+        setVal('mazemaster_qte_on_fail', profile.onFail);
+        // Allowed keys checkboxes
+        const keys = profile.allowedKeys || ['W', 'A', 'S', 'D', 'SPACE'];
+        setCheck('mazemaster_qte_key_w', keys.includes('W'));
+        setCheck('mazemaster_qte_key_a', keys.includes('A'));
+        setCheck('mazemaster_qte_key_s', keys.includes('S'));
+        setCheck('mazemaster_qte_key_d', keys.includes('D'));
+        setCheck('mazemaster_qte_key_space', keys.includes('SPACE'));
+        // Update difficulty display
+        const diffVal = document.getElementById('mazemaster_qte_diff_val');
+        if (diffVal) diffVal.textContent = `(${profile.difficulty || 5})`;
+    }
+
+    // Load initial QTE profile
+    if (extensionSettings.currentQteProfile) {
+        loadQteProfileIntoUI(extensionSettings.currentQteProfile);
+    }
+
     // =========================================================================
     // DICE HANDLERS
     // =========================================================================
@@ -27969,6 +31275,7 @@ function setupEventHandlers() {
         diceProfileSelect.addEventListener('change', (e) => {
             extensionSettings.currentDiceProfile = e.target.value;
             saveSettingsDebounced();
+            loadDiceProfileIntoUI(e.target.value);
         });
     }
 
@@ -28110,6 +31417,32 @@ function setupEventHandlers() {
         });
     }
 
+    // Helper to load Dice profile data into UI
+    function loadDiceProfileIntoUI(profileName) {
+        const profile = getDiceProfile(profileName) || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        setVal('mazemaster_dice_main_title', profile.mainTitle);
+        setVal('mazemaster_dice_description', profile.description);
+        setVal('mazemaster_dice_count', profile.diceCount || 2);
+        setVal('mazemaster_dice_type', profile.diceType || 6);
+        setVal('mazemaster_dice_target', profile.targetNumber || 7);
+        setVal('mazemaster_dice_modifier', profile.modifier || 0);
+        setVal('mazemaster_dice_difficulty', profile.difficulty || 5);
+        setVal('mazemaster_dice_damage', profile.damage || 15);
+        setVal('mazemaster_dice_rerolls', profile.rerolls || 1);
+        setVal('mazemaster_dice_on_success', profile.onSuccess);
+        setVal('mazemaster_dice_on_fail', profile.onFail);
+        setVal('mazemaster_dice_on_crit', profile.onCritical);
+        // Update difficulty display
+        const diffVal = document.getElementById('mazemaster_dice_diff_val');
+        if (diffVal) diffVal.textContent = `(${profile.difficulty || 5})`;
+    }
+
+    // Load initial Dice profile
+    if (extensionSettings.currentDiceProfile) {
+        loadDiceProfileIntoUI(extensionSettings.currentDiceProfile);
+    }
+
     // =========================================================================
     // STEALTH HANDLERS
     // =========================================================================
@@ -28120,6 +31453,7 @@ function setupEventHandlers() {
         stealthProfileSelect.addEventListener('change', (e) => {
             extensionSettings.currentStealthProfile = e.target.value;
             saveSettingsDebounced();
+            loadStealthProfileIntoUI(e.target.value);
         });
     }
 
@@ -28261,6 +31595,32 @@ function setupEventHandlers() {
         });
     }
 
+    // Helper to load Stealth profile data into UI
+    function loadStealthProfileIntoUI(profileName) {
+        const profile = getStealthProfile(profileName) || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        setVal('mazemaster_stealth_main_title', profile.mainTitle);
+        setVal('mazemaster_stealth_guard_name', profile.guardName || 'Guard');
+        setVal('mazemaster_stealth_description', profile.description);
+        setVal('mazemaster_stealth_sections', profile.sections || 3);
+        setVal('mazemaster_stealth_detection_limit', profile.detectionLimit || 100);
+        setVal('mazemaster_stealth_base_detection', profile.baseDetection || 15);
+        setVal('mazemaster_stealth_damage', profile.damage || 20);
+        setVal('mazemaster_stealth_difficulty', profile.difficulty || 5);
+        setVal('mazemaster_stealth_hide_reduce', profile.hideReduction || 10);
+        setVal('mazemaster_stealth_distract_max', profile.distractMax || 25);
+        setVal('mazemaster_stealth_on_success', profile.onSuccess);
+        setVal('mazemaster_stealth_on_caught', profile.onCaught);
+        // Update difficulty display
+        const diffVal = document.getElementById('mazemaster_stealth_diff_val');
+        if (diffVal) diffVal.textContent = `(${profile.difficulty || 5})`;
+    }
+
+    // Load initial Stealth profile
+    if (extensionSettings.currentStealthProfile) {
+        loadStealthProfileIntoUI(extensionSettings.currentStealthProfile);
+    }
+
     // =========================================================================
     // PUZZLE HANDLERS
     // =========================================================================
@@ -28271,6 +31631,7 @@ function setupEventHandlers() {
         puzzleProfileSelect.addEventListener('change', (e) => {
             extensionSettings.currentPuzzleProfile = e.target.value;
             saveSettingsDebounced();
+            loadPuzzleProfileIntoUI(e.target.value);
         });
     }
 
@@ -28411,6 +31772,31 @@ function setupEventHandlers() {
         });
     }
 
+    // Helper to load Puzzle profile data into UI
+    function loadPuzzleProfileIntoUI(profileName) {
+        const profile = getPuzzleProfile(profileName) || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        setVal('mazemaster_puzzle_main_title', profile.mainTitle);
+        setVal('mazemaster_puzzle_description', profile.description);
+        setVal('mazemaster_puzzle_grid_size', profile.gridSize || 3);
+        setVal('mazemaster_puzzle_seq_length', profile.sequenceLength || 4);
+        setVal('mazemaster_puzzle_max_mistakes', profile.maxMistakes || 5);
+        setVal('mazemaster_puzzle_hints', profile.hints || 3);
+        setVal('mazemaster_puzzle_difficulty', profile.difficulty || 5);
+        setVal('mazemaster_puzzle_damage', profile.damage || 15);
+        setVal('mazemaster_puzzle_time_limit', profile.timeLimit || 60);
+        setVal('mazemaster_puzzle_on_solve', profile.onSolve);
+        setVal('mazemaster_puzzle_on_fail', profile.onFail);
+        // Update difficulty display
+        const diffVal = document.getElementById('mazemaster_puzzle_diff_val');
+        if (diffVal) diffVal.textContent = `(${profile.difficulty || 5})`;
+    }
+
+    // Load initial Puzzle profile
+    if (extensionSettings.currentPuzzleProfile) {
+        loadPuzzleProfileIntoUI(extensionSettings.currentPuzzleProfile);
+    }
+
     // =========================================================================
     // NEGOTIATION HANDLERS
     // =========================================================================
@@ -28421,6 +31807,7 @@ function setupEventHandlers() {
         negotiationProfileSelect.addEventListener('change', (e) => {
             extensionSettings.currentNegotiationProfile = e.target.value;
             saveSettingsDebounced();
+            loadNegotiationProfileIntoUI(e.target.value);
         });
     }
 
@@ -28563,6 +31950,35 @@ function setupEventHandlers() {
             saveNegotiationProfile(profileName, profileData);
             alert(`Negotiation profile "${profileName}" saved!`);
         });
+    }
+
+    // Helper to load Negotiation profile data into UI
+    function loadNegotiationProfileIntoUI(profileName) {
+        const profile = getNegotiationProfile(profileName) || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        setVal('mazemaster_negotiate_main_title', profile.mainTitle);
+        setVal('mazemaster_negotiate_npc_name', profile.npcName || 'NPC');
+        setVal('mazemaster_negotiate_description', profile.description);
+        setVal('mazemaster_negotiate_favor_target', profile.favorTarget || 75);
+        setVal('mazemaster_negotiate_starting_favor', profile.startingFavor || 25);
+        setVal('mazemaster_negotiate_max_turns', profile.maxTurns || 6);
+        setVal('mazemaster_negotiate_damage', profile.damage || 10);
+        setVal('mazemaster_negotiate_difficulty', profile.difficulty || 5);
+        setVal('mazemaster_negotiate_persuade', profile.persuadeAvg || 12);
+        setVal('mazemaster_negotiate_flatter', profile.flatterAvg || 10);
+        setVal('mazemaster_negotiate_mood', profile.startingMood || 'unfriendly');
+        setVal('mazemaster_negotiate_intimidate', profile.intimidateRisk || 'medium');
+        setVal('mazemaster_negotiate_bribe_cost', profile.bribeCost || 'gold');
+        setVal('mazemaster_negotiate_on_success', profile.onSuccess);
+        setVal('mazemaster_negotiate_on_fail', profile.onFail);
+        // Update difficulty display
+        const diffVal = document.getElementById('mazemaster_negotiate_diff_val');
+        if (diffVal) diffVal.textContent = `(${profile.difficulty || 5})`;
+    }
+
+    // Load initial Negotiation profile
+    if (extensionSettings.currentNegotiationProfile) {
+        loadNegotiationProfileIntoUI(extensionSettings.currentNegotiationProfile);
     }
 
     // =========================================================================
