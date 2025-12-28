@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MazeMaster Test Harness</title>
+    <style>
+        :root {
+            --primary-color: #2ecc71;
+            --secondary-color: #27ae60;
+            --background-color: #1a1a2e;
+            --text-color: #eee;
+            --cell-size: 40px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        /* Maze Grid Styles */
+        #maze-container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .maze-grid {
+            display: grid;
+            gap: 0;
+            background: #2d2d44;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .maze-cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background: #3d3d5c;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .maze-cell.wall-top { border-top: 3px solid #1a1a2e; }
+        .maze-cell.wall-right { border-right: 3px solid #1a1a2e; }
+        .maze-cell.wall-bottom { border-bottom: 3px solid #1a1a2e; }
+        .maze-cell.wall-left { border-left: 3px solid #1a1a2e; }
+
+        .maze-cell.has-player {
+            background: var(--primary-color);
+        }
+
+        .maze-cell.has-exit {
+            background: #f39c12;
+        }
+
+        .maze-cell.has-chest {
+            background: #9b59b6;
+        }
+
+        .maze-cell.has-minion {
+            background: #e74c3c;
+        }
+
+        .maze-cell.explored {
+            background: #4a4a6a;
+        }
+
+        .maze-cell.visible {
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Control Panel */
+        #controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--secondary-color);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        /* D-Pad */
+        #dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 5px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .dpad-btn {
+            background: #3d3d5c;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dpad-btn:hover {
+            background: var(--primary-color);
+        }
+
+        .dpad-btn:active {
+            transform: scale(0.95);
+        }
+
+        .dpad-center {
+            background: transparent;
+            border: none;
+        }
+
+        /* Stats Panel */
+        #stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* HP Bar */
+        #hp-bar-container {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #hp-bar {
+            height: 100%;
+            background: linear-gradient(to right, #e74c3c, #2ecc71);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Inventory */
+        #inventory {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .inventory-slot {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+        }
+
+        .inventory-slot.has-item {
+            border-color: var(--primary-color);
+        }
+
+        .item-count {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 12px;
+            background: var(--primary-color);
+            color: white;
+            padding: 0 4px;
+            border-radius: 2px;
+        }
+
+        /* Modal */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        #modal-overlay.active {
+            display: flex;
+        }
+
+        #modal-content {
+            background: var(--background-color);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        #modal-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        #modal-message {
+            margin-bottom: 20px;
+        }
+
+        /* Message Log */
+        #message-log {
+            height: 150px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry.combat { color: #e74c3c; }
+        .log-entry.loot { color: #f39c12; }
+        .log-entry.move { color: #3498db; }
+        .log-entry.system { color: #95a5a6; }
+    </style>
+</head>
+<body>
+    <div id="test-container">
+        <h1>MazeMaster Test Harness</h1>
+
+        <div class="test-section">
+            <h2>Controls</h2>
+            <div id="controls">
+                <button id="btn-new-game" data-testid="new-game">New Game</button>
+                <button id="btn-generate-maze" data-testid="generate-maze">Generate Maze</button>
+                <button id="btn-toggle-visibility" data-testid="toggle-visibility">Toggle Fog</button>
+                <button id="btn-add-item" data-testid="add-item">Add Item</button>
+                <button id="btn-take-damage" data-testid="take-damage">Take Damage</button>
+                <button id="btn-heal" data-testid="heal">Heal</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>HP</h2>
+            <div id="hp-bar-container">
+                <div id="hp-bar" data-testid="hp-bar" style="width: 100%;">100 / 100</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Maze</h2>
+            <div id="maze-container" data-testid="maze-container">
+                <div class="maze-grid" id="maze-grid" data-testid="maze-grid">
+                    <!-- Grid cells will be generated here -->
+                </div>
+            </div>
+            <div id="dpad" data-testid="dpad">
+                <div></div>
+                <button class="dpad-btn" id="move-up" data-testid="move-up">&#9650;</button>
+                <div></div>
+                <button class="dpad-btn" id="move-left" data-testid="move-left">&#9664;</button>
+                <div class="dpad-btn dpad-center"></div>
+                <button class="dpad-btn" id="move-right" data-testid="move-right">&#9654;</button>
+                <div></div>
+                <button class="dpad-btn" id="move-down" data-testid="move-down">&#9660;</button>
+                <div></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Inventory</h2>
+            <div id="inventory" data-testid="inventory">
+                <div class="inventory-slot" data-slot="0" data-testid="slot-0"></div>
+                <div class="inventory-slot" data-slot="1" data-testid="slot-1"></div>
+                <div class="inventory-slot" data-slot="2" data-testid="slot-2"></div>
+                <div class="inventory-slot" data-slot="3" data-testid="slot-3"></div>
+                <div class="inventory-slot" data-slot="4" data-testid="slot-4"></div>
+                <div class="inventory-slot" data-slot="5" data-testid="slot-5"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Stats</h2>
+            <div id="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Moves</div>
+                    <div class="stat-value" id="stat-moves" data-testid="stat-moves">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Chests</div>
+                    <div class="stat-value" id="stat-chests" data-testid="stat-chests">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Encounters</div>
+                    <div class="stat-value" id="stat-encounters" data-testid="stat-encounters">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Floor</div>
+                    <div class="stat-value" id="stat-floor" data-testid="stat-floor">1</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Message Log</h2>
+            <div id="message-log" data-testid="message-log"></div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" data-testid="modal-overlay">
+        <div id="modal-content">
+            <h3 id="modal-title" data-testid="modal-title">Modal Title</h3>
+            <p id="modal-message" data-testid="modal-message">Modal message</p>
+            <button id="modal-close" data-testid="modal-close">Close</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Test Harness Game State
+        window.testGameState = {
+            grid: [],
+            size: 8,
+            playerX: 0,
+            playerY: 0,
+            exitX: 7,
+            exitY: 7,
+            hp: 100,
+            maxHp: 100,
+            inventory: {},
+            stats: {
+                moves: 0,
+                chests: 0,
+                encounters: 0,
+                floor: 1
+            },
+            fogEnabled: true
+        };
+
+        // Maze generation (simplified)
+        function generateMaze(size) {
+            const grid = [];
+            for (let y = 0; y < size; y++) {
+                grid[y] = [];
+                for (let x = 0; x < size; x++) {
+                    grid[y][x] = {
+                        walls: { top: true, right: true, bottom: true, left: true },
+                        visited: false,
+                        type: 'floor'
+                    };
+                }
+            }
+
+            // Simple recursive backtracking
+            const stack = [];
+            let current = { x: 0, y: 0 };
+            grid[0][0].visited = true;
+
+            function getUnvisited(x, y) {
+                const neighbors = [];
+                if (y > 0 && !grid[y-1][x].visited) neighbors.push({ x, y: y-1, dir: 'top' });
+                if (x < size-1 && !grid[y][x+1].visited) neighbors.push({ x: x+1, y, dir: 'right' });
+                if (y < size-1 && !grid[y+1][x].visited) neighbors.push({ x, y: y+1, dir: 'bottom' });
+                if (x > 0 && !grid[y][x-1].visited) neighbors.push({ x: x-1, y, dir: 'left' });
+                return neighbors;
+            }
+
+            while (true) {
+                const neighbors = getUnvisited(current.x, current.y);
+                if (neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    stack.push(current);
+                    if (next.dir === 'top') {
+                        grid[current.y][current.x].walls.top = false;
+                        grid[next.y][next.x].walls.bottom = false;
+                    } else if (next.dir === 'right') {
+                        grid[current.y][current.x].walls.right = false;
+                        grid[next.y][next.x].walls.left = false;
+                    } else if (next.dir === 'bottom') {
+                        grid[current.y][current.x].walls.bottom = false;
+                        grid[next.y][next.x].walls.top = false;
+                    } else if (next.dir === 'left') {
+                        grid[current.y][current.x].walls.left = false;
+                        grid[next.y][next.x].walls.right = false;
+                    }
+                    current = { x: next.x, y: next.y };
+                    grid[current.y][current.x].visited = true;
+                } else if (stack.length > 0) {
+                    current = stack.pop();
+                } else {
+                    break;
+                }
+            }
+
+            // Reset visited, add special tiles
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    grid[y][x].visited = false;
+                    grid[y][x].explored = false;
+                }
+            }
+
+            // Place exit
+            grid[size-1][size-1].type = 'exit';
+
+            // Place some chests
+            const chestCount = Math.floor(size / 2);
+            for (let i = 0; i < chestCount; i++) {
+                const x = 1 + Math.floor(Math.random() * (size - 2));
+                const y = 1 + Math.floor(Math.random() * (size - 2));
+                if (grid[y][x].type === 'floor') {
+                    grid[y][x].type = 'chest';
+                    grid[y][x].opened = false;
+                }
+            }
+
+            return grid;
+        }
+
+        // Render maze
+        function renderMaze() {
+            const state = window.testGameState;
+            const container = document.getElementById('maze-grid');
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${state.size}, var(--cell-size))`;
+
+            for (let y = 0; y < state.size; y++) {
+                for (let x = 0; x < state.size; x++) {
+                    const cell = state.grid[y][x];
+                    const div = document.createElement('div');
+                    div.className = 'maze-cell';
+                    div.dataset.x = x;
+                    div.dataset.y = y;
+                    div.dataset.testid = `cell-${x}-${y}`;
+
+                    // Add wall classes
+                    if (cell.walls.top) div.classList.add('wall-top');
+                    if (cell.walls.right) div.classList.add('wall-right');
+                    if (cell.walls.bottom) div.classList.add('wall-bottom');
+                    if (cell.walls.left) div.classList.add('wall-left');
+
+                    // Add content classes
+                    if (x === state.playerX && y === state.playerY) {
+                        div.classList.add('has-player');
+                        div.textContent = '@';
+                    } else if (cell.type === 'exit') {
+                        div.classList.add('has-exit');
+                        div.textContent = 'E';
+                    } else if (cell.type === 'chest' && !cell.opened) {
+                        div.classList.add('has-chest');
+                        div.textContent = 'C';
+                    } else if (cell.type === 'minion') {
+                        div.classList.add('has-minion');
+                        div.textContent = 'M';
+                    }
+
+                    if (cell.explored) div.classList.add('explored');
+
+                    container.appendChild(div);
+                }
+            }
+        }
+
+        // Move player
+        function movePlayer(dx, dy) {
+            const state = window.testGameState;
+            const newX = state.playerX + dx;
+            const newY = state.playerY + dy;
+
+            if (newX < 0 || newX >= state.size || newY < 0 || newY >= state.size) {
+                addLog('Cannot move outside the maze!', 'system');
+                return false;
+            }
+
+            const currentCell = state.grid[state.playerY][state.playerX];
+            const targetCell = state.grid[newY][newX];
+
+            // Check walls
+            if (dx === 1 && currentCell.walls.right) { addLog('Wall blocks your path!', 'system'); return false; }
+            if (dx === -1 && currentCell.walls.left) { addLog('Wall blocks your path!', 'system'); return false; }
+            if (dy === 1 && currentCell.walls.bottom) { addLog('Wall blocks your path!', 'system'); return false; }
+            if (dy === -1 && currentCell.walls.top) { addLog('Wall blocks your path!', 'system'); return false; }
+
+            state.playerX = newX;
+            state.playerY = newY;
+            state.stats.moves++;
+            targetCell.explored = true;
+
+            // Check for interactions
+            if (targetCell.type === 'chest' && !targetCell.opened) {
+                targetCell.opened = true;
+                state.stats.chests++;
+                addLog('You found a treasure chest!', 'loot');
+                showModal('Chest Found!', 'You found some items!');
+            }
+
+            if (targetCell.type === 'exit') {
+                addLog('You reached the exit!', 'system');
+                showModal('Victory!', 'You escaped the maze!');
+            }
+
+            addLog(`Moved to (${newX}, ${newY})`, 'move');
+            updateUI();
+            renderMaze();
+            return true;
+        }
+
+        // Update UI
+        function updateUI() {
+            const state = window.testGameState;
+            document.getElementById('hp-bar').style.width = `${(state.hp / state.maxHp) * 100}%`;
+            document.getElementById('hp-bar').textContent = `${state.hp} / ${state.maxHp}`;
+            document.getElementById('stat-moves').textContent = state.stats.moves;
+            document.getElementById('stat-chests').textContent = state.stats.chests;
+            document.getElementById('stat-encounters').textContent = state.stats.encounters;
+            document.getElementById('stat-floor').textContent = state.stats.floor;
+        }
+
+        // Add log entry
+        function addLog(message, type = 'system') {
+            const log = document.getElementById('message-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.insertBefore(entry, log.firstChild);
+        }
+
+        // Show modal
+        function showModal(title, message) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        // Initialize
+        function init() {
+            const state = window.testGameState;
+            state.grid = generateMaze(state.size);
+            state.grid[0][0].explored = true;
+            renderMaze();
+            updateUI();
+            addLog('Game initialized!', 'system');
+        }
+
+        // Event listeners
+        document.getElementById('btn-new-game').addEventListener('click', () => {
+            window.testGameState.hp = 100;
+            window.testGameState.stats = { moves: 0, chests: 0, encounters: 0, floor: 1 };
+            window.testGameState.playerX = 0;
+            window.testGameState.playerY = 0;
+            init();
+        });
+
+        document.getElementById('btn-generate-maze').addEventListener('click', () => {
+            window.testGameState.grid = generateMaze(window.testGameState.size);
+            window.testGameState.playerX = 0;
+            window.testGameState.playerY = 0;
+            renderMaze();
+            addLog('New maze generated!', 'system');
+        });
+
+        document.getElementById('btn-toggle-visibility').addEventListener('click', () => {
+            window.testGameState.fogEnabled = !window.testGameState.fogEnabled;
+            addLog(`Fog ${window.testGameState.fogEnabled ? 'enabled' : 'disabled'}`, 'system');
+        });
+
+        document.getElementById('btn-take-damage').addEventListener('click', () => {
+            window.testGameState.hp = Math.max(0, window.testGameState.hp - 20);
+            updateUI();
+            addLog('Took 20 damage!', 'combat');
+        });
+
+        document.getElementById('btn-heal').addEventListener('click', () => {
+            window.testGameState.hp = Math.min(window.testGameState.maxHp, window.testGameState.hp + 30);
+            updateUI();
+            addLog('Healed 30 HP!', 'loot');
+        });
+
+        document.getElementById('btn-add-item').addEventListener('click', () => {
+            const items = ['key', 'potion', 'torch', 'map'];
+            const item = items[Math.floor(Math.random() * items.length)];
+            window.testGameState.inventory[item] = (window.testGameState.inventory[item] || 0) + 1;
+            addLog(`Found a ${item}!`, 'loot');
+        });
+
+        document.getElementById('move-up').addEventListener('click', () => movePlayer(0, -1));
+        document.getElementById('move-down').addEventListener('click', () => movePlayer(0, 1));
+        document.getElementById('move-left').addEventListener('click', () => movePlayer(-1, 0));
+        document.getElementById('move-right').addEventListener('click', () => movePlayer(1, 0));
+
+        document.getElementById('modal-close').addEventListener('click', () => {
+            document.getElementById('modal-overlay').classList.remove('active');
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+
+        // Start
+        init();
+
+        // Expose functions for testing
+        window.testHarness = {
+            movePlayer,
+            renderMaze,
+            updateUI,
+            showModal,
+            addLog,
+            generateMaze,
+            init
+        };
+    </script>
+</body>
+</html>

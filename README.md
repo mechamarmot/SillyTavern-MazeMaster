@@ -11,29 +11,121 @@ A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally gen
 
 ---
 
-## What's New in v1.4.9
+## What's New (v1.5.0 - v1.9.0)
 
-### LLM Room Enhancement
-- **Dynamic Descriptions** - Your LLM generates unique, atmospheric room descriptions on first entry
-- **Session Memory** - Each description is saved to session notes, influencing future generations
-- **Visual Indicator** - Player gem flashes orange while LLM is generating
-- **Per-Profile Toggle** - Enable/disable via "Enhance Room Descriptions" checkbox
+### v1.9.0 - Help System & Dynamic Registries
 
-### Session Memory System
-- **Persistent Notes** - Access via "m" button below inventory
-- **Auto-Population** - Events auto-log: room entries, combat results, loot, floor changes
-- **Context Awareness** - Session notes passed to all LLM generations for narrative continuity
+**Comprehensive Help Tab**
+- **Three organized sub-tabs**: Commands, Macros, STScript Hooks
+- All 22 slash commands documented with usage examples
+- 30+ hooks with complete parameter reference
+- Full macro documentation with examples
 
-### Fairness/Pity Mechanics
-- **Key Pity** - Increased key drops after multiple chests without finding one
-- **Healing Pity** - Boosted healing items when HP is low
-- **Mercy Unlock** - Locked chests auto-unlock after skipping several with no keys
-- All thresholds configurable per-profile
+**Dynamic Profile Registries**
+- Themes, difficulties, map styles auto-populate from profiles
+- Slash commands validate against actual available options
+- UI dropdowns generate dynamically - custom profiles appear automatically
+- Eliminated all hardcoded item, theme, and difficulty data
+
+**STScript Macro System**
+```
+{{roll:2d6+3}}     → Dice roll with modifier (5-15)
+{{roll:1d20}}      → Standard d20 roll (1-20)
+{{random:50:100}}  → Random number in range (50-100)
+```
+
+**Testing Infrastructure**
+- 237 unit tests covering all game mechanics
+- STScript hook tests verify macro substitution
+- Integration tests for hook parameter validation
+
+---
+
+### v1.8.0 - Equipment & Progression Systems
+
+**Equipment System**
+- **3 equipment slots**: Weapon, Armor, Accessory
+- Equipment drops from combat victories
+- Attack/Defense bonuses affect combat
+- Rarity tiers: Common, Uncommon, Rare, Epic, Legendary
+- STScript hooks: `onEquip`, `onUnequip`, `onEquipmentFound`
+
+**XP & Leveling**
+- Gain XP from combat, exploration, and quest completion
+- Level-up grants skill points for character customization
+- STScript hooks: `onXpGain`, `onLevelUp`
+
+**Skill Trees**
+- Multiple skill trees per theme
+- Skills unlock at specific levels
+- Skill ranks improve effectiveness
+- STScript hooks: `onSkillLearn`, `onSkillUse`
+
+**Quest Profile System**
+- Link quest profiles to maze profiles
+- Quest-gated zones replace room-clearing progression
+- Multi-step quests with progression tracking
+- STScript hooks: `onQuestComplete`, `onQuestProgression`
+
+---
+
+### v1.6.0 - 248 Themed Encounter Profiles
+
+**Complete Profile Redesign**
+Every encounter type now has **31 themed profiles**:
+- 1 Tutorial Profile (theme-agnostic, teaches mechanics)
+- 30 Theme × Difficulty Profiles (6 themes × 5 difficulties)
+
+**6 Themes**
+- Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action
+- Theme-specific NPCs, enemies, and flavor text
+- Unique boss encounters per theme
+
+**6-Tier Difficulty System**
+| Tier | Floors | Zones | Combat | Permadeath |
+|------|--------|-------|--------|------------|
+| Tutorial | 1 | 1 | None | No |
+| Easy | 1 | 2 | Simple | No |
+| Normal | 2 | 3 | Default | Optional |
+| Hard | 3 | 4 | Default | Optional |
+| Nightmare | 4 | 4 | Aggressive | Required |
+| Apocalypse | 5 | 5 | Lethal | Required |
+
+**STScript-Powered Encounters**
+- All 248 profiles include proper hooks
+- Rewards scale with difficulty: `/mazeitem`, `/mazeheal`
+- Punishments scale with difficulty: `/mazedamage`
+- Narrative feedback via `/echo`
+
+---
+
+### v1.5.0 - Combat Mechanics & Fairness
+
+**Combat Mechanics Profiles**
+- Configurable combat rules per difficulty
+- Damage multipliers, hit chances, flee penalties
+- Enemy AI behavior settings
+
+**Fairness/Pity System**
+- Key pity: Guaranteed key after N chests without one
+- Healing pity: Increased healing drops at low HP
+- Mercy unlock: Locked chests auto-unlock after being skipped
+- All thresholds configurable per profile
+
+**Session Memory**
+- Adventure events stored for LLM context
+- "Session Notes" button shows current memory
+- Influences room descriptions and NPC dialogue
+
+**LLM Room Enhancement**
+- Dynamic room descriptions on first entry
+- Theme-aware narrative generation
+- Configurable prompt templates
 
 <details>
-<summary>Previous Versions</summary>
+<summary>Earlier Versions (v1.3 - v1.4)</summary>
 
-**v1.4.0**
+**v1.4.x**
 - BSP Dungeon Generation for all map styles
 - Themed Room Types (treasureVault, arena, library, etc.)
 - Zone Progression System - Metroidvania-style unlocks
@@ -44,12 +136,6 @@ A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally gen
 - HP System with damage/heal mechanics
 - 5 Vision Items with dynamic fog of war
 - Battlebar 1-10 Difficulty scaling
-
-**v1.2.x**
-- Isometric Renderer with Kenney sprite support
-- Multi-Floor Dungeons with staircases
-- Fog of War visibility system
-- 12 Default Maze Profiles across 6 themes
 </details>
 
 ---
@@ -96,11 +182,9 @@ The heart of MazeMaster is a complete dungeon-crawling adventure. Players naviga
 - **HP System** - Track health with potions, damage, and revival mechanics
 - **8 Mini Games** - Combat, puzzles, stealth, and social encounters
 - **Fairness System** - Pity mechanics prevent unlucky streaks
-- **Difficulty Tiers** - Easy, Normal, Hard, Nightmare with scaling HP/damage
+- **6 Difficulty Tiers** - Tutorial, Easy, Normal, Hard, Nightmare, Apocalypse
 
 ### Minion Types
-
-When you encounter a minion in the maze, it triggers one of these behaviors:
 
 | Type | Behavior |
 |------|----------|
@@ -125,29 +209,11 @@ When you encounter a minion in the maze, it triggers one of these behaviors:
 | **HP** | Healing Potion (25%), Greater Healing (50%), Elixir (100%), Revival Charm (auto-revive), Heart Crystal (+10 max HP) |
 | **Vision** | Torch (+2 visibility for 3 moves), Lantern (+1 passive), Reveal Scroll (full floor), Sight Potion (+1 permanent), Crystal Ball (reveal minions) |
 
-### HP System
-
-MazeMaster features a roguelike HP system that tracks player health across encounters:
-
-- **Damage Sources** - Traps, failed combat, minion attacks, and environmental hazards
-- **Healing** - Potions, rest points, victory rewards, and STScript commands
-- **Death & Revival** - Revival Charms auto-trigger on death; otherwise game over
-- **Difficulty Scaling** - Easy mode has more HP and less damage; Nightmare is brutal
-- **Visual Feedback** - HP bar with damage flash (red) and heal flash (green) effects
-- **STScript Hooks** - `onDamage`, `onHeal`, and `onPlayerDeath` for custom behaviors
-
-Control HP via commands: `/mazehp` (status), `/mazeheal amount=50`, `/mazedamage amount=25`
-
 ---
 
 ## Mini Games
 
-MazeMaster includes **8 modular mini games** that can be used in two ways:
-
-1. **Within the Maze** - Triggered by minion encounters, chests, traps, or exit conditions
-2. **Standalone** - Called directly via slash commands from anywhere (character cards, Quick Replies, World Info, other extensions)
-
-Each mini game has configurable profiles with STScript hooks for win/lose conditions, making them perfect for skill checks, combat, puzzles, or any interactive scenario.
+MazeMaster includes **8 modular mini games** that can be used standalone or within mazes.
 
 <table>
 <tr>
@@ -163,41 +229,214 @@ Each mini game has configurable profiles with STScript hooks for win/lose condit
 <tr>
 <td align="center"><img src="screenshots/wheel.png" width="280"><br><em>Prize Wheel</em></td>
 <td align="center"><img src="screenshots/battlebar.png" width="280"><br><em>Battlebar</em></td>
-<td align="center"></td>
+<td></td>
 </tr>
 </table>
 
-### Mini Game Types
+| Game | Slash Command | Description |
+|------|---------------|-------------|
+| **Battlebar** | `/battlebar profile="Name"` | Timing-based - hit the green zone |
+| **Prize Wheel** | `/wheel profile="Name"` | Spin-to-win with weighted segments |
+| **Turn-Based** | `/turnbased profile="Name"` | RPG combat with Attack/Defend/Item/Flee |
+| **QTE** | `/qte profile="Name"` | Quick-time events - press keys as prompted |
+| **Dice** | `/dice profile="Name"` | Roll dice against a target number |
+| **Stealth** | `/stealth profile="Name"` | Sneak past guards |
+| **Puzzle** | `/puzzle profile="Name"` | Sequence/memory puzzles |
+| **Negotiation** | `/negotiate profile="Name"` | Social encounters |
 
-| Game | Description | Slash Command |
-|------|-------------|---------------|
-| **Battlebar** | Timing-based combat - hit the green zone | `/battlebar profile="Name"` |
-| **Prize Wheel** | Spin-to-win with weighted segments | `/wheel profile="Name"` |
-| **Turn-Based** | RPG combat with Attack/Defend/Item/Flee | `/turnbased profile="Name"` |
-| **QTE** | Quick-time events - press keys as prompted | `/qte profile="Name"` |
-| **Dice** | Roll dice against a target number | `/dice profile="Name"` |
-| **Stealth** | Sneak past guards using Advance/Hide/Distract | `/stealth profile="Name"` |
-| **Puzzle** | Sequence/memory puzzles on a grid | `/puzzle profile="Name"` |
-| **Negotiation** | Social encounters with Persuade/Intimidate/Bribe | `/negotiate profile="Name"` |
+---
 
-### Standalone Usage Examples
+## Slash Commands Reference
 
-Use mini games outside of mazes for any purpose:
+### Game Commands
+
+| Command | Description |
+|---------|-------------|
+| `/maze [profile="name"]` | Start a maze using specified profile |
+| `/wheel [profile="name"]` | Open the prize wheel |
+| `/battlebar [profile="name"]` | Start battlebar challenge |
+| `/turnbased [profile="name"]` | Start turn-based combat |
+| `/qte [profile="name"]` | Start QTE challenge |
+| `/dice [profile="name"]` | Start dice roll challenge |
+| `/stealth [profile="name"]` | Start stealth encounter |
+| `/puzzle [profile="name"]` | Start puzzle challenge |
+| `/negotiate [profile="name"]` | Start negotiation |
+
+### Maze Info Commands
+
+| Command | Description |
+|---------|-------------|
+| `/mazestats` | Get maze statistics as JSON |
+| `/mazeexplore` | Get exploration percentage (0-100) |
+| `/mazeobjective [id="name"]` | Get objective progress |
+| `/mazefloor` | Get current/total floor info |
+| `/mazepersonastats [persona="x"]` | Get stats for a persona |
+
+### Maze Settings Commands
+
+| Command | Description |
+|---------|-------------|
+| `/mazedifficulty [tier="x"]` | Get/set difficulty (easy/normal/hard/nightmare) |
+| `/mazetheme [theme="x"]` | Get/set theme (fantasy/horror/scifi/action) |
+| `/mazemapstyle [style="x"]` | Get/set map style (maze/dungeon/city/forest/spaceship) |
+| `/mazeminion [name="x"] [message="x"]` | Set minion display in active maze |
+
+### HP System Commands
+
+| Command | Description |
+|---------|-------------|
+| `/mazehp [set=N]` | Get HP status as JSON, or set HP to value |
+| `/mazeheal [amount=N] [percent=true]` | Heal player (absolute or % of max) |
+| `/mazedamage [amount=N] [source="x"]` | Deal damage with optional source |
+
+### Inventory Commands
+
+| Command | Description |
+|---------|-------------|
+| `/mazeitem action="add" item="x" [amount=N]` | Add item(s) to inventory |
+| `/mazeitem action="remove" item="x" [amount=N]` | Remove item(s) from inventory |
+| `/mazeitem action="list"` | List all available items with IDs |
+
+---
+
+## Macros
+
+Macros are processed in STScript hooks before execution. Use them for dynamic values.
+
+### Dice Roll Macro
 
 ```
-/wheel profile="Loot Table"           // Random rewards
-/battlebar profile="Boss Fight"       // Combat encounter
-/dice profile="Skill Check"           // Ability check
-/negotiate profile="Merchant Haggle"  // Social encounter
-/stealth profile="Guard Patrol"       // Infiltration scene
+{{roll:XdY+Z}}
 ```
 
-### In-Maze Integration
+Rolls X dice with Y sides and adds Z modifier.
 
-When configured as minion encounters, mini games integrate seamlessly:
-- **Win** rewards items, opens paths, or advances the story
-- **Lose** deals HP damage, spawns traps, or triggers consequences
-- Results feed into maze statistics and STScript hooks
+| Example | Result Range |
+|---------|--------------|
+| `{{roll:1d6}}` | 1-6 |
+| `{{roll:2d6}}` | 2-12 |
+| `{{roll:1d20}}` | 1-20 |
+| `{{roll:2d6+3}}` | 5-15 |
+| `{{roll:1d8-2}}` | -1 to 6 |
+| `{{roll:3d10+5}}` | 8-35 |
+
+**Usage in hook:**
+```
+/echo Dealt {{roll:2d6+3}} damage!
+```
+
+### Random Number Macro
+
+```
+{{random:MIN:MAX}}
+```
+
+Generates random integer between MIN and MAX (inclusive).
+
+| Example | Result Range |
+|---------|--------------|
+| `{{random:1:10}}` | 1-10 |
+| `{{random:50:100}}` | 50-100 |
+| `{{random:0:1}}` | 0 or 1 (coin flip) |
+
+**Usage in hook:**
+```
+/echo Found {{random:10:50}} gold coins!
+```
+
+### Combining Macros
+
+Use multiple macros and template variables together:
+
+```
+/echo {{source}} deals {{roll:2d6}} damage!
+/setvar key=loot value={{random:1:100}}
+/echo Roll: {{roll:1d20}} | Gold: {{random:10:50}}
+```
+
+---
+
+## STScript Hooks
+
+Hooks are STScript commands that fire on game events. Configure them in profile settings.
+
+### Movement Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onMove` | `{{x}}`, `{{y}}`, `{{direction}}` | Fires when player moves |
+| `onTeleport` | `{{x}}`, `{{y}}`, `{{source}}` | Fires on teleport |
+
+### HP System Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onDamage` | `{{amount}}`, `{{source}}`, `{{hp}}`, `{{maxHp}}` | Fires on damage taken |
+| `onHeal` | `{{amount}}`, `{{source}}`, `{{hp}}`, `{{maxHp}}` | Fires on heal |
+| `onPlayerDeath` | `{{source}}` | Fires when HP reaches 0 |
+
+### Item Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onItemAdd` | `{{item}}`, `{{count}}`, `{{total}}` | Item added to inventory |
+| `onItemRemove` | `{{item}}`, `{{count}}`, `{{total}}` | Item removed/used |
+| `onChestOpen` | `{{x}}`, `{{y}}`, `{{loot}}` | Chest opened |
+
+### Equipment Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onEquip` | `{{itemId}}`, `{{name}}`, `{{slot}}`, `{{attack}}`, `{{defense}}` | Item equipped |
+| `onUnequip` | `{{itemId}}`, `{{name}}`, `{{slot}}` | Item unequipped |
+| `onEquipmentFound` | `{{itemId}}`, `{{name}}`, `{{slot}}`, `{{rarity}}` | Equipment dropped |
+
+### Progression Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onXpGain` | `{{amount}}`, `{{source}}`, `{{totalXp}}`, `{{level}}` | XP gained |
+| `onLevelUp` | `{{newLevel}}`, `{{skillPointsAvailable}}`, `{{stats}}` | Level up |
+| `onSkillLearn` | `{{skillId}}`, `{{skillName}}`, `{{rank}}`, `{{tree}}` | Skill learned |
+| `onSkillUse` | `{{skillId}}`, `{{skillName}}`, `{{rank}}`, `{{effect}}` | Skill used |
+
+### Objective Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onObjectiveProgress` | `{{objectiveId}}`, `{{current}}`, `{{target}}` | Progress made |
+| `onObjectiveComplete` | `{{objectiveId}}` | Objective completed |
+| `onAllObjectivesComplete` | (none) | All objectives done |
+| `onExploreComplete` | `{{percentage}}` | 100% exploration |
+
+### Enemy Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onEnemyMove` | `{{minionId}}`, `{{x}}`, `{{y}}`, `{{state}}` | Minion moves |
+| `onMinionAlert` | `{{minionId}}`, `{{x}}`, `{{y}}`, `{{alertLevel}}` | Minion alerted |
+| `onRoomClear` | `{{roomId}}`, `{{roomType}}`, `{{x}}`, `{{y}}` | Room cleared |
+
+### Combat Mode Hooks
+
+| Hook | Variables | Description |
+|------|-----------|-------------|
+| `onTurnStart` | `{{turn}}` | Combat turn starts |
+| `onAttack` | `{{attacker}}` | Player attacks |
+| `onDefend` | `{{defender}}` | Player defends |
+| `onPlayerHit` | `{{damage}}` | Player hits enemy |
+| `onEnemyHit` | `{{enemy}}`, `{{damage}}` | Enemy hits player |
+| `onWin` | (none) | Combat won |
+| `onLose` | (none) | Combat lost |
+| `onFlee` | (none) | Player fled |
+
+### Example Hook Configuration
+
+```
+onWin: /mazeitem action="add" item="key" | /mazeheal amount=20 | /echo Victory!
+onLose: /mazedamage amount=10 | /echo Defeated...
+onDamage: /echo Took {{amount}} damage from {{source}}! HP: {{hp}}/{{maxHp}}
+```
 
 ---
 
@@ -210,90 +449,49 @@ When configured as minion encounters, mini games integrate seamlessly:
 </tr>
 </table>
 
-<p align="center">
-  <img src="screenshots/config-minions.png" alt="Minions Configuration" width="400">
-</p>
-<p align="center"><em>Minions - Define NPCs with types, images, and encounter scripts</em></p>
-
-### Tabs
-
 | Tab | Purpose |
 |-----|---------|
-| **Maze** | Grid size, encounters, chests, loot, milestones, LLM settings, fairness config |
+| **Maze** | Grid size, encounters, chests, loot, milestones, LLM settings, fairness |
 | **Wheel** | Segment text, sizes, colors, STScript commands |
 | **Battlebar** | Difficulty, hit counts, stage images, event hooks |
 | **Combat** | Turn-based, QTE, Dice, Stealth, Puzzle, Negotiation profiles |
 | **Minions** | Reusable NPC configurations with types and scripts |
 | **Traps** | Trap configurations with images and effects |
-
----
-
-## STScript Integration
-
-**MazeMaster is built for STScript.** Every component supports callbacks:
-
-- **Maze events** - onEnter, onExit, onMove, onFloorChange, onEncounter, onChest, onTrap
-- **HP events** - onDamage, onHeal, onPlayerDeath
-- **Mini game events** - onWin, onLose, onHit, onMiss, and game-specific hooks
-
-### Message Macros
-
-Trigger games naturally through dialogue:
-
-```
-"You dare challenge me? {{battlebar:Boss Fight}}"
-"Spin for your reward! {{wheel:Treasure}}"
-"The ancient door requires a test of wit. {{puzzle:Ancient Riddle}}"
-```
-
----
-
-## Slash Commands
-
-| Command | Description |
-|---------|-------------|
-| `/maze profile="Name"` | Start a maze |
-| `/mazeclose` | Close active maze |
-| `/mazestats` | Get session statistics |
-| `/mazehp` | Get/set player HP |
-| `/mazeitem action="add" item="key"` | Manage inventory |
-| `/wheel`, `/battlebar`, `/turnbased`, `/qte`, `/dice`, `/stealth`, `/puzzle`, `/negotiate` | Launch mini games |
+| **Help** | Commands, Macros, and STScript Hooks reference |
 
 ---
 
 ## Quick Start
 
 ### Option 1: Jump Right In
-MazeMaster comes with **12 pre-built maze profiles** across 6 themes (Fantasy, Horror, Sci-Fi, Cyberpunk, Western, Action). Just open the extension panel, select a profile, and click **Play**.
+MazeMaster comes with **31 pre-built maze profiles**. Open the extension panel, select a profile, and click **Play**.
+
+**Recommended:** Start with `Tutorial - Learn the Basics` or any `Easy` profile.
 
 ### Option 2: Test the Mini Games
-Try any mini game standalone to see how they work:
 ```
-/turnbased profile="Training Bout"    // Learn turn-based combat
-/dice profile="Lucky Roll"            // Simple dice challenge
-/stealth profile="Simple Sneak"       // Stealth mechanics
-/puzzle profile="Simple Riddle"       // Sequence puzzle
-/negotiate profile="Friendly Chat"    // Social encounter
-/wheel profile="Blessing Wheel"       // Spin for rewards
-/battlebar profile="Training Dummy"   // Timing combat
+/turnbased profile="Tutorial - Combat Training"
+/dice profile="Fantasy - Easy"
+/stealth profile="Cyberpunk - Normal"
+/puzzle profile="Horror - Hard"
 ```
 
 ### Option 3: Build Your Own
-1. **Minions Tab** - Create NPCs (messengers, merchants, combat triggers)
-2. **Combat Tabs** - Configure mini game profiles with custom difficulty
-3. **Maze Tab** - Build a dungeon profile with your encounters, loot, and win conditions
+1. **Minions Tab** - Create NPCs
+2. **Combat Tabs** - Configure mini game profiles
+3. **Maze Tab** - Build a dungeon profile
 4. Click **Play** or use `/maze profile="Your Profile"`
 
 ---
 
 ## Tips
 
-- **LLM Enhancement** works best with descriptive theme names and main story text
+- **LLM Enhancement** works best with descriptive theme names
 - **Session Notes** ("m" button) shows what the LLM knows about your adventure
 - Use **Intelligent Distribute** to auto-balance encounter percentages
-- **POW** and **Stealth** items are valuable - use strategically!
 - Chain STScript commands with `|` for complex behaviors
-- Test mini games with the **Preview buttons** before adding to mazes
+- Test mini games with **Preview buttons** before adding to mazes
+- Use `{{roll:XdY}}` macros for dynamic damage/rewards in hooks
 
 ---
 
