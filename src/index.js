@@ -3258,11 +3258,46 @@ function initHP(profile) {
 /**
  * Try to absorb damage with equipment items (e.g., Iron Guard)
  * v1.7.0: Checks for equipment with absorption charges
+ * v1.9.7: Also checks equipped armor for absorb special
  * @param {number} amount - The damage amount
  * @param {string} source - The damage source
  * @returns {Promise<{fullyAbsorbed: boolean, remainingDamage: number}>}
  */
 async function tryAbsorbDamage(amount, source) {
+    // v1.9.7: First check equipped armor for absorb special
+    const equippedArmor = currentMaze?.equipment?.armor;
+    if (equippedArmor?.special?.type === 'absorb') {
+        // Initialize charges tracking if not present
+        if (typeof currentMaze.equipmentCharges === 'undefined') {
+            currentMaze.equipmentCharges = {};
+        }
+        if (typeof currentMaze.equipmentCharges[equippedArmor.id] === 'undefined') {
+            currentMaze.equipmentCharges[equippedArmor.id] = equippedArmor.special.charges || 3;
+        }
+
+        const chargesLeft = currentMaze.equipmentCharges[equippedArmor.id];
+        if (chargesLeft > 0) {
+            // Absorb the damage
+            const absorbed = amount; // Full absorption
+            currentMaze.equipmentCharges[equippedArmor.id]--;
+            const remaining = currentMaze.equipmentCharges[equippedArmor.id];
+
+            if (remaining > 0) {
+                addMazeMessage('Shield', `${equippedArmor.name} absorbed ${absorbed} damage! (${remaining} charges left)`);
+            } else {
+                addMazeMessage('Shield', `${equippedArmor.name} absorbed ${absorbed} damage and shattered!`);
+                // Unequip the broken armor
+                currentMaze.equipment.armor = null;
+                updateEquipmentDisplay();
+            }
+
+            return {
+                fullyAbsorbed: true,
+                remainingDamage: 0,
+            };
+        }
+    }
+
     // v1.9.0: Dynamically find equipment items that can absorb damage from item profiles
     const absorbItems = getItemProfileIds().filter(itemId => {
         const profile = getItemProfile(itemId);
