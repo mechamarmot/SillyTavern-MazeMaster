@@ -4,7 +4,7 @@ const MODULE_NAME = 'MazeMaster';
 
 // Factory defaults version - increment this when you update DEFAULT_* constants
 // and want all users to get the updated factory defaults
-const FACTORY_DEFAULTS_VERSION = 11;
+const FACTORY_DEFAULTS_VERSION = 12;
 
 // Dynamically detect the extension folder name from the script URL
 // This handles both 'MazeMaster' and 'SillyTavern-MazeMaster' folder names
@@ -19343,7 +19343,7 @@ function resetFactoryDefaults() {
     // Update the stored version
     extensionSettings.factoryDefaultsVersion = FACTORY_DEFAULTS_VERSION;
 
-    console.log('[MazeMaster] Factory defaults reset complete - all old profiles removed, v1.6.0 profiles installed');
+    console.log('[MazeMaster] Factory defaults reset complete - all old profiles removed, v1.9.0 profiles installed');
 }
 
 function loadSettings() {
@@ -41966,10 +41966,10 @@ function getPanelHtml() {
                     <!-- Reset Factory Defaults Button -->
                     <div class="mazemaster-section" style="background: #2a1a1a; border: 1px solid #ff6b6b; border-radius: 8px; padding: 10px; margin-bottom: 15px;">
                         <button id="mazemaster_reset_factory" class="menu_button" style="width: 100%; background: #8b0000; color: white;">
-                            <i class="fa-solid fa-rotate-left"></i> Reset Factory Defaults (v1.6.0)
+                            <i class="fa-solid fa-rotate-left"></i> Reset Factory Defaults (v1.9.0)
                         </button>
                         <div style="font-size: 11px; color: #ff9999; margin-top: 5px; text-align: center;">
-                            Clears all profiles and restores v1.6.0 themed defaults (248 profiles)
+                            Clears all profiles and restores v1.9.0 themed defaults (248 profiles)
                         </div>
                     </div>
 
@@ -51447,7 +51447,7 @@ function setupEventHandlers() {
     if (resetFactoryBtn) {
         resetFactoryBtn.addEventListener('click', async () => {
             const confirmed = await callGenericPopup(
-                'This will DELETE all your custom profiles and restore v1.6.0 factory defaults (248 themed profiles).\n\nThis cannot be undone!',
+                'This will DELETE all your custom profiles and restore v1.9.0 factory defaults (248 themed profiles).\n\nThis cannot be undone!',
                 POPUP_TYPE.CONFIRM
             );
             if (confirmed) {
