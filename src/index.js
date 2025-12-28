@@ -26505,45 +26505,61 @@ async function handleTurnBasedWin() {
     const profile = currentTurnBased.profile;
     addTBLogEntry('Victory! The enemy is defeated!');
 
-    // Execute STScript hook
-    if (profile.onWin) {
-        await executeWithTimeout(profile.onWin);
-    }
-
-    // Handle item drops if in maze (v1.8.0: filtered by item pool)
-    if (currentMaze.isOpen && currentMaze.pendingEncounter) {
-        if (isItemInPool('key') && Math.random() * 100 < (profile.keyDropChance || 40)) {
-            addToInventory('key');
-            addTBLogEntry('You found a Key!');
-        }
-        if (isItemInPool('strike') && Math.random() * 100 < (profile.strikeDropChance || 20)) {
-            addToInventory('strike');
-            addTBLogEntry('You found a Strike!');
-        }
-        if (isItemInPool('healingPotion') && Math.random() * 100 < (profile.healingPotionDropChance || 20)) {
-            addToInventory('healingPotion');
-            addTBLogEntry('You found a Healing Potion!');
+    try {
+        // Execute STScript hook
+        if (profile.onWin) {
+            await executeWithTimeout(profile.onWin);
         }
 
-        // v1.5.0: Equipment drop chance
-        const equipDropChance = profile.equipmentDropChance ?? 15;
-        const equipment = await triggerEquipmentDrop(equipDropChance);
-        if (equipment) {
-            addTBLogEntry(`You found ${equipment.name}!`);
-        }
+        // Handle item drops if in maze (v1.8.0: filtered by item pool)
+        if (currentMaze.isOpen && currentMaze.pendingEncounter) {
+            if (isItemInPool('key') && Math.random() * 100 < (profile.keyDropChance || 40)) {
+                addToInventory('key');
+                addTBLogEntry('You found a Key!');
+            }
+            if (isItemInPool('strike') && Math.random() * 100 < (profile.strikeDropChance || 20)) {
+                addToInventory('strike');
+                addTBLogEntry('You found a Strike!');
+            }
+            if (isItemInPool('healingPotion') && Math.random() * 100 < (profile.healingPotionDropChance || 20)) {
+                addToInventory('healingPotion');
+                addTBLogEntry('You found a Healing Potion!');
+            }
 
-        // v1.5.0: Grant XP for combat victory
-        const difficulty = currentTurnBased.difficulty || 1;
-        const xpAmount = XP_REWARDS.combatVictory + (difficulty * XP_REWARDS.combatDifficultyBonus);
-        const xpResult = await grantXp(xpAmount, 'combat');
-        addTBLogEntry(`+${xpAmount} XP`);
-        if (xpResult.leveledUp) {
-            addTBLogEntry(`LEVEL UP! Now level ${xpResult.newLevel}!`);
-        }
+            // v1.5.0: Equipment drop chance
+            try {
+                const equipDropChance = profile.equipmentDropChance ?? 15;
+                const equipment = await triggerEquipmentDrop(equipDropChance);
+                if (equipment) {
+                    addTBLogEntry(`You found ${equipment.name}!`);
+                }
+            } catch (e) {
+                console.error('[MazeMaster] Equipment drop error:', e);
+            }
 
-        // v1.5.0: Update defeat quest progress
-        const enemyType = currentTurnBased.enemyType || 'enemy';
-        await updateQuestProgress('defeat', enemyType, 1);
+            // v1.5.0: Grant XP for combat victory
+            try {
+                const difficulty = currentTurnBased.difficulty || 1;
+                const xpAmount = XP_REWARDS.combatVictory + (difficulty * XP_REWARDS.combatDifficultyBonus);
+                const xpResult = await grantXp(xpAmount, 'combat');
+                addTBLogEntry(`+${xpAmount} XP`);
+                if (xpResult?.leveledUp) {
+                    addTBLogEntry(`LEVEL UP! Now level ${xpResult.newLevel}!`);
+                }
+            } catch (e) {
+                console.error('[MazeMaster] XP grant error:', e);
+            }
+
+            // v1.5.0: Update defeat quest progress
+            try {
+                const enemyType = currentTurnBased.enemyType || 'enemy';
+                await updateQuestProgress('defeat', enemyType, 1);
+            } catch (e) {
+                console.error('[MazeMaster] Quest progress error:', e);
+            }
+        }
+    } catch (e) {
+        console.error('[MazeMaster] Victory handler error:', e);
     }
 
     // Store result
