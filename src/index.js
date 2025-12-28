@@ -14434,6 +14434,20 @@ const DEFAULT_EQUIPMENT = {
         icon: 'fa-droplet',
         description: 'Drains life from enemies to heal the wearer.',
     },
+
+    // ===== CONSUMABLE ARMOR =====
+    'ironGuard': {
+        id: 'ironGuard',
+        name: 'Iron Guard',
+        slot: 'armor',
+        rarity: 'uncommon',
+        attack: 0,
+        defense: 5,
+        critBonus: 0,
+        special: { type: 'absorb', value: 3, charges: 3 },
+        icon: 'fa-shield-halved',
+        description: 'Absorbs 3 hits from combat or traps before breaking.',
+    },
 };
 
 /**
