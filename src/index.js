@@ -31958,20 +31958,52 @@ function connectBSPChildren(node, grid, size, config) {
  * @param {number} y2 - End Y
  * @param {object} config - Configuration
  */
-function carveCorridor(grid, size, x1, y1, x2, y2, config) {
+function carveCorridor(grid, size, x1, y1, x2, y2, config, depth = 0) {
     const width = config.corridorWidth || 1;
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const distance = dx + dy;
 
-    // Randomly choose horizontal-first or vertical-first
-    const horizontalFirst = Math.random() < 0.5;
+    // Always break up long corridors with multiple segments
+    // More aggressive breaking for longer distances
+    const shouldBreak = distance > 3 && (Math.random() < 0.75 || distance > 6);
 
-    if (config.windingCorridors && Math.random() < 0.3) {
-        // Add a midpoint for more interesting corridors
-        const midX = Math.floor((x1 + x2) / 2) + Math.floor((Math.random() - 0.5) * 4);
-        const midY = Math.floor((y1 + y2) / 2) + Math.floor((Math.random() - 0.5) * 4);
-        carveCorridor(grid, size, x1, y1, midX, midY, { ...config, windingCorridors: false });
-        carveCorridor(grid, size, midX, midY, x2, y2, { ...config, windingCorridors: false });
-        return;
+    if (shouldBreak && depth < 4) {
+        // Calculate number of segments based on distance
+        const segments = distance > 8 ? 3 : 2;
+
+        if (segments === 3 && distance > 8) {
+            // Three-segment zigzag for long corridors
+            const third = 1 / 3;
+            const twoThird = 2 / 3;
+
+            // Add randomized waypoints
+            const offset1 = Math.floor((Math.random() - 0.5) * Math.min(4, size / 4));
+            const offset2 = Math.floor((Math.random() - 0.5) * Math.min(4, size / 4));
+
+            const mid1X = Math.max(1, Math.min(size - 2, Math.floor(x1 + (x2 - x1) * third) + offset1));
+            const mid1Y = Math.max(1, Math.min(size - 2, Math.floor(y1 + (y2 - y1) * third) + offset2));
+            const mid2X = Math.max(1, Math.min(size - 2, Math.floor(x1 + (x2 - x1) * twoThird) - offset1));
+            const mid2Y = Math.max(1, Math.min(size - 2, Math.floor(y1 + (y2 - y1) * twoThird) - offset2));
+
+            carveCorridor(grid, size, x1, y1, mid1X, mid1Y, config, depth + 1);
+            carveCorridor(grid, size, mid1X, mid1Y, mid2X, mid2Y, config, depth + 1);
+            carveCorridor(grid, size, mid2X, mid2Y, x2, y2, config, depth + 1);
+            return;
+        } else {
+            // Two-segment L-shape with offset midpoint
+            const offsetRange = Math.min(3, Math.floor(distance / 3));
+            const midX = Math.max(1, Math.min(size - 2, Math.floor((x1 + x2) / 2) + Math.floor((Math.random() - 0.5) * offsetRange * 2)));
+            const midY = Math.max(1, Math.min(size - 2, Math.floor((y1 + y2) / 2) + Math.floor((Math.random() - 0.5) * offsetRange * 2)));
+
+            carveCorridor(grid, size, x1, y1, midX, midY, config, depth + 1);
+            carveCorridor(grid, size, midX, midY, x2, y2, config, depth + 1);
+            return;
+        }
     }
+
+    // For short segments, use alternating direction patterns
+    const horizontalFirst = Math.random() < 0.5;
 
     if (horizontalFirst) {
         // Horizontal then vertical
