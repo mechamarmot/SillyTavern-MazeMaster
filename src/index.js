@@ -21022,6 +21022,52 @@ function renderCustomItemsList() {
     }).join('');
 }
 
+/**
+ * Render custom items in the item pool section
+ * This allows custom items to be included/excluded from loot drops
+ */
+function renderCustomItemsInItemPool() {
+    const container = document.getElementById('mazemaster_itempool_custom');
+    if (!container) return;
+
+    const customItems = extensionSettings.customItems || {};
+    const itemIds = Object.keys(customItems);
+
+    if (itemIds.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const currentMazeData = getCurrentMazeProfile();
+    const poolItems = currentMazeData.itemPool?.items || [];
+
+    container.innerHTML = `
+        <label class="mazemaster-label" style="font-size: 0.8em; color: var(--SmartThemeEmColor);">Custom Items</label>
+        <div class="mazemaster-grid-4col" style="gap: 4px;">
+            ${itemIds.map(id => {
+                const item = customItems[id];
+                const checked = poolItems.includes(id) ? 'checked' : '';
+                const icon = item.icon || 'fa-box';
+                const color = {
+                    common: '#9e9e9e',
+                    uncommon: '#4caf50',
+                    rare: '#2196f3',
+                    epic: '#9c27b0',
+                    legendary: '#ff9800'
+                }[item.rarity] || '#9e9e9e';
+                return `<label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="${id}" ${checked}><i class="fa-solid ${icon}" style="color:${color};"></i> ${escapeHtml(item.name)}</label>`;
+            }).join('')}
+        </div>
+    `;
+
+    // Attach event listeners to new checkboxes
+    container.querySelectorAll('input[data-pool-item]').forEach(cb => {
+        cb.addEventListener('change', () => {
+            updateItemPoolFromCheckboxes();
+        });
+    });
+}
+
 // =========================================================================
 // v1.6.0: FACTIONS CONFIG TAB
 // =========================================================================
@@ -43863,7 +43909,6 @@ function getPanelHtml() {
                                             <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="elixir" ${currentMazeData.itemPool?.items?.includes('elixir') ? 'checked' : ''}><i class="fa-solid fa-flask" style="color:#f1c40f;"></i> Elixir</label>
                                             <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="revivalCharm" ${currentMazeData.itemPool?.items?.includes('revivalCharm') ? 'checked' : ''}><i class="fa-solid fa-heart-pulse" style="color:#e74c3c;"></i> Revival</label>
                                             <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="heartCrystal" ${currentMazeData.itemPool?.items?.includes('heartCrystal') ? 'checked' : ''}><i class="fa-solid fa-heart" style="color:#e74c3c;"></i> Heart Crystal</label>
-                                            <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="ironGuard" ${currentMazeData.itemPool?.items?.includes('ironGuard') ? 'checked' : ''}><i class="fa-solid fa-shield-halved" style="color:#7f8c8d;"></i> Iron Guard</label>
                                         </div>
                                         <label class="mazemaster-label" style="font-size: 0.8em; color: var(--SmartThemeEmColor);">Vision</label>
                                         <div class="mazemaster-grid-4col" style="gap: 4px; margin-bottom: 8px;">
@@ -43893,6 +43938,10 @@ function getPanelHtml() {
                                             <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="accessory_amulet_protection" ${currentMazeData.itemPool?.items?.includes('accessory_amulet_protection') ? 'checked' : ''}><i class="fa-solid fa-gem" style="color:#3498db;"></i> Amulet of Protection</label>
                                             <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="accessory_lucky_charm" ${currentMazeData.itemPool?.items?.includes('accessory_lucky_charm') ? 'checked' : ''}><i class="fa-solid fa-clover" style="color:#27ae60;"></i> Lucky Charm</label>
                                             <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="accessory_vampiric_pendant" ${currentMazeData.itemPool?.items?.includes('accessory_vampiric_pendant') ? 'checked' : ''}><i class="fa-solid fa-droplet" style="color:#8e44ad;"></i> Vampiric Pendant</label>
+                                            <label class="mazemaster-checkbox-label"><input type="checkbox" data-pool-item="ironGuard" ${currentMazeData.itemPool?.items?.includes('ironGuard') ? 'checked' : ''}><i class="fa-solid fa-shield-halved" style="color:#7f8c8d;"></i> Iron Guard</label>
+                                        </div>
+                                        <div id="mazemaster_itempool_custom" style="margin-top: 8px;">
+                                            <!-- Custom items dynamically populated -->
                                         </div>
                                     </div>
                                 </div>
@@ -48723,6 +48772,9 @@ function updateMazeSettings() {
     document.querySelectorAll('#mazemaster_itempool_items input[data-pool-item]').forEach(cb => {
         cb.checked = poolItems.includes(cb.dataset.poolItem);
     });
+
+    // v1.9.2: Render custom items in item pool
+    renderCustomItemsInItemPool();
 }
 
 function updateExitProfileDropdown(exitType, selectedProfile) {
@@ -51125,7 +51177,7 @@ function setupEventHandlers() {
         if (configType === 'styles') populateStyleProfileSelect();
         if (configType === 'quests') renderQuestTemplateList();
         // v1.6.0: Render new tab content
-        if (configType === 'items') renderCustomItemsList();
+        if (configType === 'items') { renderCustomItemsList(); renderCustomItemsInItemPool(); }
         if (configType === 'factions') renderFactionsList();
         if (configType === 'vision') renderVisionSettings();
         if (configType === 'sound') renderSoundSettings();
@@ -53222,6 +53274,7 @@ function setupEventHandlers() {
 
             document.getElementById('mazemaster_item_editor').style.display = 'none';
             renderCustomItemsList();
+            renderCustomItemsInItemPool();
             attachItemListHandlers();
         });
     }
@@ -53480,6 +53533,7 @@ function setupEventHandlers() {
                 if (confirmed) {
                     deleteCustomItem(id);
                     renderCustomItemsList();
+                    renderCustomItemsInItemPool();
                     attachItemListHandlers();
                 }
             });
@@ -53516,6 +53570,7 @@ function setupEventHandlers() {
             if (count > 0) {
                 toastr.success(`Imported ${count} custom items!`);
                 renderCustomItemsList();
+                renderCustomItemsInItemPool();
                 attachItemListHandlers();
             } else {
                 toastr.error('No valid items found in file');
@@ -53528,6 +53583,7 @@ function setupEventHandlers() {
 
     // Initial render
     renderCustomItemsList();
+    renderCustomItemsInItemPool();
     attachItemListHandlers();
 
     // =========================================================================
