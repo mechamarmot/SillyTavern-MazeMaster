@@ -34281,7 +34281,7 @@ async function startMaze(profileName) {
         elixir: baseStartInv.elixir || 0,
         revivalCharm: baseStartInv.revivalCharm || 0,
         heartCrystal: baseStartInv.heartCrystal || 0,
-        // v1.8.0 Equipment
+        // v1.8.0 Equipment - Iron Guard
         ironGuard: baseStartInv.ironGuard || 0,
         // v1.8.0 Visibility items
         torch: baseStartInv.torch || 0,
@@ -34289,6 +34289,21 @@ async function startMaze(profileName) {
         revealScroll: baseStartInv.revealScroll || 0,
         sightPotion: baseStartInv.sightPotion || 0,
         crystalBall: baseStartInv.crystalBall || 0,
+        // v1.9.3 Equipment - Weapons
+        weapon_rusty_sword: baseStartInv.weapon_rusty_sword || 0,
+        weapon_iron_sword: baseStartInv.weapon_iron_sword || 0,
+        weapon_steel_blade: baseStartInv.weapon_steel_blade || 0,
+        weapon_enchanted_blade: baseStartInv.weapon_enchanted_blade || 0,
+        weapon_shadow_dagger: baseStartInv.weapon_shadow_dagger || 0,
+        // v1.9.3 Equipment - Armor
+        armor_leather: baseStartInv.armor_leather || 0,
+        armor_chainmail: baseStartInv.armor_chainmail || 0,
+        armor_plate: baseStartInv.armor_plate || 0,
+        // v1.9.3 Equipment - Accessories
+        accessory_ring_power: baseStartInv.accessory_ring_power || 0,
+        accessory_amulet_protection: baseStartInv.accessory_amulet_protection || 0,
+        accessory_lucky_charm: baseStartInv.accessory_lucky_charm || 0,
+        accessory_vampiric_pendant: baseStartInv.accessory_vampiric_pendant || 0,
     };
 
     // Determine initial minion display (main story, main minion intro, or default)
