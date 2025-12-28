@@ -34432,6 +34432,47 @@ async function startMaze(profileName) {
         equipmentInventory: [],
     };
 
+    // v1.9.4: Populate equipmentInventory from starting inventory equipment items
+    const equipmentItems = [
+        'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_steel_blade', 'weapon_enchanted_blade', 'weapon_shadow_dagger',
+        'armor_leather', 'armor_chainmail', 'armor_plate',
+        'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant',
+        'ironGuard'
+    ];
+    for (const itemId of equipmentItems) {
+        const count = startInv[itemId] || 0;
+        for (let i = 0; i < count; i++) {
+            currentMaze.equipmentInventory.push(itemId);
+        }
+    }
+
+    // Auto-equip first available weapon/armor/accessory from starting inventory
+    if (!currentMaze.equipment.weapon) {
+        const startWeapon = equipmentItems.filter(id => id.startsWith('weapon_')).find(id => startInv[id] > 0);
+        if (startWeapon) {
+            currentMaze.equipment.weapon = getEquipment(startWeapon);
+            // Remove from inventory since it's equipped
+            const idx = currentMaze.equipmentInventory.indexOf(startWeapon);
+            if (idx >= 0) currentMaze.equipmentInventory.splice(idx, 1);
+        }
+    }
+    if (!currentMaze.equipment.armor) {
+        const startArmor = equipmentItems.filter(id => id.startsWith('armor_')).find(id => startInv[id] > 0);
+        if (startArmor) {
+            currentMaze.equipment.armor = getEquipment(startArmor);
+            const idx = currentMaze.equipmentInventory.indexOf(startArmor);
+            if (idx >= 0) currentMaze.equipmentInventory.splice(idx, 1);
+        }
+    }
+    if (!currentMaze.equipment.accessory) {
+        const startAccessory = equipmentItems.filter(id => id.startsWith('accessory_')).find(id => startInv[id] > 0);
+        if (startAccessory) {
+            currentMaze.equipment.accessory = getEquipment(startAccessory);
+            const idx = currentMaze.equipmentInventory.indexOf(startAccessory);
+            if (idx >= 0) currentMaze.equipmentInventory.splice(idx, 1);
+        }
+    }
+
     // Add initial session note
     addSessionNote(`Adventure begins: ${profileName}`);
     addSessionNote(`Floor 1/${profile.floors || 1} - ${size}x${size} ${profile.theme || 'fantasy'} ${profile.mapStyle || 'dungeon'}`);
