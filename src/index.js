@@ -31635,8 +31635,8 @@ const BSP_STYLE_CONFIGS = {
         splitVariance: 0.3,
         corridorWidth: 1,
         roomPadding: 0,
-        extraConnections: 0.5,
-        branchChance: 0.4,
+        extraConnections: 0.9,
+        branchChance: 0.65,
         preferSquareRooms: false
     },
     maze: {
@@ -31646,9 +31646,9 @@ const BSP_STYLE_CONFIGS = {
         splitVariance: 0.3,
         corridorWidth: 1,
         roomPadding: 0,
-        extraConnections: 0.6,
+        extraConnections: 1.0,
         addDeadEnds: true,
-        branchChance: 0.5,
+        branchChance: 0.7,
         preferSquareRooms: true
     },
     city: {
@@ -31659,8 +31659,8 @@ const BSP_STYLE_CONFIGS = {
         corridorWidth: 1,
         roomPadding: 0,
         gridAlign: true,
-        extraConnections: 0.6,
-        branchChance: 0.4,
+        extraConnections: 0.95,
+        branchChance: 0.6,
         preferSquareRooms: false
     },
     forest: {
@@ -31671,8 +31671,8 @@ const BSP_STYLE_CONFIGS = {
         corridorWidth: 1,
         roomPadding: 0,
         windingCorridors: true,
-        extraConnections: 0.5,
-        branchChance: 0.5,
+        extraConnections: 0.9,
+        branchChance: 0.7,
         preferSquareRooms: false
     },
     spaceship: {
@@ -31682,9 +31682,9 @@ const BSP_STYLE_CONFIGS = {
         splitVariance: 0.2,
         corridorWidth: 1,
         roomPadding: 0,
-        extraConnections: 0.5,
+        extraConnections: 0.85,
         modularRooms: true,
-        branchChance: 0.4,
+        branchChance: 0.6,
         preferSquareRooms: true
     },
     arena: {
@@ -31694,8 +31694,8 @@ const BSP_STYLE_CONFIGS = {
         splitVariance: 0.3,
         corridorWidth: 1,
         roomPadding: 0,
-        extraConnections: 0.5,
-        branchChance: 0.4,
+        extraConnections: 0.9,
+        branchChance: 0.65,
         preferSquareRooms: true
     },
     hospital: {
@@ -31706,8 +31706,8 @@ const BSP_STYLE_CONFIGS = {
         corridorWidth: 1,
         roomPadding: 0,
         gridAlign: true,
-        extraConnections: 0.5,
-        branchChance: 0.4,
+        extraConnections: 0.85,
+        branchChance: 0.6,
         preferSquareRooms: false
     }
 };
@@ -32274,7 +32274,7 @@ function addExtraBSPConnections(grid, rooms, size, config) {
  * Add intersection points along corridors to create more direction options
  */
 function addCorridorIntersections(grid, size, config) {
-    const intersectionCount = Math.floor(size * 1.5); // More intersections for larger maps
+    const intersectionCount = Math.floor(size * 2.5); // More intersections for larger maps
 
     for (let i = 0; i < intersectionCount; i++) {
         // Find a corridor cell (not a room interior, not on edge)
@@ -32335,7 +32335,7 @@ function addCorridorIntersections(grid, size, config) {
  * Add dead-end branches for maze-like feel
  */
 function addBSPDeadEnds(grid, rooms, size, config) {
-    const deadEndCount = Math.floor(rooms.length * 0.5);
+    const deadEndCount = Math.floor(rooms.length * 0.8);
 
     for (let i = 0; i < deadEndCount; i++) {
         const room = rooms[Math.floor(Math.random() * rooms.length)];
