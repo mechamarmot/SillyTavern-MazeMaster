@@ -34457,7 +34457,8 @@ async function startMaze(profileName) {
         }
     }
     if (!currentMaze.equipment.armor) {
-        const startArmor = equipmentItems.filter(id => id.startsWith('armor_')).find(id => startInv[id] > 0);
+        // Iron Guard counts as armor (all armor is consumable with charges)
+        const startArmor = equipmentItems.filter(id => id.startsWith('armor_') || id === 'ironGuard').find(id => startInv[id] > 0);
         if (startArmor) {
             currentMaze.equipment.armor = getEquipment(startArmor);
             const idx = currentMaze.equipmentInventory.indexOf(startArmor);
