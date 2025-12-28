@@ -13568,6 +13568,31 @@ const DEFAULT_ITEM_PROFILES = {
             western: 'Iron Constitution',
         },
     },
+
+    // ===== REPAIR =====
+    'repairKit': {
+        id: 'repairKit',
+        name: 'Repair Kit',
+        type: 'repair',
+        effect: 'repairEquipment',
+        icon: 'fa-wrench',
+        iconColor: '#95a5a6',
+        description: 'Restores durability to a weapon or armor',
+        rarity: 'uncommon',
+        stackable: true,
+        repairAmount: 3,
+        aliases: {
+            fantasy: 'Smithing Kit',
+            horror: 'Dark Restoration',
+            scifi: 'Nano-Repair Module',
+            action: 'Field Repair Kit',
+            cyberpunk: 'Chrome Polish',
+            noir: 'Maintenance Kit',
+            postapoc: 'Scrap Repair',
+            comedy: 'Duct Tape & WD-40',
+            western: 'Gunsmith Tools',
+        },
+    },
 };
 
 /**
@@ -14332,6 +14357,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-sword',
         description: 'A worn blade, better than nothing.',
+        durability: 10,
+        maxDurability: 10,
     },
     'weapon_iron_sword': {
         id: 'weapon_iron_sword',
@@ -14344,6 +14371,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-sword',
         description: 'A reliable blade forged from iron.',
+        durability: 15,
+        maxDurability: 15,
     },
     'weapon_steel_blade': {
         id: 'weapon_steel_blade',
@@ -14356,6 +14385,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-sword',
         description: 'Sharp and well-balanced for precise strikes.',
+        durability: 20,
+        maxDurability: 20,
     },
     'weapon_enchanted_blade': {
         id: 'weapon_enchanted_blade',
@@ -14368,6 +14399,8 @@ const DEFAULT_EQUIPMENT = {
         special: { type: 'fire', value: 3 },
         icon: 'fa-sword',
         description: 'Wreathed in magical flames that sear foes.',
+        durability: 25,
+        maxDurability: 25,
     },
     'weapon_shadow_dagger': {
         id: 'weapon_shadow_dagger',
@@ -14380,6 +14413,8 @@ const DEFAULT_EQUIPMENT = {
         special: { type: 'backstab', value: 25 },
         icon: 'fa-khanda',
         description: 'A dark blade that strikes from the shadows.',
+        durability: 18,
+        maxDurability: 18,
     },
 
     // ===== ARMOR =====
@@ -14394,6 +14429,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-vest',
         description: 'Basic protection that allows freedom of movement.',
+        durability: 12,
+        maxDurability: 12,
     },
     'armor_chainmail': {
         id: 'armor_chainmail',
@@ -14406,6 +14443,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-shield',
         description: 'Interlocking steel rings provide solid defense.',
+        durability: 18,
+        maxDurability: 18,
     },
     'armor_plate': {
         id: 'armor_plate',
@@ -14418,6 +14457,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-shield-halved',
         description: 'Heavy but extremely protective steel plates.',
+        durability: 25,
+        maxDurability: 25,
     },
 
     // ===== ACCESSORIES =====
@@ -14432,6 +14473,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-ring',
         description: 'Channels raw energy into your strikes.',
+        durability: 20,
+        maxDurability: 20,
     },
     'accessory_amulet_protection': {
         id: 'accessory_amulet_protection',
@@ -14444,6 +14487,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-gem',
         description: 'Wards off incoming harm with ancient magic.',
+        durability: 20,
+        maxDurability: 20,
     },
     'accessory_lucky_charm': {
         id: 'accessory_lucky_charm',
@@ -14456,6 +14501,8 @@ const DEFAULT_EQUIPMENT = {
         special: null,
         icon: 'fa-clover',
         description: 'Fortune favors those who carry this talisman.',
+        durability: 25,
+        maxDurability: 25,
     },
     'accessory_vampiric_pendant': {
         id: 'accessory_vampiric_pendant',
@@ -14468,6 +14515,8 @@ const DEFAULT_EQUIPMENT = {
         special: { type: 'lifesteal', value: 10 },
         icon: 'fa-droplet',
         description: 'Drains life from enemies to heal the wearer.',
+        durability: 30,
+        maxDurability: 30,
     },
 
     // ===== CONSUMABLE ARMOR =====
@@ -14482,6 +14531,8 @@ const DEFAULT_EQUIPMENT = {
         special: { type: 'absorb', value: 3, charges: 3 },
         icon: 'fa-shield-halved',
         description: 'Absorbs 3 hits from combat or traps before breaking.',
+        durability: 3,
+        maxDurability: 3,
     },
 };
 
@@ -17050,7 +17101,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 100 },
             { questId: 'quest_treasure_hunter', chance: 100 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 
     // ===== FANTASY THEME =====
@@ -17098,7 +17149,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_defeat_5', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 70 },
         ],
-        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power'] },
+        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power', 'repairKit'] },
     },
     'Guardian\'s Domain': {
         gridSize: 10, floors: 2, difficulty: 'normal', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'fogOfWar',
@@ -17148,7 +17199,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'repairKit'] },
     },
     'The Abyss Gauntlet': {
         gridSize: 12, floors: 3, difficulty: 'hard', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
@@ -17199,7 +17250,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_survive_combat', chance: 70 },
             { questId: 'quest_boss_slayer', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Trial of the Damned': {
         gridSize: 14, floors: 4, difficulty: 'nightmare', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
@@ -17251,7 +17302,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 60 },
             { questId: 'quest_full_clear', chance: 40 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Extinction\'s Edge': {
         gridSize: 16, floors: 5, difficulty: 'apocalypse', theme: 'fantasy', mapStyle: 'dungeon', mapVisibility: 'hideUnexplored',
@@ -17302,7 +17353,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 70 },
             { questId: 'quest_full_clear', chance: 60 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 
     // ===== HORROR THEME =====
@@ -17350,7 +17401,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_defeat_5', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 70 },
         ],
-        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power'] },
+        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power', 'repairKit'] },
     },
     'Asylum of Whispers': {
         gridSize: 10, floors: 2, difficulty: 'normal', theme: 'horror', mapStyle: 'hospital', mapVisibility: 'fogOfWar',
@@ -17399,7 +17450,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'repairKit'] },
     },
     'Catacombs of Dread': {
         gridSize: 12, floors: 3, difficulty: 'hard', theme: 'horror', mapStyle: 'highrise', mapVisibility: 'hideUnexplored',
@@ -17449,7 +17500,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_survive_combat', chance: 70 },
             { questId: 'quest_boss_slayer', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'The Endless Dark': {
         gridSize: 14, floors: 4, difficulty: 'nightmare', theme: 'horror', mapStyle: 'hospital', mapVisibility: 'hideUnexplored',
@@ -17500,7 +17551,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 60 },
             { questId: 'quest_full_clear', chance: 40 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Hell\'s Threshold': {
         gridSize: 16, floors: 5, difficulty: 'apocalypse', theme: 'horror', mapStyle: 'hospital', mapVisibility: 'hideUnexplored',
@@ -17550,7 +17601,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 70 },
             { questId: 'quest_full_clear', chance: 60 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 
     // ===== SCI-FI THEME =====
@@ -17598,7 +17649,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_defeat_5', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 70 },
         ],
-        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power'] },
+        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power', 'repairKit'] },
     },
     'Lockdown Protocol': {
         gridSize: 10, floors: 2, difficulty: 'normal', theme: 'scifi', mapStyle: 'spacestation', mapVisibility: 'fogOfWar',
@@ -17647,7 +17698,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'repairKit'] },
     },
     'Rogue AI Uprising': {
         gridSize: 12, floors: 3, difficulty: 'hard', theme: 'scifi', mapStyle: 'spacestation', mapVisibility: 'hideUnexplored',
@@ -17697,7 +17748,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_survive_combat', chance: 70 },
             { questId: 'quest_boss_slayer', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Total System Failure': {
         gridSize: 14, floors: 4, difficulty: 'nightmare', theme: 'scifi', mapStyle: 'spacestation', mapVisibility: 'hideUnexplored',
@@ -17748,7 +17799,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 60 },
             { questId: 'quest_full_clear', chance: 40 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Extinction Event': {
         gridSize: 16, floors: 5, difficulty: 'apocalypse', theme: 'scifi', mapStyle: 'spacestation', mapVisibility: 'hideUnexplored',
@@ -17798,7 +17849,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 70 },
             { questId: 'quest_full_clear', chance: 60 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 
     // ===== CYBERPUNK THEME =====
@@ -17846,7 +17897,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_defeat_5', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 70 },
         ],
-        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power'] },
+        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power', 'repairKit'] },
     },
     'Corporate Heist': {
         gridSize: 10, floors: 2, difficulty: 'normal', theme: 'cyberpunk', mapStyle: 'neotokyo', mapVisibility: 'fogOfWar',
@@ -17895,7 +17946,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'repairKit'] },
     },
     'Syndicate Takedown': {
         gridSize: 12, floors: 3, difficulty: 'hard', theme: 'cyberpunk', mapStyle: 'city', mapVisibility: 'hideUnexplored',
@@ -17945,7 +17996,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_survive_combat', chance: 70 },
             { questId: 'quest_boss_slayer', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Blacksite Infiltration': {
         gridSize: 14, floors: 4, difficulty: 'nightmare', theme: 'cyberpunk', mapStyle: 'city', mapVisibility: 'hideUnexplored',
@@ -17996,7 +18047,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 60 },
             { questId: 'quest_full_clear', chance: 40 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Night City Apocalypse': {
         gridSize: 16, floors: 5, difficulty: 'apocalypse', theme: 'cyberpunk', mapStyle: 'city', mapVisibility: 'hideUnexplored',
@@ -18046,7 +18097,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 70 },
             { questId: 'quest_full_clear', chance: 60 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 
     // ===== WESTERN THEME =====
@@ -18094,7 +18145,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_defeat_5', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 70 },
         ],
-        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power'] },
+        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power', 'repairKit'] },
     },
     'Outlaw Territory': {
         gridSize: 10, floors: 2, difficulty: 'normal', theme: 'western', mapStyle: 'outpost', mapVisibility: 'fogOfWar',
@@ -18143,7 +18194,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'repairKit'] },
     },
     'Dead Man\'s Canyon': {
         gridSize: 12, floors: 3, difficulty: 'hard', theme: 'western', mapStyle: 'outpost', mapVisibility: 'hideUnexplored',
@@ -18193,7 +18244,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_survive_combat', chance: 70 },
             { questId: 'quest_boss_slayer', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Blood Mesa': {
         gridSize: 14, floors: 4, difficulty: 'nightmare', theme: 'western', mapStyle: 'outpost', mapVisibility: 'hideUnexplored',
@@ -18244,7 +18295,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 60 },
             { questId: 'quest_full_clear', chance: 40 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'The Devil\'s Crossing': {
         gridSize: 16, floors: 5, difficulty: 'apocalypse', theme: 'western', mapStyle: 'outpost', mapVisibility: 'hideUnexplored',
@@ -18294,7 +18345,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 70 },
             { questId: 'quest_full_clear', chance: 60 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 
     // ===== ACTION THEME =====
@@ -18342,7 +18393,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_defeat_5', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 70 },
         ],
-        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power'] },
+        itemPool: { enabled: true, items: ['key', 'strike', 'stealth', 'healingPotion', 'greaterHealing', 'torch', 'lantern', 'mapFragment', 'weapon_rusty_sword', 'weapon_iron_sword', 'armor_leather', 'accessory_ring_power', 'repairKit'] },
     },
     'Hostile Territory': {
         gridSize: 10, floors: 2, difficulty: 'normal', theme: 'action', mapStyle: 'arena', mapVisibility: 'fogOfWar',
@@ -18391,7 +18442,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_explore_75', chance: 60 },
             { questId: 'quest_treasure_hunter', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'minionBane', 'portalStone', 'mapFragment', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'repairKit'] },
     },
     'Behind Enemy Lines': {
         gridSize: 12, floors: 3, difficulty: 'hard', theme: 'action', mapStyle: 'arena', mapVisibility: 'hideUnexplored',
@@ -18441,7 +18492,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_survive_combat', chance: 70 },
             { questId: 'quest_boss_slayer', chance: 50 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'No Man\'s Land': {
         gridSize: 14, floors: 4, difficulty: 'nightmare', theme: 'action', mapStyle: 'arena', mapVisibility: 'hideUnexplored',
@@ -18492,7 +18543,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 60 },
             { questId: 'quest_full_clear', chance: 40 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
     'Operation Armageddon': {
         gridSize: 16, floors: 5, difficulty: 'apocalypse', theme: 'action', mapStyle: 'arena', mapVisibility: 'hideUnexplored',
@@ -18542,7 +18593,7 @@ const DEFAULT_MAZE_PROFILE = {
             { questId: 'quest_boss_slayer', chance: 70 },
             { questId: 'quest_full_clear', chance: 60 },
         ],
-        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant'] },
+        itemPool: { enabled: true, items: ['key', 'floorKey', 'strike', 'stealth', 'execute', 'minionBane', 'portalStone', 'mapFragment', 'voidWalk', 'timeShard', 'healingPotion', 'greaterHealing', 'elixir', 'revivalCharm', 'heartCrystal', 'torch', 'lantern', 'revealScroll', 'sightPotion', 'crystalBall', 'ironGuard', 'weapon_rusty_sword', 'weapon_iron_sword', 'weapon_enchanted_blade', 'weapon_shadow_dagger', 'weapon_steel_blade', 'armor_leather', 'armor_chainmail', 'armor_plate', 'accessory_ring_power', 'accessory_amulet_protection', 'accessory_lucky_charm', 'accessory_vampiric_pendant', 'repairKit'] },
     },
 };
 
@@ -25860,6 +25911,11 @@ async function handleTBAttack() {
         }
     }
 
+    // v2.0.0: Reduce weapon durability on attack
+    if (currentMaze?.equipment?.weapon) {
+        reduceEquipmentDurability('weapon', 1);
+    }
+
     // Execute STScript hook
     if (profile.onAttack) {
         await executeWithTimeout(profile.onAttack);
@@ -26436,6 +26492,11 @@ async function processEnemyTurn() {
         if (cmProfile.comboResetOnDamage && damage > 0) {
             await resetCombo('damage');
             updateComboDisplay();
+        }
+
+        // v2.0.0: Reduce armor durability when taking damage
+        if (currentMaze?.equipment?.armor) {
+            reduceEquipmentDurability('armor', 1);
         }
     } else if (!wasParried) {
         addTBLogEntry(`${enemyName} attacks but deals no damage!`);
@@ -38059,12 +38120,12 @@ function showMazeModal() {
         });
     }
 
-    // Equipment slot click handler (unequip)
+    // Equipment slot click handler (opens modal for stats/repair/unequip)
     modal.querySelectorAll('.equip-slot').forEach(slot => {
-        slot.addEventListener('click', async () => {
+        slot.addEventListener('click', () => {
             const slotType = slot.dataset.slot;
             if (currentMaze.equipment?.[slotType]) {
-                await unequipItem(slotType);
+                showEquipmentModal(slotType);
             }
         });
     });
@@ -39626,6 +39687,517 @@ async function triggerEquipmentDrop(dropChance = 10, luckModifier = 0) {
     }
 
     return null;
+}
+
+// =============================================================================
+// EQUIPMENT MODAL (v2.0.0)
+// =============================================================================
+
+/**
+ * Get equipment modal styles
+ */
+function getEquipmentModalStyles() {
+    return `
+        .equip-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .equip-modal-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 320px;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .equip-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .equip-modal-icon {
+            font-size: 32px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .equip-modal-icon.rarity-common { color: #9e9e9e; }
+        .equip-modal-icon.rarity-uncommon { color: #4caf50; }
+        .equip-modal-icon.rarity-rare { color: #2196f3; }
+        .equip-modal-icon.rarity-epic { color: #9c27b0; }
+        .equip-modal-icon.rarity-legendary { color: #ff9800; }
+
+        .equip-modal-title {
+            flex: 1;
+        }
+
+        .equip-modal-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            margin: 0;
+        }
+
+        .equip-modal-slot {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .equip-modal-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .equip-modal-stat {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .equip-modal-stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .equip-modal-stat-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .equip-modal-stat.attack .equip-modal-stat-value { color: #e74c3c; }
+        .equip-modal-stat.defense .equip-modal-stat-value { color: #3498db; }
+        .equip-modal-stat.crit .equip-modal-stat-value { color: #f1c40f; }
+
+        .equip-modal-durability {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .equip-modal-durability-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .equip-modal-durability-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .equip-modal-durability-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .equip-modal-durability-bar {
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .equip-modal-durability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+            transition: width 0.3s ease;
+        }
+
+        .equip-modal-durability-fill.low { background: #e74c3c; }
+        .equip-modal-durability-fill.medium { background: #f39c12; }
+        .equip-modal-durability-fill.high { background: #2ecc71; }
+
+        .equip-modal-special {
+            background: rgba(156, 39, 176, 0.2);
+            border: 1px solid rgba(156, 39, 176, 0.4);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #ce93d8;
+        }
+
+        .equip-modal-description {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+
+        .equip-modal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .equip-modal-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .equip-modal-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .equip-modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .equip-modal-btn.unequip {
+            background: #95a5a6;
+            color: #fff;
+        }
+
+        .equip-modal-btn.unequip:hover:not(:disabled) {
+            background: #7f8c8d;
+        }
+
+        .equip-modal-btn.repair {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff;
+        }
+
+        .equip-modal-btn.repair:hover:not(:disabled) {
+            background: linear-gradient(135deg, #229954, #27ae60);
+        }
+
+        .equip-modal-btn.close {
+            background: rgba(255, 255, 255, 0.1);
+            color: #888;
+        }
+
+        .equip-modal-btn.close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .equip-modal-repair-info {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin-top: 8px;
+        }
+    `;
+}
+
+/**
+ * Get current durability of an equipment item
+ * @param {string} itemId - Equipment ID
+ * @param {string} slot - Slot type
+ * @returns {object} { current, max }
+ */
+function getEquipmentDurability(itemId, slot) {
+    const baseEquip = DEFAULT_EQUIPMENT[itemId];
+    if (!baseEquip) return { current: 0, max: 0 };
+
+    const maxDurability = baseEquip.maxDurability || 10;
+
+    // For absorb-type armor, use equipmentCharges
+    if (baseEquip.special?.type === 'absorb') {
+        const charges = currentMaze.equipmentCharges?.[itemId];
+        if (typeof charges !== 'undefined') {
+            return { current: charges, max: baseEquip.special.charges || maxDurability };
+        }
+        return { current: baseEquip.special.charges || maxDurability, max: baseEquip.special.charges || maxDurability };
+    }
+
+    // For regular equipment, use equipmentDurability tracking
+    if (!currentMaze.equipmentDurability) {
+        currentMaze.equipmentDurability = {};
+    }
+
+    if (typeof currentMaze.equipmentDurability[itemId] === 'undefined') {
+        currentMaze.equipmentDurability[itemId] = maxDurability;
+    }
+
+    return { current: currentMaze.equipmentDurability[itemId], max: maxDurability };
+}
+
+/**
+ * Show equipment modal for a slot
+ * @param {string} slot - The slot type ('weapon', 'armor', 'accessory')
+ */
+function showEquipmentModal(slot) {
+    const item = currentMaze.equipment?.[slot];
+    if (!item) return;
+
+    // Remove existing modal
+    const existing = document.getElementById('mazemaster_equip_modal');
+    if (existing) existing.remove();
+
+    // Add styles if not present
+    if (!document.getElementById('mazemaster_equip_modal_styles')) {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'mazemaster_equip_modal_styles';
+        styleEl.textContent = getEquipmentModalStyles();
+        document.head.appendChild(styleEl);
+    }
+
+    // Get durability
+    const durability = getEquipmentDurability(item.id, slot);
+    const durabilityPercent = durability.max > 0 ? (durability.current / durability.max) * 100 : 100;
+    const durabilityClass = durabilityPercent <= 25 ? 'low' : durabilityPercent <= 50 ? 'medium' : 'high';
+
+    // Check repair kits
+    const repairKits = currentMaze.inventory?.repairKit || 0;
+    const needsRepair = durability.current < durability.max;
+    const canRepair = repairKits > 0 && needsRepair;
+
+    // Get themed name for repair kit
+    const theme = currentMaze.theme || 'fantasy';
+    const repairProfile = getItemProfile('repairKit');
+    const repairKitName = repairProfile?.aliases?.[theme] || 'Repair Kit';
+
+    // Build special text
+    let specialHtml = '';
+    if (item.special) {
+        const specialTypes = {
+            fire: 'Deals fire damage',
+            backstab: `+${item.special.value}% backstab damage`,
+            lifesteal: `Heals ${item.special.value}% of damage dealt`,
+            absorb: `Absorbs ${item.special.value} hits`,
+        };
+        specialHtml = `<div class="equip-modal-special"><i class="fa-solid fa-star"></i> Special: ${specialTypes[item.special.type] || item.special.type}</div>`;
+    }
+
+    // Create modal HTML
+    const modalHtml = `
+        <div id="mazemaster_equip_modal" class="equip-modal-overlay">
+            <div class="equip-modal-container">
+                <div class="equip-modal-header">
+                    <div class="equip-modal-icon rarity-${item.rarity}">
+                        <i class="fa-solid ${item.icon}"></i>
+                    </div>
+                    <div class="equip-modal-title">
+                        <h3 class="equip-modal-name">${item.name}</h3>
+                        <span class="equip-modal-slot">${slot} • ${item.rarity}</span>
+                    </div>
+                </div>
+
+                <div class="equip-modal-stats">
+                    <div class="equip-modal-stat attack">
+                        <div class="equip-modal-stat-value">+${item.attack}</div>
+                        <div class="equip-modal-stat-label">Attack</div>
+                    </div>
+                    <div class="equip-modal-stat defense">
+                        <div class="equip-modal-stat-value">+${item.defense}</div>
+                        <div class="equip-modal-stat-label">Defense</div>
+                    </div>
+                    <div class="equip-modal-stat crit">
+                        <div class="equip-modal-stat-value">+${item.critBonus}%</div>
+                        <div class="equip-modal-stat-label">Crit</div>
+                    </div>
+                </div>
+
+                <div class="equip-modal-durability">
+                    <div class="equip-modal-durability-header">
+                        <span class="equip-modal-durability-label">Durability</span>
+                        <span class="equip-modal-durability-value">${durability.current} / ${durability.max}</span>
+                    </div>
+                    <div class="equip-modal-durability-bar">
+                        <div class="equip-modal-durability-fill ${durabilityClass}" style="width: ${durabilityPercent}%"></div>
+                    </div>
+                </div>
+
+                ${specialHtml}
+
+                <div class="equip-modal-description">${item.description}</div>
+
+                <div class="equip-modal-buttons">
+                    <button class="equip-modal-btn unequip" id="equip_modal_unequip">
+                        <i class="fa-solid fa-circle-minus"></i> Unequip
+                    </button>
+                    <button class="equip-modal-btn repair" id="equip_modal_repair" ${canRepair ? '' : 'disabled'}>
+                        <i class="fa-solid fa-wrench"></i> Repair
+                    </button>
+                    <button class="equip-modal-btn close" id="equip_modal_close">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="equip-modal-repair-info">
+                    ${repairKitName}s: ${repairKits} available${!needsRepair ? ' (fully repaired)' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Attach event handlers
+    document.getElementById('equip_modal_close').addEventListener('click', closeEquipmentModal);
+
+    document.getElementById('equip_modal_unequip').addEventListener('click', async () => {
+        await unequipItem(slot);
+        closeEquipmentModal();
+    });
+
+    document.getElementById('equip_modal_repair').addEventListener('click', async () => {
+        await repairEquipment(slot);
+        // Refresh modal to show updated durability
+        closeEquipmentModal();
+        showEquipmentModal(slot);
+    });
+
+    // Close on backdrop click
+    document.getElementById('mazemaster_equip_modal').addEventListener('click', (e) => {
+        if (e.target.id === 'mazemaster_equip_modal') {
+            closeEquipmentModal();
+        }
+    });
+}
+
+/**
+ * Close equipment modal
+ */
+function closeEquipmentModal() {
+    const modal = document.getElementById('mazemaster_equip_modal');
+    if (modal) modal.remove();
+}
+
+/**
+ * Repair equipment in a slot using repair kit
+ * @param {string} slot - The slot type
+ * @returns {boolean} Success
+ */
+async function repairEquipment(slot) {
+    const item = currentMaze.equipment?.[slot];
+    if (!item) return false;
+
+    const repairKits = currentMaze.inventory?.repairKit || 0;
+    if (repairKits <= 0) {
+        addMazeMessage('Repair', 'No repair kits available!');
+        return false;
+    }
+
+    const durability = getEquipmentDurability(item.id, slot);
+    if (durability.current >= durability.max) {
+        addMazeMessage('Repair', `${item.name} is already fully repaired.`);
+        return false;
+    }
+
+    // Consume repair kit
+    currentMaze.inventory.repairKit--;
+    if (currentMaze.inventory.repairKit <= 0) {
+        delete currentMaze.inventory.repairKit;
+    }
+
+    // Get repair amount from profile
+    const repairProfile = getItemProfile('repairKit');
+    const repairAmount = repairProfile?.repairAmount || 3;
+
+    // For absorb-type armor, restore charges
+    const baseEquip = DEFAULT_EQUIPMENT[item.id];
+    if (baseEquip?.special?.type === 'absorb') {
+        if (!currentMaze.equipmentCharges) currentMaze.equipmentCharges = {};
+        const maxCharges = baseEquip.special.charges || 3;
+        currentMaze.equipmentCharges[item.id] = Math.min(
+            (currentMaze.equipmentCharges[item.id] || 0) + repairAmount,
+            maxCharges
+        );
+        const newCharges = currentMaze.equipmentCharges[item.id];
+        addMazeMessage('Repair', `Restored ${item.name} to ${newCharges}/${maxCharges} charges!`);
+    } else {
+        // Regular durability repair
+        if (!currentMaze.equipmentDurability) currentMaze.equipmentDurability = {};
+        const maxDur = baseEquip?.maxDurability || 10;
+        currentMaze.equipmentDurability[item.id] = Math.min(
+            (currentMaze.equipmentDurability[item.id] || maxDur) + repairAmount,
+            maxDur
+        );
+        const newDur = currentMaze.equipmentDurability[item.id];
+        addMazeMessage('Repair', `Restored ${item.name} to ${newDur}/${maxDur} durability!`);
+    }
+
+    updateInventoryDisplay();
+    updateEquipmentDisplay();
+
+    await fireHook('onRepair', {
+        itemId: item.id,
+        name: item.name,
+        slot,
+    });
+
+    return true;
+}
+
+/**
+ * Reduce equipment durability after use in combat
+ * @param {string} slot - The slot type ('weapon', 'armor', 'accessory')
+ * @param {number} amount - Amount to reduce (default 1)
+ * @returns {boolean} True if equipment broke
+ */
+function reduceEquipmentDurability(slot, amount = 1) {
+    const item = currentMaze.equipment?.[slot];
+    if (!item) return false;
+
+    const baseEquip = DEFAULT_EQUIPMENT[item.id];
+    if (!baseEquip) return false;
+
+    // Skip absorb-type armor (handled separately in tryAbsorbDamage)
+    if (baseEquip.special?.type === 'absorb') return false;
+
+    // Initialize durability tracking
+    if (!currentMaze.equipmentDurability) {
+        currentMaze.equipmentDurability = {};
+    }
+
+    const maxDur = baseEquip.maxDurability || 10;
+    if (typeof currentMaze.equipmentDurability[item.id] === 'undefined') {
+        currentMaze.equipmentDurability[item.id] = maxDur;
+    }
+
+    // Reduce durability
+    currentMaze.equipmentDurability[item.id] -= amount;
+
+    // Check if broken
+    if (currentMaze.equipmentDurability[item.id] <= 0) {
+        addMazeMessage('Equipment', `Your ${item.name} broke!`);
+        currentMaze.equipment[slot] = null;
+        delete currentMaze.equipmentDurability[item.id];
+        updateEquipmentDisplay();
+        return true;
+    }
+
+    // Low durability warning
+    if (currentMaze.equipmentDurability[item.id] <= 2) {
+        addMazeMessage('Warning', `Your ${item.name} is about to break!`);
+    }
+
+    return false;
 }
 
 // =============================================================================
