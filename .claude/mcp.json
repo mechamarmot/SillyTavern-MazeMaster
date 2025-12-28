@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--init",
+        "--pull=always",
+        "-v", "/home/saintorphan/Projects/ST-Extensions/SillyTavern-MazeMaster:/workspace",
+        "mcr.microsoft.com/playwright/mcp"
+      ]
+    }
+  }
+}
