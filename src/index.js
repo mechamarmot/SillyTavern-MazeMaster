@@ -26769,13 +26769,23 @@ function calculateDamage(attack, defense, critChance, critMultiplier, isPlayerAt
         isCrit = true;
     }
 
+    // v2.0.4: Calculate total lifesteal from skills AND equipment specials
+    let totalLifesteal = passiveSkills.lifestealPercent;
+    if (isPlayerAttack && equipStats.specials) {
+        for (const special of equipStats.specials) {
+            if (special.type === 'lifesteal') {
+                totalLifesteal += special.value;
+            }
+        }
+    }
+
     return {
         damage: baseDamage,
         isCrit,
         equipBonuses: equipStats,
         levelBonuses: levelStats,
         skillBonuses: { passive: passiveSkills, active: activeSkills },
-        lifestealPercent: passiveSkills.lifestealPercent,
+        lifestealPercent: totalLifesteal,
         comboBonus,
     };
 }
@@ -30645,6 +30655,13 @@ async function closePuzzleModal() {
     const wasSuccess = currentPuzzle.isSuccess;
     currentPuzzle.isOpen = false;
 
+    // v2.0.4: Debug logging for puzzle XP issues
+    console.log('[MazeMaster] closePuzzleModal:', {
+        wasSuccess,
+        mazeIsOpen: currentMaze.isOpen,
+        pendingEncounter: currentMaze.pendingEncounter,
+    });
+
     // Handle maze integration
     if (currentMaze.isOpen) {
         try {
@@ -30655,9 +30672,10 @@ async function closePuzzleModal() {
                     // v1.4.0: Mark room as cleared for zone progression
                     await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
 
-                    // v2.0.3: Award XP for solving puzzle
+                    // v2.0.4: Award XP for solving puzzle (moved from v2.0.3)
                     try {
                         const puzzleXp = getXpReward('puzzleSolved');
+                        console.log('[MazeMaster] Awarding puzzle XP:', puzzleXp);
                         const xpResult = await grantXp(puzzleXp, 'puzzle');
                         addMazeLogMessage(`Puzzle solved! +${puzzleXp} XP`, 'success');
                         if (xpResult?.leveledUp) {
