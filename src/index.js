@@ -21239,7 +21239,8 @@ function renderVisionSettings() {
  * @returns {Object} Vision profile settings
  */
 function getVisionProfile() {
-    const profileName = extensionSettings.currentVisionProfile || 'default';
+    // v2.0.0: Prioritize maze profile setting over global setting
+    const profileName = currentMaze?.profile?.visionProfile || extensionSettings.currentVisionProfile || 'default';
     const profile = extensionSettings.visionProfiles?.[profileName];
     if (profile) return profile;
     return DEFAULT_VISION_PROFILES[profileName] || DEFAULT_VISION_PROFILES.default;
@@ -21858,7 +21859,8 @@ async function handleLockedDoorInteraction(door) {
  * @returns {Object} Faction profile settings
  */
 function getFactionProfile() {
-    const profileName = extensionSettings.currentFactionProfile || 'default';
+    // v2.0.0: Prioritize maze profile setting over global setting
+    const profileName = currentMaze?.profile?.factionProfile || extensionSettings.currentFactionProfile || 'default';
     const profile = extensionSettings.factionProfiles?.[profileName];
     if (profile) return profile;
     return DEFAULT_FACTION_PROFILES[profileName] || DEFAULT_FACTION_PROFILES.default;
@@ -22569,7 +22571,8 @@ let isMuted = false;
  * @returns {Object} Sound profile settings
  */
 function getSoundProfile() {
-    const profileName = extensionSettings.currentSoundProfile || 'default';
+    // v2.0.0: Prioritize maze profile setting over global setting
+    const profileName = currentMaze?.profile?.soundProfile || extensionSettings.currentSoundProfile || 'default';
     const profile = extensionSettings.soundProfiles?.[profileName];
     if (profile) return profile;
 
@@ -22848,7 +22851,9 @@ function saveSoundProfile(name, data) {
  * @returns {Object} VFX settings
  */
 function getVFXSettings() {
-    return extensionSettings.vfxSettings || {
+    // v2.0.0: Check maze profile vfxEnabled setting first
+    const mazeVfxEnabled = currentMaze?.profile?.vfxEnabled;
+    const baseSettings = extensionSettings.vfxSettings || {
         enabled: true,
         screenShake: true,
         particles: true,
@@ -22870,6 +22875,12 @@ function getVFXSettings() {
             'level_up': { particleType: 'sparks', color: '#f39c12', shake: null },
         },
     };
+
+    // v2.0.0: Override enabled state from maze profile if specified
+    if (typeof mazeVfxEnabled === 'boolean') {
+        return { ...baseSettings, enabled: mazeVfxEnabled };
+    }
+    return baseSettings;
 }
 
 /**
@@ -25387,9 +25398,10 @@ function flashHPBar(isPlayer, isDamage) {
  * @returns {object} The current profile or default
  */
 function getCombatMechanicsProfile() {
-    const profileName = extensionSettings.currentCombatMechanicsProfile || 'default';
+    // v2.0.0: Prioritize maze profile setting over global setting
+    const profileName = currentMaze?.profile?.combatMechanicsProfile || extensionSettings.currentCombatMechanicsProfile || 'default';
     const profiles = extensionSettings.combatMechanicsProfiles || {};
-    return profiles[profileName] || DEFAULT_COMBAT_MECHANICS_PROFILES.default;
+    return profiles[profileName] || DEFAULT_COMBAT_MECHANICS_PROFILES[profileName] || DEFAULT_COMBAT_MECHANICS_PROFILES.default;
 }
 
 /**
