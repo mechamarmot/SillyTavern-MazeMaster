@@ -723,6 +723,133 @@ const CUSTOM_THEME_DEFAULTS = {
 };
 
 /**
+ * v2.0.0: Default theme profiles (factory defaults)
+ * These appear in the Themes dropdown alongside custom themes
+ */
+const DEFAULT_THEME_PROFILES = {
+    fantasy: {
+        name: 'fantasy',
+        displayName: 'Fantasy',
+        tags: ['medieval', 'magical', 'dungeon', 'adventure'],
+        atmosphere: 'A realm of ancient stone and flickering torchlight, where magic lingers in the shadows.',
+        adjectives: ['Ancient', 'Mystical', 'Forgotten', 'Enchanted', 'Cursed'],
+        roomTypes: {
+            small: ['Alcove', 'Nook', 'Chamber'],
+            medium: ['Hall', 'Gallery', 'Sanctum'],
+            large: ['Great Hall', 'Throne Room', 'Cathedral'],
+            special: ['Dragon\'s Lair', 'Wizard\'s Tower', 'Sacred Grove']
+        },
+        flavorMessages: {
+            chestFind: 'You discover an ornate treasure chest, its lock rusted with age.',
+            trapTrigger: 'Ancient magic springs to life, unleashing a deadly trap!',
+            victory: 'The foe falls before your blade. Victory is yours!',
+            defeat: 'Darkness claims you as your strength fades...'
+        },
+        colors: { primary: '#8b4513', secondary: '#2d1f1f', accent: '#ffd700' }
+    },
+    horror: {
+        name: 'horror',
+        displayName: 'Horror',
+        tags: ['dark', 'terrifying', 'supernatural', 'dread'],
+        atmosphere: 'Shadows writhe in corners as unspeakable horrors lurk just beyond sight.',
+        adjectives: ['Bloodstained', 'Twisted', 'Nightmarish', 'Rotting', 'Haunted'],
+        roomTypes: {
+            small: ['Crawlspace', 'Closet', 'Cell'],
+            medium: ['Morgue', 'Chapel', 'Study'],
+            large: ['Ballroom', 'Asylum Ward', 'Crypt'],
+            special: ['Ritual Chamber', 'Mass Grave', 'The Pit']
+        },
+        flavorMessages: {
+            chestFind: 'A decrepit box sits in the gloom, something scratches from within...',
+            trapTrigger: 'Pain explodes through your body as the trap activates!',
+            victory: 'The creature shrieks as it dissolves into shadow.',
+            defeat: 'Your screams echo into the darkness...'
+        },
+        colors: { primary: '#8b0000', secondary: '#1a0a0a', accent: '#ff0000' }
+    },
+    scifi: {
+        name: 'scifi',
+        displayName: 'Sci-Fi',
+        tags: ['futuristic', 'technological', 'space', 'advanced'],
+        atmosphere: 'Humming machinery and sterile corridors of an advanced technological facility.',
+        adjectives: ['Automated', 'Damaged', 'Secure', 'Experimental', 'Quarantined'],
+        roomTypes: {
+            small: ['Access Shaft', 'Storage Pod', 'Maintenance Bay'],
+            medium: ['Control Room', 'Laboratory', 'Crew Quarters'],
+            large: ['Hangar Bay', 'Command Bridge', 'Reactor Core'],
+            special: ['AI Core', 'Xenobiology Lab', 'Escape Pod Bay']
+        },
+        flavorMessages: {
+            chestFind: 'A sealed container awaits, its biometric lock flickering.',
+            trapTrigger: 'Security systems activate with deadly precision!',
+            victory: 'Target eliminated. Threat neutralized.',
+            defeat: 'Critical system failure... consciousness fading...'
+        },
+        colors: { primary: '#0066cc', secondary: '#1a1a2e', accent: '#00ffff' }
+    },
+    cyberpunk: {
+        name: 'cyberpunk',
+        displayName: 'Cyberpunk',
+        tags: ['neon', 'corporate', 'hackers', 'dystopian'],
+        atmosphere: 'Neon-lit streets and chrome-plated megastructures hide corporate conspiracies.',
+        adjectives: ['Hacked', 'Corrupted', 'Black-Market', 'Augmented', 'Underground'],
+        roomTypes: {
+            small: ['Server Closet', 'Smuggler\'s Cache', 'Wire Nest'],
+            medium: ['Hacker Den', 'Chop Shop', 'Black Clinic'],
+            large: ['Data Center', 'Combat Arena', 'Corporate Plaza'],
+            special: ['CEO Suite', 'AI Mainframe', 'Rebel Base']
+        },
+        flavorMessages: {
+            chestFind: 'A secured stash, probably hot. Worth the risk.',
+            trapTrigger: 'ICE protocols engage! Neural feedback imminent!',
+            victory: 'Target flatlined. Time to ghost.',
+            defeat: 'System crash... your wetware is fried...'
+        },
+        colors: { primary: '#ff00ff', secondary: '#0a0a1a', accent: '#00ff00' }
+    },
+    western: {
+        name: 'western',
+        displayName: 'Western',
+        tags: ['frontier', 'dusty', 'lawless', 'rugged'],
+        atmosphere: 'Sun-baked desert towns where outlaws and lawmen play deadly games.',
+        adjectives: ['Dusty', 'Abandoned', 'Lawless', 'Frontier', 'Sun-bleached'],
+        roomTypes: {
+            small: ['Jail Cell', 'Supply Closet', 'Stable'],
+            medium: ['Saloon', 'Sheriff\'s Office', 'General Store'],
+            large: ['Town Square', 'Mine Shaft', 'Cattle Yard'],
+            special: ['Bank Vault', 'Outlaw Hideout', 'Boot Hill']
+        },
+        flavorMessages: {
+            chestFind: 'An old strongbox, probably from a stagecoach robbery.',
+            trapTrigger: 'You trigger a hidden tripwire - dynamite!',
+            victory: 'Another notch on your gunbelt, partner.',
+            defeat: 'You\'ve drawn your last breath in the dust...'
+        },
+        colors: { primary: '#cd853f', secondary: '#2d2416', accent: '#daa520' }
+    },
+    action: {
+        name: 'action',
+        displayName: 'Action',
+        tags: ['explosive', 'tactical', 'military', 'intense'],
+        atmosphere: 'High-stakes combat zones where every second counts and danger lurks around corners.',
+        adjectives: ['Fortified', 'Hostile', 'Tactical', 'Compromised', 'Hot'],
+        roomTypes: {
+            small: ['Armory', 'Comm Station', 'Bunker'],
+            medium: ['Barracks', 'War Room', 'Motor Pool'],
+            large: ['Battlefield', 'Command Center', 'Extraction Zone'],
+            special: ['Bomb Site', 'HVT Location', 'Evac Point']
+        },
+        flavorMessages: {
+            chestFind: 'Supply crate located. Could contain valuable intel.',
+            trapTrigger: 'IED detected too late! Brace for impact!',
+            victory: 'Hostile down. Area secured.',
+            defeat: 'Mission failed. We\'ll get \'em next time...'
+        },
+        colors: { primary: '#4a5c3c', secondary: '#1a1f1a', accent: '#ff6600' }
+    }
+};
+
+/**
  * Default structure for custom map styles created by users
  */
 const CUSTOM_STYLE_DEFAULTS = {
@@ -1300,6 +1427,203 @@ const ROOM_NAME_DATA = {
             names: ['Rooftop Access', 'Upper Floor', 'Entry Point', 'The Beginning'],
             descriptions: ['You enter the abandoned building.', 'Urban exploration begins.'],
         },
+    },
+};
+
+/**
+ * v2.0.0: Default style profiles that combine BSP config with room names
+ * These appear in the Styles tab alongside custom styles
+ */
+const DEFAULT_STYLE_PROFILES = {
+    maze: {
+        name: 'maze',
+        displayName: 'Maze',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 2,
+            minSplitSize: 2,
+            splitVariance: 0.3,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 1.0,
+            branchChance: 0.7,
+            preferSquareRooms: true,
+            gridAlign: false,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.maze,
+    },
+    dungeon: {
+        name: 'dungeon',
+        displayName: 'Dungeon',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.3,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.9,
+            branchChance: 0.65,
+            preferSquareRooms: false,
+            gridAlign: false,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.dungeon,
+    },
+    city: {
+        name: 'city',
+        displayName: 'City',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.25,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.95,
+            branchChance: 0.6,
+            preferSquareRooms: false,
+            gridAlign: true,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.city,
+    },
+    forest: {
+        name: 'forest',
+        displayName: 'Forest',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.35,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.9,
+            branchChance: 0.7,
+            preferSquareRooms: false,
+            gridAlign: false,
+            windingCorridors: true,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.forest,
+    },
+    spaceship: {
+        name: 'spaceship',
+        displayName: 'Spaceship',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.2,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.85,
+            branchChance: 0.6,
+            preferSquareRooms: true,
+            gridAlign: false,
+            windingCorridors: false,
+            modularRooms: true,
+        },
+        roomNames: ROOM_NAME_DATA.spaceship,
+    },
+    arena: {
+        name: 'arena',
+        displayName: 'Arena',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.3,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.9,
+            branchChance: 0.65,
+            preferSquareRooms: true,
+            gridAlign: false,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.maze, // Arena uses maze-style room names
+    },
+    hospital: {
+        name: 'hospital',
+        displayName: 'Hospital',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.2,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.85,
+            branchChance: 0.6,
+            preferSquareRooms: false,
+            gridAlign: true,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.maze, // Hospital uses generic room names
+    },
+    college: {
+        name: 'college',
+        displayName: 'College',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.2,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.85,
+            branchChance: 0.6,
+            preferSquareRooms: false,
+            gridAlign: true,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.college,
+    },
+    apartment: {
+        name: 'apartment',
+        displayName: 'Apartment',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.25,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.95,
+            branchChance: 0.6,
+            preferSquareRooms: false,
+            gridAlign: true,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.apartment,
+    },
+    highrise: {
+        name: 'highrise',
+        displayName: 'Highrise',
+        bspConfig: {
+            minRoomSize: 2,
+            maxRoomSize: 3,
+            minSplitSize: 2,
+            splitVariance: 0.25,
+            corridorWidth: 1,
+            roomPadding: 0,
+            extraConnections: 0.95,
+            branchChance: 0.6,
+            preferSquareRooms: false,
+            gridAlign: true,
+            windingCorridors: false,
+            modularRooms: false,
+        },
+        roomNames: ROOM_NAME_DATA.highrise,
     },
 };
 
@@ -20723,11 +21047,23 @@ function deleteMazeProfile(name) {
 // =============================================================================
 
 function getCustomThemeNames() {
-    return Object.keys(extensionSettings.customThemes || {});
+    // v2.0.0: Include both custom themes and default themes
+    const customNames = Object.keys(extensionSettings.customThemes || {});
+    const defaultNames = Object.keys(DEFAULT_THEME_PROFILES);
+    // Combine, with custom themes first, avoiding duplicates
+    return [...customNames, ...defaultNames.filter(n => !customNames.includes(n))];
 }
 
 function getCustomTheme(name) {
-    return extensionSettings.customThemes?.[name];
+    // v2.0.0: Check custom themes first, then fall back to default themes
+    if (extensionSettings.customThemes?.[name]) {
+        return extensionSettings.customThemes[name];
+    }
+    // Return default theme if exists
+    if (DEFAULT_THEME_PROFILES[name]) {
+        return DEFAULT_THEME_PROFILES[name];
+    }
+    return undefined;
 }
 
 function saveCustomTheme(name, themeData) {
@@ -20794,11 +21130,23 @@ function getThemedRoomTypes(theme) {
 // =============================================================================
 
 function getCustomStyleNames() {
-    return Object.keys(extensionSettings.customStyles || {});
+    // v2.0.0: Include both custom styles and default styles
+    const customNames = Object.keys(extensionSettings.customStyles || {});
+    const defaultNames = Object.keys(DEFAULT_STYLE_PROFILES);
+    // Combine, with custom styles first, avoiding duplicates
+    return [...customNames, ...defaultNames.filter(n => !customNames.includes(n))];
 }
 
 function getCustomStyle(name) {
-    return extensionSettings.customStyles?.[name];
+    // v2.0.0: Check custom styles first, then fall back to default styles
+    if (extensionSettings.customStyles?.[name]) {
+        return extensionSettings.customStyles[name];
+    }
+    // Return default style if exists
+    if (DEFAULT_STYLE_PROFILES[name]) {
+        return DEFAULT_STYLE_PROFILES[name];
+    }
+    return undefined;
 }
 
 function saveCustomStyle(name, styleData) {
@@ -23235,8 +23583,16 @@ function populateThemeProfileSelect() {
     if (!select) return;
 
     const names = getCustomThemeNames();
+    // v2.0.0: Use getCustomTheme to get display names (works for both custom and default themes)
+    const customThemes = extensionSettings.customThemes || {};
     select.innerHTML = '<option value="">-- Select Theme --</option>' +
-        names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(extensionSettings.customThemes[n]?.displayName || n)}</option>`).join('');
+        names.map(n => {
+            const theme = getCustomTheme(n);
+            const displayName = (theme && theme.displayName) ? theme.displayName : n;
+            const isDefault = DEFAULT_THEME_PROFILES[n] && !customThemes[n];
+            const label = isDefault ? `${displayName} (Default)` : displayName;
+            return `<option value="${escapeHtml(n)}">${escapeHtml(label)}</option>`;
+        }).join('');
 }
 
 /**
@@ -23247,8 +23603,16 @@ function populateStyleProfileSelect() {
     if (!select) return;
 
     const names = getCustomStyleNames();
+    // v2.0.0: Use getCustomStyle to get display names (works for both custom and default styles)
+    const customStyles = extensionSettings.customStyles || {};
     select.innerHTML = '<option value="">-- Select Style --</option>' +
-        names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(extensionSettings.customStyles[n]?.displayName || n)}</option>`).join('');
+        names.map(n => {
+            const style = getCustomStyle(n);
+            const displayName = (style && style.displayName) ? style.displayName : n;
+            const isDefault = DEFAULT_STYLE_PROFILES[n] && !customStyles[n];
+            const label = isDefault ? `${displayName} (Default)` : displayName;
+            return `<option value="${escapeHtml(n)}">${escapeHtml(label)}</option>`;
+        }).join('');
 }
 
 /**
@@ -23278,6 +23642,8 @@ function loadThemeToUI(themeName) {
     setVal('mazemaster_theme_rooms_special', (theme.roomTypes?.special || []).join(', '));
     setVal('mazemaster_theme_flavor_chest', theme.flavorMessages?.chestFind);
     setVal('mazemaster_theme_flavor_trap', theme.flavorMessages?.trapTrigger);
+    setVal('mazemaster_theme_flavor_victory', theme.flavorMessages?.victory);
+    setVal('mazemaster_theme_flavor_defeat', theme.flavorMessages?.defeat);
     setVal('mazemaster_theme_color_primary', theme.colors?.primary || '#8b0000');
     setVal('mazemaster_theme_color_secondary', theme.colors?.secondary || '#2d1f1f');
     setVal('mazemaster_theme_color_accent', theme.colors?.accent || '#ff4444');
@@ -23305,6 +23671,8 @@ function collectThemeFromUI() {
         flavorMessages: {
             chestFind: getVal('mazemaster_theme_flavor_chest'),
             trapTrigger: getVal('mazemaster_theme_flavor_trap'),
+            victory: getVal('mazemaster_theme_flavor_victory'),
+            defeat: getVal('mazemaster_theme_flavor_defeat'),
         },
         colors: {
             primary: getVal('mazemaster_theme_color_primary'),
@@ -23323,7 +23691,8 @@ function clearThemeForm() {
         'mazemaster_theme_atmosphere', 'mazemaster_theme_adjectives',
         'mazemaster_theme_rooms_small', 'mazemaster_theme_rooms_medium',
         'mazemaster_theme_rooms_large', 'mazemaster_theme_rooms_special',
-        'mazemaster_theme_flavor_chest', 'mazemaster_theme_flavor_trap'
+        'mazemaster_theme_flavor_chest', 'mazemaster_theme_flavor_trap',
+        'mazemaster_theme_flavor_victory', 'mazemaster_theme_flavor_defeat'
     ];
     fields.forEach(id => {
         const el = document.getElementById(id);
@@ -23360,10 +23729,15 @@ function loadStyleToUI(styleName) {
     setVal('mazemaster_style_bsp_minroom', style.bspConfig?.minRoomSize ?? 2);
     setVal('mazemaster_style_bsp_maxroom', style.bspConfig?.maxRoomSize ?? 5);
     setVal('mazemaster_style_bsp_corridor', style.bspConfig?.corridorWidth ?? 1);
+    setVal('mazemaster_style_bsp_padding', style.bspConfig?.roomPadding ?? 1);
+    setVal('mazemaster_style_bsp_minsplit', style.bspConfig?.minSplitSize ?? 4);
+    setVal('mazemaster_style_bsp_variance', style.bspConfig?.splitVariance ?? 0.3);
     setVal('mazemaster_style_bsp_connections', style.bspConfig?.extraConnections ?? 0.1);
+    setVal('mazemaster_style_bsp_branch', style.bspConfig?.branchChance ?? 0.3);
     setChecked('mazemaster_style_bsp_grid', style.bspConfig?.gridAlign);
     setChecked('mazemaster_style_bsp_winding', style.bspConfig?.windingCorridors);
     setChecked('mazemaster_style_bsp_modular', style.bspConfig?.modularRooms);
+    setChecked('mazemaster_style_bsp_square', style.bspConfig?.preferSquareRooms);
 
     // Room names
     setVal('mazemaster_style_common_prefixes', (style.roomNames?.common?.prefixes || []).join(', '));
@@ -23375,8 +23749,12 @@ function loadStyleToUI(styleName) {
     setVal('mazemaster_style_deadend_prefixes', (style.roomNames?.deadend?.prefixes || []).join(', '));
     setVal('mazemaster_style_deadend_nouns', (style.roomNames?.deadend?.nouns || []).join(', '));
     setVal('mazemaster_style_deadend_desc', (style.roomNames?.deadend?.descriptions || []).join('\n'));
+    setVal('mazemaster_style_start_names', (style.roomNames?.start?.names || []).join(', '));
     setVal('mazemaster_style_staircase_names', (style.roomNames?.staircase?.names || []).join(', '));
+    setVal('mazemaster_style_portal_names', (style.roomNames?.portal?.names || []).join(', '));
     setVal('mazemaster_style_chest_names', (style.roomNames?.chest?.names || []).join(', '));
+    setVal('mazemaster_style_minion_names', (style.roomNames?.minion?.names || []).join(', '));
+    setVal('mazemaster_style_trap_names', (style.roomNames?.trap?.names || []).join(', '));
     setVal('mazemaster_style_exit_names', (style.roomNames?.exit?.names || []).join(', '));
 }
 
@@ -23398,10 +23776,15 @@ function collectStyleFromUI() {
             minRoomSize: getInt('mazemaster_style_bsp_minroom', 2),
             maxRoomSize: getInt('mazemaster_style_bsp_maxroom', 5),
             corridorWidth: getInt('mazemaster_style_bsp_corridor', 1),
+            roomPadding: getInt('mazemaster_style_bsp_padding', 1),
+            minSplitSize: getInt('mazemaster_style_bsp_minsplit', 4),
+            splitVariance: getNum('mazemaster_style_bsp_variance', 0.3),
             extraConnections: getNum('mazemaster_style_bsp_connections', 0.1),
+            branchChance: getNum('mazemaster_style_bsp_branch', 0.3),
             gridAlign: getChecked('mazemaster_style_bsp_grid'),
             windingCorridors: getChecked('mazemaster_style_bsp_winding'),
             modularRooms: getChecked('mazemaster_style_bsp_modular'),
+            preferSquareRooms: getChecked('mazemaster_style_bsp_square'),
         },
         roomNames: {
             common: {
@@ -23419,22 +23802,34 @@ function collectStyleFromUI() {
                 nouns: parseList('mazemaster_style_deadend_nouns'),
                 descriptions: parseLines('mazemaster_style_deadend_desc'),
             },
+            start: {
+                names: parseList('mazemaster_style_start_names'),
+                descriptions: [],
+            },
             staircase: {
                 names: parseList('mazemaster_style_staircase_names'),
+                descriptions: [],
+            },
+            portal: {
+                names: parseList('mazemaster_style_portal_names'),
                 descriptions: [],
             },
             chest: {
                 names: parseList('mazemaster_style_chest_names'),
                 descriptions: [],
             },
+            minion: {
+                names: parseList('mazemaster_style_minion_names'),
+                descriptions: [],
+            },
+            trap: {
+                names: parseList('mazemaster_style_trap_names'),
+                descriptions: [],
+            },
             exit: {
                 names: parseList('mazemaster_style_exit_names'),
                 descriptions: [],
             },
-            portal: { names: [], descriptions: [] },
-            minion: { names: [], descriptions: [] },
-            trap: { names: [], descriptions: [] },
-            start: { names: [], descriptions: [] },
         }
     };
 }
@@ -23448,7 +23843,9 @@ function clearStyleForm() {
         'mazemaster_style_common_prefixes', 'mazemaster_style_common_nouns', 'mazemaster_style_common_desc',
         'mazemaster_style_junction_prefixes', 'mazemaster_style_junction_nouns', 'mazemaster_style_junction_desc',
         'mazemaster_style_deadend_prefixes', 'mazemaster_style_deadend_nouns', 'mazemaster_style_deadend_desc',
-        'mazemaster_style_staircase_names', 'mazemaster_style_chest_names', 'mazemaster_style_exit_names'
+        'mazemaster_style_start_names', 'mazemaster_style_staircase_names', 'mazemaster_style_portal_names',
+        'mazemaster_style_chest_names', 'mazemaster_style_minion_names', 'mazemaster_style_trap_names',
+        'mazemaster_style_exit_names'
     ];
     fields.forEach(id => {
         const el = document.getElementById(id);
@@ -23466,10 +23863,15 @@ function clearStyleForm() {
     setVal('mazemaster_style_bsp_minroom', '2');
     setVal('mazemaster_style_bsp_maxroom', '5');
     setVal('mazemaster_style_bsp_corridor', '1');
+    setVal('mazemaster_style_bsp_padding', '1');
+    setVal('mazemaster_style_bsp_minsplit', '4');
+    setVal('mazemaster_style_bsp_variance', '0.3');
     setVal('mazemaster_style_bsp_connections', '0.1');
+    setVal('mazemaster_style_bsp_branch', '0.3');
     setChecked('mazemaster_style_bsp_grid', false);
     setChecked('mazemaster_style_bsp_winding', false);
     setChecked('mazemaster_style_bsp_modular', false);
+    setChecked('mazemaster_style_bsp_square', false);
 }
 
 // =============================================================================
@@ -44938,7 +45340,13 @@ function getPanelHtml() {
                             <div class="mazemaster-profile-row">
                                 <select id="mazemaster_theme_profile_select" class="mazemaster-select">
                                     <option value="">(New Theme)</option>
-                                    ${getCustomThemeNames().map(p => `<option value="${escapeHtml(p)}">${escapeHtml(extensionSettings.customThemes[p]?.displayName || p)}</option>`).join('')}
+                                    ${getCustomThemeNames().map(p => {
+                                        const theme = getCustomTheme(p);
+                                        const displayName = (theme && theme.displayName) ? theme.displayName : p;
+                                        const isDefault = DEFAULT_THEME_PROFILES[p] && !(extensionSettings.customThemes || {})[p];
+                                        const label = isDefault ? `${displayName} (Default)` : displayName;
+                                        return `<option value="${escapeHtml(p)}">${escapeHtml(label)}</option>`;
+                                    }).join('')}
                                 </select>
                                 <button id="mazemaster_theme_new_btn" class="menu_button menu_button_icon" title="New Theme">
                                     <i class="fa-solid fa-plus"></i>
@@ -45023,6 +45431,14 @@ function getPanelHtml() {
                                     <label style="width: 100px;">Trap Trigger</label>
                                     <input type="text" id="mazemaster_theme_flavor_trap" class="mazemaster-input" placeholder="A hidden danger springs forth!" style="flex: 1;">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 100px;">Victory</label>
+                                    <input type="text" id="mazemaster_theme_flavor_victory" class="mazemaster-input" placeholder="You emerge victorious!" style="flex: 1;">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 100px;">Defeat</label>
+                                    <input type="text" id="mazemaster_theme_flavor_defeat" class="mazemaster-input" placeholder="Darkness claims you..." style="flex: 1;">
+                                </div>
                             </div>
                         </div>
 
@@ -45048,7 +45464,13 @@ function getPanelHtml() {
                             <div class="mazemaster-profile-row">
                                 <select id="mazemaster_style_profile_select" class="mazemaster-select">
                                     <option value="">(New Style)</option>
-                                    ${getCustomStyleNames().map(p => `<option value="${escapeHtml(p)}">${escapeHtml(extensionSettings.customStyles[p]?.displayName || p)}</option>`).join('')}
+                                    ${getCustomStyleNames().map(p => {
+                                        const style = getCustomStyle(p);
+                                        const displayName = (style && style.displayName) ? style.displayName : p;
+                                        const isDefault = DEFAULT_STYLE_PROFILES[p] && !(extensionSettings.customStyles || {})[p];
+                                        const label = isDefault ? `${displayName} (Default)` : displayName;
+                                        return `<option value="${escapeHtml(p)}">${escapeHtml(label)}</option>`;
+                                    }).join('')}
                                 </select>
                                 <button id="mazemaster_style_new_btn" class="menu_button menu_button_icon" title="New Style">
                                     <i class="fa-solid fa-plus"></i>
@@ -45088,8 +45510,20 @@ function getPanelHtml() {
                                 <div class="mazemaster-row">
                                     <label style="width: 120px;">Corridor Width</label>
                                     <input type="number" id="mazemaster_style_bsp_corridor" class="mazemaster-input-small" min="1" max="3" value="1">
-                                    <label style="width: 120px; margin-left: 16px;">Extra Connections</label>
+                                    <label style="width: 120px; margin-left: 16px;">Room Padding</label>
+                                    <input type="number" id="mazemaster_style_bsp_padding" class="mazemaster-input-small" min="0" max="3" value="1">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 120px;">Min Split Size</label>
+                                    <input type="number" id="mazemaster_style_bsp_minsplit" class="mazemaster-input-small" min="3" max="8" value="4">
+                                    <label style="width: 120px; margin-left: 16px;">Split Variance</label>
+                                    <input type="number" id="mazemaster_style_bsp_variance" class="mazemaster-input-small" min="0" max="0.5" step="0.05" value="0.3">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 120px;">Extra Connections</label>
                                     <input type="number" id="mazemaster_style_bsp_connections" class="mazemaster-input-small" min="0" max="1" step="0.1" value="0.1">
+                                    <label style="width: 120px; margin-left: 16px;">Branch Chance</label>
+                                    <input type="number" id="mazemaster_style_bsp_branch" class="mazemaster-input-small" min="0" max="1" step="0.1" value="0.3">
                                 </div>
                                 <div class="mazemaster-row" style="margin-top: 8px;">
                                     <label class="mazemaster-checkbox-label">
@@ -45103,6 +45537,10 @@ function getPanelHtml() {
                                     <label class="mazemaster-checkbox-label" style="margin-left: 16px;">
                                         <input type="checkbox" id="mazemaster_style_bsp_modular">
                                         Modular Rooms (Spaceship)
+                                    </label>
+                                    <label class="mazemaster-checkbox-label" style="margin-left: 16px;">
+                                        <input type="checkbox" id="mazemaster_style_bsp_square">
+                                        Prefer Square Rooms
                                     </label>
                                 </div>
                             </div>
@@ -45137,6 +45575,10 @@ function getPanelHtml() {
                                     <label style="width: 80px;">Nouns</label>
                                     <input type="text" id="mazemaster_style_junction_nouns" class="mazemaster-input" placeholder="Hub, Crossroads, Junction" style="flex: 1;">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 80px;">Descriptions</label>
+                                    <textarea id="mazemaster_style_junction_desc" class="mazemaster-textarea" rows="2" placeholder="One description per line..." style="flex: 1;"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -45151,6 +45593,10 @@ function getPanelHtml() {
                                     <label style="width: 80px;">Nouns</label>
                                     <input type="text" id="mazemaster_style_deadend_nouns" class="mazemaster-input" placeholder="Alcove, Nook, Corner" style="flex: 1;">
                                 </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 80px;">Descriptions</label>
+                                    <textarea id="mazemaster_style_deadend_desc" class="mazemaster-textarea" rows="2" placeholder="One description per line..." style="flex: 1;"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -45158,12 +45604,28 @@ function getPanelHtml() {
                             <label class="mazemaster-label">Special Room Names</label>
                             <div class="mazemaster-form-group">
                                 <div class="mazemaster-row">
+                                    <label style="width: 80px;">Start</label>
+                                    <input type="text" id="mazemaster_style_start_names" class="mazemaster-input" placeholder="Entry Point, Starting Chamber" style="flex: 1;">
+                                </div>
+                                <div class="mazemaster-row">
                                     <label style="width: 80px;">Staircase</label>
                                     <input type="text" id="mazemaster_style_staircase_names" class="mazemaster-input" placeholder="Spiral Stairs, Stone Steps" style="flex: 1;">
                                 </div>
                                 <div class="mazemaster-row">
+                                    <label style="width: 80px;">Portal</label>
+                                    <input type="text" id="mazemaster_style_portal_names" class="mazemaster-input" placeholder="Teleport Pad, Warp Gate" style="flex: 1;">
+                                </div>
+                                <div class="mazemaster-row">
                                     <label style="width: 80px;">Chest</label>
                                     <input type="text" id="mazemaster_style_chest_names" class="mazemaster-input" placeholder="Treasury, Storage Room" style="flex: 1;">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 80px;">Minion</label>
+                                    <input type="text" id="mazemaster_style_minion_names" class="mazemaster-input" placeholder="Guard Post, Monster Den" style="flex: 1;">
+                                </div>
+                                <div class="mazemaster-row">
+                                    <label style="width: 80px;">Trap</label>
+                                    <input type="text" id="mazemaster_style_trap_names" class="mazemaster-input" placeholder="Danger Zone, Trapped Area" style="flex: 1;">
                                 </div>
                                 <div class="mazemaster-row">
                                     <label style="width: 80px;">Exit</label>
