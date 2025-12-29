@@ -1,5 +1,85 @@
 # MazeMaster - What's New
 
+## v2.0.3
+
+### Loading Screen Progress Display
+- Real-time console showing all generation steps (grid, tiles, systems, LLM)
+- Fixed-position loading card at bottom of screen throughout entire loading
+- Progress percentage displayed during maze generation
+- Smooth transition from generation to LLM enhancement phases
+
+### Bug Fixes
+- Fixed corrupted `secretDensity` values causing maze generation to hang
+- Added profile repair at load time for corrupted BSP config values
+- Fixed loading screen jumping to middle of screen during LLM phase
+- Game UI (D-pad) now properly hidden until loading completes
+
+---
+
+## v2.0.2
+
+### Configurable XP Rates
+- Per-profile XP rate configuration (exploration, combat, quest, chest, trap survival)
+- XP_CONFIG system allows fine-tuning progression per difficulty tier
+- XP multipliers stack with existing difficulty settings
+
+---
+
+## v2.0.1
+
+### UI Improvements
+- Default themes/styles now appear in profile dropdowns
+- Equipment modal z-index fix for proper layering
+- Quest profiles added to factory reset options
+
+### Bug Fixes
+- Fixed undefined `customThemes` error on fresh installs
+
+---
+
+## v2.0.0
+
+### Equipment System Overhaul
+- **Equipment Modal** - Dedicated UI for managing weapons, armor, accessories
+- **Durability System** - Equipment degrades with use, affects effectiveness
+- **Repair Kits** - New consumable item to restore equipment durability
+- **Iron Guard** - Starting accessory that auto-equips on maze start
+
+### Dynamic Profile Settings
+- Vision settings now configurable per profile
+- Combat mechanics adjustable per difficulty
+- Faction reputation systems per theme
+- Sound and VFX toggles per profile
+
+### Starting Equipment
+- Auto-equip starting equipment items on maze start
+- Custom items added to global item pool
+- Starting inventory properly handles weapons/armor/accessories
+
+---
+
+## v1.9.x Patch Notes
+
+### v1.9.9
+- Fixed combat victory freeze with improved error handling
+
+### v1.9.8
+- Fixed equipped armor properly absorbing trap/combat damage
+
+### v1.9.5 - v1.9.7
+- Iron Guard accessory improvements and auto-equip fixes
+
+### v1.9.3 - v1.9.4
+- Custom items now appear in item pools
+- Starting inventory fixes for equipment slots
+
+### v1.9.1 - v1.9.2
+- Improved maze generation with more pathway splits
+- Break up straight corridors with zigzag paths
+- Better dungeon layouts with increased variety
+
+---
+
 ## v1.4.8
 
 ### LLM Room Enhancement

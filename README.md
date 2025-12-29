@@ -1,7 +1,7 @@
 # MazeMaster
 
 <p align="center">
-  <img src="screenshots/loading-screen.png" alt="MazeMaster Loading Screen" width="800">
+  <img src="screenshots/loading-progress.png" alt="MazeMaster Loading Screen" width="800">
 </p>
 
 A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally generated dungeons, LLM-enhanced narration, 8 combat mini games, and full inventory management.
@@ -15,7 +15,27 @@ A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally gen
 
 ---
 
-## What's New (v1.5.0 - v1.9.0)
+## What's New (v1.5.0 - v2.0.3)
+
+### v2.0.x - Equipment System & Loading Progress
+
+**Equipment System Overhaul**
+- **Equipment Modal** - Dedicated UI for weapons, armor, accessories
+- **Durability System** - Equipment degrades with use
+- **Repair Kits** - New consumable to restore equipment
+- **Iron Guard** - Starting accessory that auto-equips
+
+**Loading Screen Progress**
+- Real-time console showing generation steps
+- Fixed-position card at bottom of screen
+- Progress percentage during all phases
+
+**Dynamic Profile Settings**
+- Vision, combat, faction settings per profile
+- Configurable XP rates per difficulty
+- Sound and VFX toggles
+
+---
 
 ### v1.9.0 - Help System & Dynamic Registries
 

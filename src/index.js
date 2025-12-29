@@ -3419,10 +3419,24 @@ const MAZE_PROFILE_DEFAULTS = {
     },
     // v1.4.8: LLM Room Enhancement
     llmEnhanceRooms: true,          // Use LLM to enhance room descriptions on first entry
+    llmMaxTokens: 250,              // Max tokens for LLM chat responses
     llmRoomPrompt: 'Describe this {{roomType}} room in 1-2 vivid sentences. Theme: {{theme}}. Context: {{sessionNotes}}',
     // v1.7.0: Quest Profiles
     questProfile: 'none',           // Reference to a quest profile by name
     questGatingEnabled: false,      // When true, quests gate zones/floors instead of room clearing
+    // v2.0.3: XP Configuration (profile-specific XP rates)
+    xpConfig: {
+        combatVictory: 25,          // Base XP for winning combat
+        combatDifficultyBonus: 5,   // Additional XP per difficulty level
+        lockedChest: 20,            // Opening a locked chest
+        normalChest: 10,            // Opening a normal chest
+        exploration10: 20,          // Every 10% of map explored
+        objectiveComplete: 50,      // Completing an objective
+        bossDefeat: 75,             // Defeating a boss minion
+        puzzleSolved: 30,           // Solving a puzzle encounter
+        trapDisarmed: 15,           // Disarming a trap
+        questComplete: 100,         // Completing a quest
+    },
 };
 
 /**
@@ -5447,7 +5461,7 @@ async function checkExplorationComplete() {
         const lastMilestone = currentMaze.character.lastExplorationMilestone || 0;
         if (currentMilestone > lastMilestone) {
             const milestonesEarned = (currentMilestone - lastMilestone) / 10;
-            const xpAmount = milestonesEarned * XP_REWARDS.exploration10;
+            const xpAmount = milestonesEarned * getXpReward('exploration10');
             await grantXp(xpAmount, 'exploration');
             currentMaze.character.lastExplorationMilestone = currentMilestone;
             addToMessageLog(`Exploration milestone! +${xpAmount} XP`, 'info');
@@ -6526,6 +6540,9 @@ const defaultSettings = {
     layoutMode: 'desktop', // 'desktop' | 'mobile' | 'auto'
     llmEnabled: true,
     llmPreset: '',
+    // v2.1.0: Avatar Generation Settings
+    avatarGenerationEnabled: false, // Opt-in: Use SD/image generation to create minion avatars
+    avatarGenerationTimeout: 60000, // 60 second timeout for image generation
     closeChatOnStart: true, // Close current chat before starting maze to prevent context bleed
     // D-Pad configuration
     dpadConfig: {
@@ -19138,6 +19155,8 @@ let currentMaze = {
     pendingChest: null,           // { chestData, x, y } for Open/Ignore flow
     voidWalkActive: false,        // v1.2.0: Void Walk active for next move
     messageLog: [],               // v1.2.1: Persistent message history
+    chatHistory: [],              // v2.x: In-game chat history for LLM context
+    chatEnabled: true,            // v2.x: Whether chat input is enabled
     // v1.3.0 HP System
     hpEnabled: true,
     hp: {
@@ -19545,6 +19564,314 @@ Write a vivid, atmospheric description (2-3 sentences max). Reference recent eve
 }
 
 /**
+ * v2.0.2: Generate LLM-enhanced minion alias (3-4 words max)
+ * @param {string} originalName - Original minion name (e.g., "The Butcher")
+ * @param {string} theme - Theme name (e.g., "horror")
+ * @returns {Promise<string>} Enhanced alias or original name on failure
+ */
+async function generateMinionAlias(originalName, theme) {
+    if (!originalName) return originalName;
+
+    // Check if LLM generation is available
+    if (typeof generateQuietPrompt !== 'function') {
+        console.log('[MazeMaster] generateQuietPrompt not available for minion alias');
+        return originalName;
+    }
+
+    // Check if LLM is globally enabled
+    if (extensionSettings.llmEnabled === false) {
+        return originalName;
+    }
+
+    // Get custom theme context if available
+    const customTheme = getCustomTheme(theme);
+    const themeContext = customTheme?.displayName || theme || 'fantasy';
+    const atmosphereNote = customTheme?.atmosphere || '';
+
+    const prompt = `Generate a dramatic 3-4 word alias for a ${themeContext} villain named "${originalName}".
+${atmosphereNote ? `Atmosphere: ${atmosphereNote}\n` : ''}
+Examples of good aliases: "The Crimson Reaper", "The Shadow Stalker", "The Demon Necrophagist", "The Flayed One"
+Reply with ONLY the new name (3-4 words max). No quotes, no explanation.`;
+
+    try {
+        console.log('[MazeMaster] Generating LLM minion alias for:', originalName);
+
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            skipWI: true,
+            max_length: 40,
+        });
+
+        if (response && response.trim()) {
+            // Clean and validate: extract 3-4 words max
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+
+            const words = cleaned.split(/\s+/).slice(0, 4);
+            if (words.length >= 2) {
+                const alias = words.join(' ');
+                console.log('[MazeMaster] Minion alias generated:', originalName, '->', alias);
+                return alias;
+            }
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Minion alias LLM failed:', error);
+    }
+
+    return originalName;
+}
+
+/**
+ * v2.0.2: Generate LLM-enhanced story intro
+ * @param {string} originalStory - Original story text
+ * @param {string} theme - Theme name
+ * @param {string} minionName - Main antagonist name (already aliased)
+ * @returns {Promise<string>} Enhanced story or original on failure
+ */
+async function generateEnhancedStoryIntro(originalStory, theme, minionName) {
+    if (!originalStory) return originalStory;
+
+    // Check if LLM generation is available
+    if (typeof generateQuietPrompt !== 'function') {
+        console.log('[MazeMaster] generateQuietPrompt not available for story intro');
+        return originalStory;
+    }
+
+    // Check if LLM is globally enabled
+    if (extensionSettings.llmEnabled === false) {
+        return originalStory;
+    }
+
+    // Get custom theme context if available
+    const customTheme = getCustomTheme(theme);
+    const themeContext = customTheme?.displayName || theme || 'fantasy';
+    const atmosphereNote = customTheme?.atmosphere || '';
+
+    const prompt = `You are the narrator for a ${themeContext} dungeon crawler game.
+${atmosphereNote ? `Atmosphere: ${atmosphereNote}\n` : ''}
+The main antagonist is "${minionName}".
+
+Original maze introduction: "${originalStory}"
+
+Rewrite this introduction in 2-3 vivid, atmospheric sentences. Keep the same meaning and tone but make it more immersive and dramatic. Do not use quotation marks.`;
+
+    try {
+        console.log('[MazeMaster] Generating LLM-enhanced story intro');
+
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            skipWI: true,
+            max_length: 250,
+        });
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            console.log('[MazeMaster] Story intro enhanced');
+            return cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Story intro LLM failed:', error);
+    }
+
+    return originalStory;
+}
+
+/**
+ * v2.0.2: Replace main minion original name with alias in text
+ * @param {string} text - Text to process
+ * @returns {string} Text with alias replacements
+ */
+function applyMinionAlias(text) {
+    if (!text || typeof text !== 'string') return text;
+    if (!currentMaze?.mainMinionOriginalName || !currentMaze?.mainMinionAlias) return text;
+    if (currentMaze.mainMinionOriginalName === currentMaze.mainMinionAlias) return text;
+
+    // Case-insensitive replacement
+    const escaped = currentMaze.mainMinionOriginalName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'gi');
+    return text.replace(regex, currentMaze.mainMinionAlias);
+}
+
+// =============================================================================
+// v2.1.0: AVATAR GENERATION FUNCTIONS
+// =============================================================================
+
+/**
+ * v2.1.0: Check if image generation (SD extension) is available
+ * @returns {Promise<boolean>} True if image generation is available
+ */
+async function isImageGenerationAvailable() {
+    try {
+        // Check if executeSlashCommandsWithOptions is available
+        if (typeof executeSlashCommandsWithOptions !== 'function') {
+            console.log('[MazeMaster] executeSlashCommandsWithOptions not available');
+            return false;
+        }
+
+        // Check if SD extension is loaded by looking for its UI elements
+        const sdPanel = document.querySelector('#sd_settings, [id*="sd_"]');
+        if (sdPanel) {
+            return true;
+        }
+
+        // Alternative: check SillyTavern context for SD extension
+        const context = SillyTavern.getContext();
+        if (context.extensionSettings?.sd) {
+            return true;
+        }
+
+        return false;
+    } catch (e) {
+        console.warn('[MazeMaster] Could not detect image generation:', e);
+        return false;
+    }
+}
+
+/**
+ * v2.1.0: Build image generation prompt for minion avatar
+ * @param {Object} minion - Minion data object
+ * @param {string} theme - Theme name
+ * @param {Object} customTheme - Custom theme data (optional)
+ * @returns {string} Prompt for image generation
+ */
+function buildMinionAvatarPrompt(minion, theme, customTheme) {
+    const themeContext = customTheme?.displayName || theme || 'fantasy';
+    const atmosphere = customTheme?.atmosphere || '';
+
+    // Type-specific keywords for better prompts
+    const typeKeywords = {
+        messenger: 'mysterious messenger, hooded figure, enigmatic',
+        battlebar: 'fierce warrior, armored combatant, battle-ready',
+        prizewheel: 'fortune teller, mystical oracle, magical aura',
+        merchant: 'cunning trader, merchant, carrying wares',
+        turnbased: 'powerful boss, imposing figure, commanding presence',
+        stealth: 'shadow assassin, stealthy hunter, dark cloak',
+        puzzle: 'ancient riddler, wise sage, mysterious',
+        negotiation: 'shrewd diplomat, persuasive speaker, elegant',
+        qte: 'quick challenger, agile fighter, nimble',
+        dice: 'gambler, risk-taker, fortune seeker',
+    };
+
+    let prompt = `portrait of ${minion.name}`;
+
+    // Add description if available (truncate to keep prompt reasonable)
+    if (minion.description) {
+        const shortDesc = minion.description.substring(0, 80).trim();
+        prompt += `, ${shortDesc}`;
+    }
+
+    // Add type-specific keywords
+    const typeKey = typeKeywords[minion.type] || 'mysterious figure';
+    prompt += `, ${typeKey}`;
+
+    // Add theme context
+    prompt += `, ${themeContext} theme`;
+
+    // Add atmosphere if available
+    if (atmosphere) {
+        prompt += `, ${atmosphere} atmosphere`;
+    }
+
+    // Standard quality tags for portrait
+    prompt += ', character portrait, detailed, high quality, 1:1 aspect ratio, centered composition';
+
+    return prompt;
+}
+
+/**
+ * v2.1.0: Generate and save avatar for a minion using SD extension
+ * @param {string} minionId - Minion identifier
+ * @param {Object} minion - Minion data object
+ * @param {string} theme - Theme name
+ * @returns {Promise<string|null>} Generated image path or null on failure
+ */
+async function generateMinionAvatar(minionId, minion, theme) {
+    if (!minion) {
+        console.log('[MazeMaster] generateMinionAvatar: No minion provided');
+        return null;
+    }
+
+    // Skip if minion already has an image
+    if (minion.imagePath) {
+        console.log('[MazeMaster] Minion already has avatar:', minionId, minion.imagePath);
+        return minion.imagePath;
+    }
+
+    const customTheme = getCustomTheme(theme);
+    const prompt = buildMinionAvatarPrompt(minion, theme, customTheme);
+    const timeout = extensionSettings.avatarGenerationTimeout || 60000;
+
+    console.log('[MazeMaster] Generating avatar for:', minionId);
+    console.log('[MazeMaster] Avatar prompt:', prompt);
+
+    try {
+        // Execute /imagine command with quiet mode (no chat posting)
+        const result = await Promise.race([
+            executeSlashCommandsWithOptions(`/imagine quiet=true ${prompt}`),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Avatar generation timed out')), timeout)
+            )
+        ]);
+
+        // The /imagine command returns the image path in result.pipe
+        let imagePath = result?.pipe;
+
+        if (imagePath && typeof imagePath === 'string' && imagePath.trim()) {
+            imagePath = imagePath.trim();
+
+            // Update minion with new image path and save
+            const updatedMinion = { ...minion, imagePath };
+            saveMinion(minionId, updatedMinion);
+
+            console.log('[MazeMaster] Avatar generated for:', minionId, imagePath);
+            return imagePath;
+        }
+
+        console.warn('[MazeMaster] No image path returned for:', minionId);
+        return null;
+
+    } catch (error) {
+        console.error('[MazeMaster] Avatar generation failed for:', minionId, error.message);
+        return null;
+    }
+}
+
+/**
+ * v2.1.0: Get list of minions that need avatar generation for a maze profile
+ * @param {Object} profile - Maze profile object
+ * @returns {Array<{id: string, minion: Object}>} Array of minions needing avatars
+ */
+function getMinionsNeedingAvatars(profile) {
+    const results = [];
+    const selectedMinions = profile.avatarGenerationMinions || [];
+
+    // If specific minions are selected, use those
+    if (selectedMinions.length > 0) {
+        for (const minionId of selectedMinions) {
+            const minion = getMinion(minionId);
+            if (minion && !minion.imagePath) {
+                results.push({ id: minionId, minion });
+            }
+        }
+    } else {
+        // Default: just the main minion
+        if (profile.mainMinion) {
+            const mainMinion = getMinion(profile.mainMinion);
+            if (mainMinion && !mainMinion.imagePath) {
+                results.push({ id: profile.mainMinion, minion: mainMinion });
+            }
+        }
+    }
+
+    return results;
+}
+
+/**
  * Enhance room description on first entry and cache it
  * @param {number} x - Room X coordinate
  * @param {number} y - Room Y coordinate
@@ -19816,6 +20143,28 @@ function loadSettings() {
         if (!extensionSettings.trapProfiles) extensionSettings.trapProfiles = {};
         resetFactoryDefaults();
         saveSettingsDebounced();
+    }
+
+    // v2.0.3: Repair corrupted bspConfig values in saved maze profiles
+    // This fixes profiles that were corrupted by earlier mutation bugs
+    let profilesRepaired = 0;
+    if (extensionSettings.mazeProfiles) {
+        for (const [name, profile] of Object.entries(extensionSettings.mazeProfiles)) {
+            if (profile?.bspConfig?.secretDensity > 0.2) {
+                console.warn(`[MazeMaster] Repairing corrupted secretDensity in profile "${name}": ${profile.bspConfig.secretDensity} -> 0.05`);
+                profile.bspConfig.secretDensity = 0.05;
+                profilesRepaired++;
+            }
+            if (profile?.bspConfig?.maxDepth > 20) {
+                console.warn(`[MazeMaster] Repairing corrupted maxDepth in profile "${name}": ${profile.bspConfig.maxDepth} -> 6`);
+                profile.bspConfig.maxDepth = 6;
+                profilesRepaired++;
+            }
+        }
+        if (profilesRepaired > 0) {
+            console.log(`[MazeMaster] Repaired ${profilesRepaired} corrupted profile value(s)`);
+            saveSettingsDebounced();
+        }
     }
 
     // Fill in any missing defaults
@@ -21043,6 +21392,8 @@ function saveMazeProfile(name, profileData) {
         restCooldown: profileData.restCooldown ?? 3,
         restInterruptChance: profileData.restInterruptChance ?? 0,
         restInterruptScript: profileData.restInterruptScript || '',
+        // v2.1.0: Avatar generation settings
+        avatarGenerationMinions: profileData.avatarGenerationMinions || [], // Array of minion IDs to generate avatars for
     };
     saveSettingsDebounced();
     console.log('[MazeMaster] Maze profile saved:', name, extensionSettings.mazeProfiles[name]);
@@ -27030,7 +27381,7 @@ async function handleTurnBasedWin() {
             // v1.5.0: Grant XP for combat victory
             try {
                 const difficulty = currentTurnBased.difficulty || 1;
-                const xpAmount = XP_REWARDS.combatVictory + (difficulty * XP_REWARDS.combatDifficultyBonus);
+                const xpAmount = getXpReward('combatVictory') + (difficulty * getXpReward('combatDifficultyBonus'));
                 const xpResult = await grantXp(xpAmount, 'combat');
                 addTBLogEntry(`+${xpAmount} XP`);
                 if (xpResult?.leveledUp) {
@@ -29466,6 +29817,8 @@ function getPuzzleStyles() {
             padding: 25px;
             min-width: 450px;
             max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 0 40px rgba(61, 90, 128, 0.4);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #e0e0e0;
@@ -30119,6 +30472,19 @@ async function closePuzzleModal() {
                 if (wasSuccess) {
                     // v1.4.0: Mark room as cleared for zone progression
                     await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+
+                    // v2.0.3: Award XP for solving puzzle
+                    try {
+                        const puzzleXp = getXpReward('puzzleSolved');
+                        const xpResult = await grantXp(puzzleXp, 'puzzle');
+                        addMazeLogMessage(`Puzzle solved! +${puzzleXp} XP`, 'success');
+                        if (xpResult?.leveledUp) {
+                            addMazeLogMessage(`Level Up! Now level ${xpResult.newLevel}!`, 'success');
+                        }
+                    } catch (e) {
+                        console.error('[MazeMaster] Puzzle XP grant error:', e);
+                    }
+
                     // Heal player on successful puzzle completion (skill reward)
                     if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
                         const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
@@ -30145,6 +30511,27 @@ async function closePuzzleModal() {
         // Always ensure maze is unpaused and encounter is cleared
         currentMaze.isPaused = false;
         currentMaze.pendingEncounter = null;
+
+        // v2.0.3: Reset minion display back to main minion or narrator
+        const profile = currentMaze.profile;
+        if (profile?.mainMinion) {
+            const mainMinion = getMinion(profile.mainMinion);
+            if (mainMinion) {
+                currentMaze.currentMinion = {
+                    name: currentMaze.mainMinionAlias || mainMinion.name,
+                    imagePath: mainMinion.imagePath,
+                    message: wasSuccess ? 'Well done! That puzzle was no match for you.' : 'The puzzle proved too difficult this time...',
+                };
+            }
+        } else {
+            // Fallback to narrator
+            currentMaze.currentMinion = {
+                name: 'Narrator',
+                imagePath: '',
+                message: wasSuccess ? 'The puzzle has been solved.' : 'The puzzle remains unsolved.',
+            };
+        }
+        updateMazeHero();
     }
 }
 
@@ -32423,7 +32810,8 @@ function generateBSPTree(x, y, width, height, depth, config) {
  * @returns {object} Room data
  */
 function generateRoomInNode(node, config) {
-    const padding = config.roomPadding || 1;
+    // v2.0.3: Fix - use ?? instead of || so roomPadding: 0 works correctly
+    const padding = config.roomPadding ?? 1;
     const minSize = config.minRoomSize || 2;
     const maxSize = config.maxRoomSize || 5;
 
@@ -34277,7 +34665,6 @@ function guaranteeFloorKeys(floors, size) {
  */
 function enforceWallConsistency(grid, size) {
     let fixes = 0;
-    console.log('[MazeMaster] Running wall consistency check...');
 
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
@@ -34288,7 +34675,6 @@ function enforceWallConsistency(grid, size) {
                 const rightCell = grid[y][x + 1];
                 const rightWallMismatch = cell.walls.right !== rightCell.walls.left;
                 if (rightWallMismatch) {
-                    console.log(`[MazeMaster] Wall mismatch at (${x},${y}) right: ${cell.walls.right} vs (${x+1},${y}) left: ${rightCell.walls.left}`);
                     // If either says open, make both open
                     if (!cell.walls.right || !rightCell.walls.left) {
                         cell.walls.right = false;
@@ -34307,7 +34693,6 @@ function enforceWallConsistency(grid, size) {
                 const bottomCell = grid[y + 1][x];
                 const bottomWallMismatch = cell.walls.bottom !== bottomCell.walls.top;
                 if (bottomWallMismatch) {
-                    console.log(`[MazeMaster] Wall mismatch at (${x},${y}) bottom: ${cell.walls.bottom} vs (${x},${y+1}) top: ${bottomCell.walls.top}`);
                     // If either says open, make both open
                     if (!cell.walls.bottom || !bottomCell.walls.top) {
                         cell.walls.bottom = false;
@@ -34321,7 +34706,6 @@ function enforceWallConsistency(grid, size) {
             }
         }
     }
-    console.log(`[MazeMaster] Wall consistency check complete. Fixed ${fixes} mismatch(es)`);
 }
 
 /**
@@ -34685,11 +35069,42 @@ function getCellSize(gridSize) {
 }
 
 async function startMaze(profileName) {
+    // v2.0.3: Get profile early to determine loading screen configuration
     const profile = getMazeProfileWithDefaults(profileName);
     if (!profile) {
         console.error(`[MazeMaster] Maze profile "${profileName}" not found`);
         return { error: `Profile "${profileName}" not found` };
     }
+
+    const size = profile.gridSize || 10;
+    const mapStyle = profile.mapStyle || 'maze';
+    const totalFloors = Math.max(1, Math.min(10, profile.floors || 1));
+    const llmEnabled = profile.llmEnhanceRooms === true;
+    const avatarGenEnabled = extensionSettings.avatarGenerationEnabled === true;
+
+    // v2.0.3: PHASE 0 - Create early modal with loading screen BEFORE any generation
+    console.log('[MazeMaster] Creating early modal for loading screen...');
+    createMazeModalEarly(totalFloors > 1, llmEnabled, avatarGenEnabled);
+
+    // v2.0.3: Preload background image and wait for it to render
+    await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            console.log('[MazeMaster] Loading screen background image loaded');
+            resolve();
+        };
+        img.onerror = () => {
+            console.warn('[MazeMaster] Loading screen background failed to load');
+            resolve();
+        };
+        img.src = '/scripts/extensions/third-party/SillyTavern-MazeMaster/images/maze-master-logo.jpg';
+        // Timeout fallback in case image is cached and events don't fire
+        setTimeout(resolve, 100);
+    });
+
+    updateLoadingPercent(0);
+    addLoadingLog('Loading profile...', 'current');
+    await tick(); // Single tick to render loading screen
 
     // Close current chat to prevent context bleed (if enabled)
     if (extensionSettings.closeChatOnStart !== false) {
@@ -34697,20 +35112,18 @@ async function startMaze(profileName) {
             const context = SillyTavern.getContext();
             if (context && typeof context.clearChat === 'function') {
                 context.clearChat();
-                console.log('[MazeMaster] Closed current chat to prevent context bleed');
+                addLoadingLog('Chat cleared', 'success');
             } else if (typeof doNewChat === 'function') {
-                // Alternative: Start a new chat
                 doNewChat();
-                console.log('[MazeMaster] Started new chat to prevent context bleed');
+                addLoadingLog('New chat started', 'success');
             }
         } catch (e) {
             console.warn('[MazeMaster] Could not close chat:', e);
         }
     }
 
-    const size = profile.gridSize || 10;
-    const mapStyle = profile.mapStyle || 'maze';
-    const totalFloors = Math.max(1, Math.min(10, profile.floors || 1));
+    addLoadingLog(`Profile loaded: ${profileName}`, 'success');
+    updateLoadingPercent(10);
 
     // Generate all floors
     const floors = [];
@@ -34748,15 +35161,37 @@ async function startMaze(profileName) {
     // v1.4.0: Store all floor data including BSP rooms
     const floorsData = [];
 
+    // v2.0.3: PHASE 2 - Grid Generation (10% - 35%)
+    addLoadingLog('Generating maze grid...', 'current');
+    updateLoadingPercent(12);
+    await tick(); // Single tick before generation phase
+
     for (let f = 0; f < totalFloors; f++) {
-        // v1.4.0: Get BSP configuration from profile
-        const bspConfig = profile.bspConfig || {};
+        // v2.0.3: Update loading text and percent for each floor (no tick in loop)
+        const gridProgress = 12 + (((f + 1) / totalFloors) * 23);
+        updateLoadingPercent(gridProgress);
+        if (totalFloors > 1) {
+            addLoadingLog(`Generating floor ${f + 1}/${totalFloors}...`, 'current');
+        }
+
+        // v2.0.3: Clone BSP config to avoid mutating profile across floors
+        const baseBspConfig = profile.bspConfig || {};
+        const bspConfig = { ...baseBspConfig };
+
+        // v2.0.3: Sanity check - cap secretDensity at 0.2 (20%) max
+        // This fixes corrupted profiles from earlier mutation bugs
+        if (bspConfig.secretDensity > 0.2) {
+            console.warn(`[MazeMaster] Corrupted secretDensity detected (${bspConfig.secretDensity}), resetting to 0.05`);
+            bspConfig.secretDensity = 0.05;
+        }
 
         // v1.4.0: Per-floor complexity scaling
         if (bspConfig.floorComplexityScaling !== false && totalFloors > 1) {
             const depthRatio = f / Math.max(1, totalFloors - 1);
-            bspConfig.maxDepth = (bspConfig.maxDepth || 4) + Math.floor(depthRatio * 2);
-            bspConfig.secretDensity = (bspConfig.secretDensity || 0.02) * (1 + depthRatio);
+            const baseMaxDepth = baseBspConfig.maxDepth || 4;
+            bspConfig.maxDepth = baseMaxDepth + Math.floor(depthRatio * 2);
+            const baseSecretDensity = Math.min(bspConfig.secretDensity || 0.02, 0.2); // Cap at 20%
+            bspConfig.secretDensity = Math.min(baseSecretDensity * (1 + depthRatio), 0.2); // Final cap
         }
 
         // v1.4.0: Generate BSP grid with rooms
@@ -34764,11 +35199,15 @@ async function startMaze(profileName) {
         const bspResult = generateGridByStyle(size, mapStyle, theme, bspConfig);
         const floorGrid = bspResult.grid;
         const floorRooms = bspResult.rooms;
+        addLoadingLog(`BSP generated: ${floorRooms.length} rooms`, 'success');
 
         // v1.4.0: Generate zones if enabled
         const zoneCount = bspConfig.zoneCount || 1;
         const floorZones = generateZones(floorRooms, zoneCount, theme);
         applyZonesToGrid(floorGrid, floorZones, floorRooms);
+        if (zoneCount > 1) {
+            addLoadingLog(`Zones created: ${zoneCount}`, 'success');
+        }
 
         // v1.4.0: Add secret passages if enabled
         if (bspConfig.secretDensity > 0) {
@@ -34780,9 +35219,6 @@ async function startMaze(profileName) {
 
         // Ensure wall consistency (both sides of each wall match)
         enforceWallConsistency(floorGrid, size);
-        placeTiles(floorGrid, profile, size);
-        // v1.2.1: Generate room names for each cell
-        generateRoomInfoForGrid(floorGrid, profile, size, exitX, exitY);
 
         floors.push(floorGrid);
         floorsData.push({
@@ -34792,9 +35228,36 @@ async function startMaze(profileName) {
         });
     }
 
-    // Add staircases between floors
+    addLoadingLog(`Grid complete: ${totalFloors} floor(s)`, 'success');
+    updateLoadingPercent(35);
+
+    // v2.0.3: PHASE 3 - Tile Placement (minions, traps, chests, etc.) (35% - 55%)
+    addLoadingLog('Placing tiles...', 'current');
+    updateLoadingPercent(37);
+    await tick(); // Single tick before tiles phase
+
+    for (let f = 0; f < totalFloors; f++) {
+        // v2.0.3: Update loading text and percent for each floor (no tick in loop)
+        const tilesProgress = 37 + (((f + 1) / totalFloors) * 18);
+        updateLoadingPercent(tilesProgress);
+        if (totalFloors > 1) {
+            addLoadingLog(`Placing tiles floor ${f + 1}/${totalFloors}...`, 'current');
+        }
+
+        placeTiles(floors[f], profile, size);
+        // v1.2.1: Generate room names for each cell
+        generateRoomInfoForGrid(floors[f], profile, size, exitX, exitY);
+    }
+
+    addLoadingLog('Tiles placed', 'success');
+    updateLoadingPercent(55);
+
+    // v2.0.3: PHASE 4 - Multi-Floor Connections (staircases) (55% - 65%)
     let guaranteedFloorKeysNeeded = 0;
     if (totalFloors > 1) {
+        addLoadingLog('Connecting floors...', 'current');
+        updateLoadingPercent(57);
+
         addStaircasesToFloors(floors, size, profile.requireFloorKey || false, exitX, exitY);
 
         // Guarantee floor keys are available when requireFloorKey is enabled
@@ -34808,8 +35271,10 @@ async function startMaze(profileName) {
         if (startFloor[exitY] && startFloor[exitY][exitX]) {
             // Wall off the exit cell on floor 0 so player MUST use stairs
             startFloor[exitY][exitX].walls = { top: true, right: true, bottom: true, left: true };
-            console.log(`[MazeMaster] Blocked exit area on floor 0 at (${exitX}, ${exitY}) - must use stairs`);
         }
+
+        addLoadingLog('Floors connected', 'success');
+        updateLoadingPercent(65);
     }
 
     // Use first floor as active grid
@@ -34881,6 +35346,10 @@ async function startMaze(profileName) {
             message: profile.mainMinionIntroMessage || 'Welcome to my maze...',
         };
     }
+
+    // v2.0.2: Store original minion name for alias system (LLM enhancement happens after modal shows)
+    let mainMinionOriginalName = mainMinion?.name || null;
+    let mainMinionAlias = mainMinionOriginalName;
 
     currentMaze = {
         isOpen: true,
@@ -34960,6 +35429,8 @@ async function startMaze(profileName) {
         floorsData: floorsData,  // v1.4.0: BSP rooms, zones per floor
         voidWalkActive: false,
         messageLog: [],  // v1.2.1: Persistent message history
+        chatHistory: [],  // v2.x: In-game chat history for LLM context
+        chatEnabled: true,  // v2.x: Whether chat input is enabled
         // v1.3.0 HP System
         hpEnabled: profile.hpEnabled !== false,
         hp: initHP(profile),
@@ -34976,6 +35447,9 @@ async function startMaze(profileName) {
         },
         // v1.4.8: LLM Enhanced Room Descriptions
         enhancedRooms: {},  // Map of "floor:x,y" -> enhanced description
+        // v2.0.2: LLM-enhanced main minion alias
+        mainMinionOriginalName: mainMinionOriginalName,
+        mainMinionAlias: mainMinionAlias,
         // v1.5.0: Quest System
         quests: initializeQuestState(),
         // v1.8.0: Equipment System
@@ -35033,14 +35507,19 @@ async function startMaze(profileName) {
     addSessionNote(`Adventure begins: ${profileName}`);
     addSessionNote(`Floor 1/${profile.floors || 1} - ${size}x${size} ${profile.theme || 'fantasy'} ${profile.mapStyle || 'dungeon'}`);
 
-    // Initialize moving minions after maze state is created
+    // v2.0.3: PHASE 5 - Systems Initialization (65% - 80%)
+    addLoadingLog('Initializing systems...', 'current');
+    updateLoadingPercent(67);
+    await tick(); // Single tick before systems phase
+
+    // Initialize all systems (fast synchronous operations - no tick needed)
     currentMaze.movingMinions = initMovingMinions(grid, size);
-    console.log('[MazeMaster] After initMovingMinions, starting v1.6.0 systems...');
+    addLoadingLog('Minions initialized', 'success');
 
     // v1.6.0: Initialize enhanced lighting system
     try {
         initLighting(profile.mapStyle || 'maze');
-        console.log('[MazeMaster] Lighting initialized');
+        addLoadingLog('Lighting initialized', 'success');
     } catch (e) {
         console.error('[MazeMaster] initLighting error:', e);
     }
@@ -35048,7 +35527,7 @@ async function startMaze(profileName) {
     // v1.6.0: Initialize faction reputation system
     try {
         initFactions();
-        console.log('[MazeMaster] Factions initialized');
+        addLoadingLog('Factions initialized', 'success');
     } catch (e) {
         console.error('[MazeMaster] initFactions error:', e);
     }
@@ -35056,7 +35535,6 @@ async function startMaze(profileName) {
     // v1.6.0: Initialize permadeath campaign if enabled
     try {
         initPermadeathCampaign();
-        console.log('[MazeMaster] Permadeath initialized');
     } catch (e) {
         console.error('[MazeMaster] initPermadeathCampaign error:', e);
     }
@@ -35065,17 +35543,71 @@ async function startMaze(profileName) {
     if (profile.questPool && profile.questPool.length > 0) {
         currentMaze.quests.available = offerRandomQuests(profile, 2);
         if (currentMaze.quests.available.length > 0) {
-            addSessionNote(`Quests available: ${currentMaze.quests.available.length}`);
+            addLoadingLog(`${currentMaze.quests.available.length} quests available`, 'success');
         }
     }
 
     // v1.7.0: Initialize quests from Quest Profile
     initializeQuestsFromProfile();
 
+    addLoadingLog('Systems ready', 'success');
+    updateLoadingPercent(80);
+
+    // v2.0.3: PHASE 6 - Create full game UI (loading screen is preserved)
     console.log('[MazeMaster] About to show maze modal...');
     try {
         showMazeModal();
         console.log('[MazeMaster] Modal shown');
+
+        // v2.0.3: Loading screen is already visible from createMazeModalEarly()
+        // Just need to get minions needing avatars for later
+        const minionsNeedingAvatars = avatarGenEnabled ? getMinionsNeedingAvatars(profile) : [];
+        const shouldGenerateAvatars = avatarGenEnabled && minionsNeedingAvatars.length > 0;
+
+        // v2.0.3: PHASE 7 - LLM Enhancements (80% - 100%)
+        if (llmEnabled && mainMinion?.name) {
+            addLoadingLog(`LLM: Enhancing ${mainMinion.name}...`, 'current');
+            updateLoadingPercent(82);
+            try {
+                mainMinionAlias = await generateMinionAlias(mainMinion.name, profile.theme);
+                currentMaze.mainMinionAlias = mainMinionAlias;
+                if (currentMaze.currentMinion && mainMinionAlias !== mainMinionOriginalName) {
+                    currentMaze.currentMinion.name = mainMinionAlias;
+                }
+                addLoadingLog(`Minion: ${mainMinionAlias}`, 'success');
+                updateLoadingPercent(85);
+            } catch (e) {
+                console.error('[MazeMaster] Failed to generate minion alias:', e);
+                mainMinionAlias = mainMinionOriginalName;
+                addLoadingLog('Minion enhancement skipped', '');
+                updateLoadingPercent(85);
+            }
+        } else {
+            updateLoadingPercent(85);
+        }
+
+        if (llmEnabled && currentMaze.currentMinion?.message) {
+            addLoadingLog('LLM: Enhancing story...', 'current');
+            updateLoadingPercent(87);
+            try {
+                const enhancedStory = await generateEnhancedStoryIntro(
+                    currentMaze.currentMinion.message,
+                    profile.theme,
+                    mainMinionAlias
+                );
+                if (enhancedStory && enhancedStory !== currentMaze.currentMinion.message) {
+                    currentMaze.currentMinion.message = enhancedStory;
+                }
+                addLoadingLog('Story enhanced', 'success');
+                updateLoadingPercent(90);
+            } catch (e) {
+                console.error('[MazeMaster] Failed to enhance story intro:', e);
+                addLoadingLog('Story enhancement skipped', '');
+                updateLoadingPercent(90);
+            }
+        } else {
+            updateLoadingPercent(90);
+        }
 
         // v1.3.2: Apply initial visibility radius at spawn
         applyVisibilityAtPosition(0, 0, size);
@@ -35086,6 +35618,7 @@ async function startMaze(profileName) {
 
         updatePlayerPosition(false); // Set initial position without animation
         updateMazeHero();
+        initChatInput();  // v2.x: Initialize in-game chat input
         updateRestButton(); // Initialize rest button state
         updateRoomInfoBox();  // v1.2.1: Update room info display
         updateInventoryDisplay();
@@ -35102,22 +35635,226 @@ async function startMaze(profileName) {
 
         document.addEventListener('keydown', handleMazeKeydown, { capture: true });
 
-        // v1.4.8: Enhance starting room description (awaited in v1.4.9)
+        // v1.4.8: Enhance starting room description
+        if (llmEnabled) {
+            addLoadingLog('LLM: Enhancing entry room...', 'current');
+            updateLoadingPercent(92);
+        }
         await enhanceRoomOnEntry(0, 0);
+        if (llmEnabled) {
+            addLoadingLog('Entry room enhanced', 'success');
+            updateLoadingPercent(95);
+        }
+
+        // v2.1.0: Generate avatars for minions that need them
+        if (shouldGenerateAvatars) {
+            addLoadingLog('Generating avatars...', 'current');
+            updateLoadingPercent(96);
+
+            try {
+                const sdAvailable = await isImageGenerationAvailable();
+                if (sdAvailable) {
+                    let generatedCount = 0;
+                    for (const { id: minionId, minion } of minionsNeedingAvatars) {
+                        addLoadingLog(`Avatar: ${minion.name}...`, 'current');
+
+                        const imagePath = await generateMinionAvatar(minionId, minion, profile.theme);
+                        if (imagePath) {
+                            generatedCount++;
+                            if (minionId === profile.mainMinion && currentMaze.currentMinion) {
+                                currentMaze.currentMinion.imagePath = imagePath;
+                            }
+                        }
+                    }
+
+                    if (generatedCount > 0) {
+                        addLoadingLog(`${generatedCount} avatar(s) generated`, 'success');
+                        updateMazeHero();
+                    }
+                }
+            } catch (e) {
+                console.error('[MazeMaster] Avatar generation error:', e);
+                addLoadingLog('Avatar generation failed', '');
+            }
+        }
+
+        // v2.0.3: Set to 100% before hiding
+        addLoadingLog('Ready!', 'success');
+        updateLoadingPercent(100);
+
+        // v2.0.2: Hide loading screen - game is ready
+        hideLoadingScreen();
 
         console.log(`[MazeMaster] Maze "${profileName}" started (${size}x${size}, ${totalFloors} floor${totalFloors > 1 ? 's' : ''})`);
     } catch (error) {
         console.error('[MazeMaster] Error during maze rendering:', error);
+        hideLoadingScreen(); // Hide loading screen on error too
         return { error: `Failed to render maze: ${error.message}` };
     }
     return { success: true };
 }
 
-function showMazeModal() {
-    console.log('[MazeMaster] showMazeModal() called, currentMaze:', currentMaze?.isOpen, 'size:', currentMaze?.size);
+/**
+ * v2.0.3: Create maze modal early for loading screen display
+ * Called before maze generation to show progress
+ * @param {boolean} showMultiFloor - Whether to show multi-floor status item
+ * @param {boolean} llmEnabled - Whether LLM enhancement is enabled
+ * @param {boolean} avatarGenEnabled - Whether avatar generation is enabled
+ */
+function createMazeModalEarly(showMultiFloor = false, llmEnabled = false, avatarGenEnabled = false) {
+    console.log('[MazeMaster] Creating early modal for loading screen');
 
     // Remove existing modal if any
     const existing = document.getElementById('mazemaster_maze_modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'mazemaster_maze_modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);';
+    modal.innerHTML = `
+        <style>
+            .mazemaster-maze-overlay {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+            }
+            .mazemaster-maze-container {
+                position: relative;
+                width: 90vw;
+                max-width: 1200px;
+                height: 94vh;
+                max-height: 960px;
+                background: #1a1a2e;
+                border-radius: 15px;
+                border: 2px solid #333;
+            }
+            .maze-loading-screen {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                background-size: 100% 100%;
+                background-position: center center;
+                background-repeat: no-repeat;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                padding-bottom: 80px;
+                z-index: 1000;
+                border-radius: 15px;
+            }
+            .maze-loading-card {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+                border-radius: 12px;
+                padding: 15px 25px;
+                border: 1px solid rgba(212, 175, 55, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                text-align: center;
+                z-index: 10;
+            }
+            .maze-loading-header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 10px;
+                color: #d4af37;
+            }
+            .maze-loading-header i {
+                font-size: 0.9em;
+            }
+            .maze-loading-subtitle {
+                font-size: 0.95em;
+                letter-spacing: 0.15em;
+                text-transform: uppercase;
+            }
+            .maze-loading-percent {
+                font-size: 0.9em;
+                font-weight: bold;
+                color: #d4af37;
+            }
+            .maze-loading-console {
+                background: rgba(0, 0, 0, 0.5);
+                border: 1px solid rgba(212, 175, 55, 0.3);
+                border-radius: 8px;
+                padding: 8px 12px;
+                width: 280px;
+                height: 80px;
+                min-height: 80px;
+                max-height: 80px;
+                overflow-y: auto;
+                font-family: monospace;
+                font-size: 0.75em;
+                text-align: left;
+                color: #aaa;
+            }
+            .maze-loading-console .log-line {
+                margin: 2px 0;
+                white-space: nowrap;
+            }
+            .maze-loading-console .log-line.success {
+                color: #4ade80;
+            }
+            .maze-loading-console .log-line.current {
+                color: #d4af37;
+            }
+            /* v2.0.3: Hide game UI while loading screen is visible */
+            .mazemaster-maze-container.loading-active .mazemaster-maze-top,
+            .mazemaster-maze-container.loading-active .maze-dpad {
+                display: none !important;
+            }
+        </style>
+        <div class="mazemaster-maze-overlay">
+            <div class="mazemaster-maze-container">
+                <!-- v2.0.3: Loading Screen Overlay with Generation Progress -->
+                <div id="maze_loading_screen" class="maze-loading-screen" style="background-image: url('/scripts/extensions/third-party/SillyTavern-MazeMaster/images/maze-master-logo.jpg');">
+                    <div class="maze-loading-card">
+                        <div class="maze-loading-header">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <span class="maze-loading-subtitle">Generating Maze</span>
+                            <span id="maze_loading_percent" class="maze-loading-percent">0%</span>
+                        </div>
+                        <div id="maze_loading_console" class="maze-loading-console">
+                            <div class="log-line current">Initializing...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // v2.0.2: Set loading screen background image
+    const loadingScreen = document.getElementById('maze_loading_screen');
+    if (loadingScreen) {
+        const logoPath = `/scripts/extensions/third-party/SillyTavern-MazeMaster/images/maze-master-logo.jpg`;
+        loadingScreen.style.backgroundImage = `url("${logoPath}")`;
+    }
+
+    return modal;
+}
+
+function showMazeModal() {
+    console.log('[MazeMaster] showMazeModal() called, currentMaze:', currentMaze?.isOpen, 'size:', currentMaze?.size);
+
+    // v2.0.3: Capture loading screen state before replacing modal
+    const existing = document.getElementById('mazemaster_maze_modal');
+    const existingLoadingScreen = existing?.querySelector('#maze_loading_screen');
+    const loadingWasVisible = existingLoadingScreen && !existingLoadingScreen.classList.contains('hidden');
+    const loadingContent = existingLoadingScreen?.innerHTML;
+    const loadingBackgroundImage = existingLoadingScreen?.style.backgroundImage;
+
+    // Remove existing modal if any
     if (existing) {
         console.log('[MazeMaster] Removing existing modal');
         existing.remove();
@@ -35132,6 +35869,19 @@ function showMazeModal() {
     modal.innerHTML = `
         <div class="mazemaster-maze-overlay">
             <div class="mazemaster-maze-container">
+                <!-- v2.0.3: Loading Screen Overlay with Generation Progress -->
+                <div id="maze_loading_screen" class="maze-loading-screen">
+                    <div class="maze-loading-card">
+                        <div class="maze-loading-header">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <span class="maze-loading-subtitle">Generating Maze</span>
+                            <span id="maze_loading_percent" class="maze-loading-percent">0%</span>
+                        </div>
+                        <div id="maze_loading_console" class="maze-loading-console">
+                            <div class="log-line">Initializing...</div>
+                        </div>
+                    </div>
+                </div>
                 <!-- TOP PANEL: Info & Controls -->
                 <div class="mazemaster-maze-top">
                     <!-- Left Column: Message Box, Stats, Inventory -->
@@ -35150,6 +35900,22 @@ function showMazeModal() {
                                     <div id="maze_minion_role" class="maze-minion-role"></div>
                                     <div id="maze_message_log" class="maze-message-log"></div>
                                 </div>
+                            </div>
+                            <!-- v2.0.3: Chat input moved outside hero-content to span full width -->
+                            <div id="maze_chat_input_container" class="maze-chat-input-container">
+                                <div class="maze-chat-buttons">
+                                    <button id="maze_chat_impersonate" class="maze-chat-action-btn" title="Impersonate - Generate message as {{user}}">
+                                        <i class="fa-solid fa-comment-dots"></i>
+                                    </button>
+                                    <button id="maze_chat_response" class="maze-chat-action-btn" title="Response - Generate creature/narrator reply">
+                                        <i class="fa-solid fa-reply"></i>
+                                    </button>
+                                </div>
+                                <input type="text" id="maze_chat_input" class="maze-chat-input"
+                                       placeholder="Say something..." maxlength="200" autocomplete="off">
+                                <button id="maze_chat_send" class="maze-chat-send-btn" title="Send message">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -35731,6 +36497,107 @@ function showMazeModal() {
                 height: 100%;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+            }
+
+            /* v2.0.2: Loading Screen Overlay */
+            .maze-loading-screen {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                background-size: 100% 100%;
+                background-position: center center;
+                background-repeat: no-repeat;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                border-radius: 15px;
+                transition: opacity 0.5s ease-out;
+            }
+
+            .maze-loading-screen.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .maze-loading-card {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border-radius: 12px;
+                padding: 15px 25px;
+                border: 1px solid rgba(212, 175, 55, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                text-align: center;
+                z-index: 10;
+            }
+
+            .maze-loading-header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 10px;
+                color: #d4af37;
+            }
+
+            .maze-loading-header i {
+                font-size: 0.9em;
+            }
+
+            .maze-loading-subtitle {
+                font-size: 0.95em;
+                letter-spacing: 0.15em;
+                text-transform: uppercase;
+            }
+
+            .maze-loading-percent {
+                font-size: 0.9em;
+                font-weight: bold;
+                color: #d4af37;
+            }
+
+            .maze-loading-console {
+                background: rgba(0, 0, 0, 0.5);
+                border: 1px solid rgba(212, 175, 55, 0.3);
+                border-radius: 8px;
+                padding: 8px 12px;
+                width: 280px;
+                height: 80px;
+                min-height: 80px;
+                max-height: 80px;
+                overflow-y: auto;
+                font-family: monospace;
+                font-size: 0.75em;
+                text-align: left;
+                color: #aaa;
+            }
+
+            .maze-loading-console .log-line {
+                margin: 2px 0;
+                white-space: nowrap;
+            }
+
+            .maze-loading-console .log-line.success {
+                color: #4ade80;
+            }
+
+            .maze-loading-console .log-line.current {
+                color: #d4af37;
+            }
+
+            /* v2.0.3: Hide game UI while loading screen is visible */
+            .mazemaster-maze-container.loading-active .mazemaster-maze-top,
+            .mazemaster-maze-container.loading-active .maze-dpad {
+                display: none !important;
             }
 
             .mazemaster-maze-container {
@@ -37262,6 +38129,129 @@ function showMazeModal() {
                 color: #ecf0f1;
             }
 
+            /* Chat Input Styles */
+            .maze-chat-input-container {
+                display: flex;
+                gap: 6px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                margin-top: 8px;
+                align-items: center;
+            }
+
+            /* v2.0.3: Buttons wrapper aligned with avatar column */
+            .maze-chat-buttons {
+                display: flex;
+                gap: 4px;
+                width: 82px;  /* Match avatar width (72px) + gap (10px) */
+                min-width: 82px;
+                flex-shrink: 0;
+                justify-content: flex-start;
+            }
+
+            .maze-chat-input {
+                flex: 1;
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 6px;
+                padding: 8px 12px;
+                color: #ecf0f1;
+                font-size: 0.9em;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+
+            .maze-chat-input:focus {
+                border-color: rgba(52, 152, 219, 0.6);
+            }
+
+            .maze-chat-input::placeholder {
+                color: rgba(255, 255, 255, 0.4);
+            }
+
+            .maze-chat-input:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .maze-chat-send-btn {
+                background: rgba(52, 152, 219, 0.6);
+                border: none;
+                border-radius: 6px;
+                padding: 8px 12px;
+                color: white;
+                cursor: pointer;
+                transition: background 0.2s, transform 0.1s;
+            }
+
+            .maze-chat-send-btn:hover:not(:disabled) {
+                background: rgba(52, 152, 219, 0.8);
+                transform: scale(1.05);
+            }
+
+            .maze-chat-send-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .maze-chat-action-btn {
+                background: rgba(100, 100, 100, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 6px;
+                padding: 8px 10px;
+                color: rgba(255, 255, 255, 0.7);
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 0.85em;
+            }
+
+            .maze-chat-action-btn:hover:not(:disabled) {
+                background: rgba(212, 175, 55, 0.4);
+                border-color: rgba(212, 175, 55, 0.6);
+                color: #d4af37;
+                transform: scale(1.05);
+            }
+
+            .maze-chat-action-btn:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .maze-chat-action-btn.generating {
+                animation: pulse-gold 1s ease-in-out infinite;
+            }
+
+            @keyframes pulse-gold {
+                0%, 100% { background: rgba(212, 175, 55, 0.3); }
+                50% { background: rgba(212, 175, 55, 0.6); }
+            }
+
+            /* Player message styling - green border */
+            .maze-message-entry.player-message {
+                border-left-color: rgba(46, 204, 113, 0.6);
+            }
+
+            /* Creature chat reply styling - cyan/teal border */
+            .maze-message-entry.creature-chat {
+                border-left-color: rgba(26, 188, 156, 0.8);
+            }
+
+            /* Typing indicator */
+            .maze-message-entry.typing {
+                opacity: 0.7;
+            }
+
+            .maze-message-entry.typing .maze-message-text::after {
+                content: '...';
+                animation: maze-typing-dots 1.5s infinite;
+            }
+
+            @keyframes maze-typing-dots {
+                0%, 20% { content: '.'; }
+                40% { content: '..'; }
+                60%, 100% { content: '...'; }
+            }
+
             /* Stats Bar */
             .mazemaster-maze-stats-bar {
                 display: flex;
@@ -37457,9 +38447,11 @@ function showMazeModal() {
                 left: 8px;
                 z-index: 100;
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
+                flex-wrap: wrap;
                 gap: 4px;
                 pointer-events: none;
+                max-width: calc(100% - 16px);
             }
 
             .inv-overlay-item {
@@ -38411,6 +39403,29 @@ function showMazeModal() {
     document.body.appendChild(modal);
     console.log('[MazeMaster] Modal appended to body');
 
+    // v2.0.3: Restore loading screen state if it was visible during early modal
+    const loadingScreen = document.getElementById('maze_loading_screen');
+    if (loadingScreen) {
+        // Set background image
+        const logoPath = `/scripts/extensions/third-party/SillyTavern-MazeMaster/images/maze-master-logo.jpg`;
+        loadingScreen.style.backgroundImage = loadingBackgroundImage || `url("${logoPath}")`;
+
+        // Restore loading screen content and visibility if it was visible
+        if (loadingWasVisible && loadingContent) {
+            loadingScreen.innerHTML = loadingContent;
+            loadingScreen.classList.remove('hidden');
+            // v2.0.3: Add loading-active class to container to hide game UI
+            const container = loadingScreen.closest('.mazemaster-maze-container');
+            if (container) {
+                container.classList.add('loading-active');
+            }
+            console.log('[MazeMaster] Restored loading screen state');
+        } else {
+            // Loading was not visible (e.g., resuming a maze) - hide loading screen
+            loadingScreen.classList.add('hidden');
+        }
+    }
+
     // Initialize the renderer and insert grid/canvas into container
     const renderer = RendererRegistry.getRenderer();
     console.log('[MazeMaster] Renderer type:', renderer?.constructor?.name || 'unknown');
@@ -38855,12 +39870,18 @@ function addSessionNote(entry, category = '') {
  * @param {string} message - The message text
  * @param {boolean} skipSave - If true, don't save to persistent log (for re-rendering)
  */
-function addMazeMessage(speaker, message, skipSave = false) {
+function addMazeMessage(speaker, message, skipSave = false, isPlayer = false, isCreatureChat = false) {
     if (!message) return;
 
     // Add to persistent log (unless we're just re-rendering)
     if (!skipSave) {
-        currentMaze.messageLog.push({ speaker, message, timestamp: Date.now() });
+        currentMaze.messageLog.push({
+            speaker,
+            message,
+            timestamp: Date.now(),
+            isPlayer,        // v2.x: Player chat message
+            isCreatureChat   // v2.x: Creature chat response
+        });
     }
 
     // Render the message log
@@ -38874,16 +39895,507 @@ function renderMessageLog() {
     const logEl = document.getElementById('maze_message_log');
     if (!logEl) return;
 
-    logEl.innerHTML = currentMaze.messageLog.map(entry => `
-        <div class="maze-message-entry">
-            <div class="maze-message-speaker">${escapeHtml(entry.speaker)}</div>
-            <div class="maze-message-text">${escapeHtml(entry.message)}</div>
+    logEl.innerHTML = currentMaze.messageLog.map(entry => {
+        // v2.0.2: Apply minion alias to speaker and message text
+        const speaker = applyMinionAlias(entry.speaker);
+        const message = applyMinionAlias(entry.message);
+        // v2.x: Determine styling classes for chat messages
+        const classes = ['maze-message-entry'];
+        if (entry.isPlayer) classes.push('player-message');
+        if (entry.isCreatureChat) classes.push('creature-chat');
+        return `
+        <div class="${classes.join(' ')}">
+            <div class="maze-message-speaker">${escapeHtml(speaker)}</div>
+            <div class="maze-message-text">${escapeHtml(message)}</div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Auto-scroll to the latest message
     logEl.scrollTop = logEl.scrollHeight;
 }
+
+// ============================================================================
+// IN-GAME CHAT FUNCTIONS (v2.x)
+// ============================================================================
+
+/**
+ * Get default chat response when LLM is unavailable
+ * @returns {string}
+ */
+function getDefaultChatResponse() {
+    const responses = [
+        '*watches you silently*',
+        '*nods slowly*',
+        '...',
+        '*seems distracted*',
+        '*mutters something incomprehensible*'
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+}
+
+/**
+ * Determine who should respond to chat based on current game state
+ * @returns {{ name: string, role: string, description: string }}
+ */
+function getChatRespondent() {
+    // If there's a current minion, they respond
+    if (currentMaze.currentMinion?.name) {
+        const minion = currentMaze.currentMinion;
+        // Try to find full minion data for description
+        const minionId = Object.keys(extensionSettings.minions || {}).find(
+            id => extensionSettings.minions[id].name === minion.name
+        );
+        const fullMinion = minionId ? extensionSettings.minions[minionId] : null;
+
+        return {
+            name: minion.name,
+            role: minion.role || 'a creature in the maze',
+            description: fullMinion?.description || ''
+        };
+    }
+
+    // Fallback to main minion from profile
+    const mainMinionId = currentMaze.profile?.mainMinion;
+    const mainMinion = mainMinionId ? extensionSettings.minions?.[mainMinionId] : null;
+
+    if (mainMinion) {
+        return {
+            name: mainMinion.name,
+            role: 'the maze master',
+            description: mainMinion.description || ''
+        };
+    }
+
+    // Ultimate fallback - narrator
+    return {
+        name: 'The Maze',
+        role: 'Narrator',
+        description: 'A mysterious voice that echoes through the corridors'
+    };
+}
+
+/**
+ * Check if chat is currently allowed
+ * @returns {boolean}
+ */
+function canChat() {
+    if (!currentMaze?.isOpen) return false;
+    if (currentMaze.isVictory) return false;
+    if (typeof currentTurnBased !== 'undefined' && currentTurnBased?.isOpen) return false;
+    if (currentMaze.chatEnabled === false) return false;
+    return true;
+}
+
+/**
+ * Enable/disable chat input UI
+ * @param {boolean} enabled
+ */
+function setChatInputEnabled(enabled) {
+    const input = document.getElementById('maze_chat_input');
+    const btn = document.getElementById('maze_chat_send');
+    if (input) input.disabled = !enabled;
+    if (btn) btn.disabled = !enabled;
+}
+
+/**
+ * Show typing indicator in message log
+ * @param {string} speakerName
+ */
+function showTypingIndicator(speakerName) {
+    const logEl = document.getElementById('maze_message_log');
+    if (!logEl) return;
+
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'maze_typing_indicator';
+    typingDiv.className = 'maze-message-entry typing creature-chat';
+    typingDiv.innerHTML = `
+        <div class="maze-message-speaker">${escapeHtml(speakerName)}</div>
+        <div class="maze-message-text"></div>
+    `;
+    logEl.appendChild(typingDiv);
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+/**
+ * Remove typing indicator from message log
+ */
+function removeTypingIndicator() {
+    const indicator = document.getElementById('maze_typing_indicator');
+    if (indicator) indicator.remove();
+}
+
+/**
+ * Update chat input placeholder based on who would respond
+ */
+function updateChatPlaceholder() {
+    const input = document.getElementById('maze_chat_input');
+    if (!input) return;
+
+    const respondent = getChatRespondent();
+    const displayName = applyMinionAlias(respondent.name);
+    input.placeholder = `Say something to ${displayName}...`;
+}
+
+/**
+ * Generate a chat response from the current creature/NPC using LLM
+ * @param {string} playerMessage - What the player said
+ * @param {object} respondent - { name, role, description } of who's responding
+ * @returns {Promise<string>} The generated response
+ */
+async function generateChatResponse(playerMessage, respondent) {
+    // Check if LLM is available
+    if (typeof generateQuietPrompt !== 'function') {
+        console.log('[MazeMaster] generateQuietPrompt not available for chat');
+        return getDefaultChatResponse();
+    }
+
+    if (extensionSettings.llmEnabled === false) {
+        console.log('[MazeMaster] LLM disabled, using default chat response');
+        return getDefaultChatResponse();
+    }
+
+    const playerName = getCurrentPersonaName();
+    const profile = currentMaze.profile;
+    const mainStory = profile?.storyConfig?.mainStory || '';
+    const theme = profile?.theme || 'Fantasy';
+
+    // Build chat history context (last 12 messages = ~6 exchanges)
+    const recentChat = (currentMaze.chatHistory || []).slice(-12).map(entry =>
+        `${entry.speaker}: "${entry.message}"`
+    ).join('\n');
+
+    // Get recent session notes for additional context
+    const recentNotes = currentMaze.sessionNotes
+        ? currentMaze.sessionNotes.slice(-300).split('\n').slice(-3).join('\n')
+        : '';
+
+    const prompt = `You are ${respondent.name}, ${respondent.role || 'a creature in a maze'}.
+Theme: ${theme}
+${mainStory ? `Story: ${mainStory}\n` : ''}${respondent.description ? `Your nature: ${respondent.description}\n` : ''}
+${recentNotes ? `Recent events:\n${recentNotes}\n` : ''}
+${recentChat ? `Recent conversation:\n${recentChat}\n` : ''}
+The player ${playerName} says to you: "${playerMessage}"
+
+Respond in character (2-4 sentences). Be atmospheric, immersive and stay in theme. You may be mysterious, helpful, threatening, or cryptic based on your nature. Engage with what the player said. Do not use quotation marks around your response.`;
+
+    try {
+        console.log('[MazeMaster] Generating chat response from:', respondent.name);
+        showGeneratingIndicator(true);
+
+        const maxTokens = currentMaze.profile?.llmMaxTokens || 250;
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            skipWI: true,
+            max_length: maxTokens,
+        });
+
+        showGeneratingIndicator(false);
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            console.log('[MazeMaster] Chat response:', cleaned);
+            return cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Chat LLM generation failed:', error);
+        showGeneratingIndicator(false);
+    }
+
+    return getDefaultChatResponse();
+}
+
+/**
+ * Send a player chat message and generate creature response
+ * @param {string} playerMessage - The player's message text
+ */
+async function sendChatMessage(playerMessage) {
+    if (!currentMaze?.isOpen || !playerMessage?.trim()) return;
+
+    const trimmedMessage = playerMessage.trim();
+    const playerName = getCurrentPersonaName();
+
+    // Check if chat is currently allowed
+    if (!canChat()) {
+        if (typeof toastr !== 'undefined') {
+            toastr.warning('Cannot chat right now');
+        }
+        return;
+    }
+
+    // Add player message to log with player styling
+    addMazeMessage(playerName, trimmedMessage, false, true); // isPlayer = true
+
+    // Add to chat history for context
+    if (!currentMaze.chatHistory) currentMaze.chatHistory = [];
+    currentMaze.chatHistory.push({
+        speaker: playerName,
+        message: trimmedMessage,
+        timestamp: Date.now(),
+        isPlayer: true
+    });
+
+    // Trim chat history to last 20 messages (10 exchanges)
+    if (currentMaze.chatHistory.length > 20) {
+        currentMaze.chatHistory = currentMaze.chatHistory.slice(-20);
+    }
+
+    // Log to session notes
+    addSessionNote(`${playerName} said: "${trimmedMessage}"`, 'Chat');
+
+    // Disable input while generating
+    setChatInputEnabled(false);
+
+    // Show typing indicator
+    const respondent = getChatRespondent();
+    const displayName = applyMinionAlias(respondent.name);
+    showTypingIndicator(displayName);
+
+    try {
+        // Generate LLM response
+        const response = await generateChatResponse(trimmedMessage, respondent);
+
+        // Remove typing indicator and add real response
+        removeTypingIndicator();
+
+        if (response) {
+            addMazeMessage(displayName, response, false, false, true); // isCreatureChat = true
+
+            // Add to chat history
+            currentMaze.chatHistory.push({
+                speaker: respondent.name,
+                message: response,
+                timestamp: Date.now(),
+                isPlayer: false
+            });
+
+            // Log response to session notes
+            addSessionNote(`${displayName} replied: "${response}"`, 'Chat');
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Chat response failed:', error);
+        removeTypingIndicator();
+        addMazeMessage(displayName, '*remains silent*', false, false, true);
+    } finally {
+        setChatInputEnabled(true);
+        saveMazeProgress();
+    }
+}
+
+/**
+ * Generate an impersonation message as the player using LLM
+ * Fills the input box but doesn't auto-send
+ */
+async function generateImpersonation() {
+    if (!currentMaze?.isOpen) return;
+    if (!canChat()) return;
+
+    const input = document.getElementById('maze_chat_input');
+    const impersonateBtn = document.getElementById('maze_chat_impersonate');
+    if (!input) return;
+
+    const seedText = input.value.trim();
+    const playerName = getCurrentPersonaName();
+    const profile = currentMaze.profile;
+    const theme = profile?.theme || 'Fantasy';
+    const mainStory = profile?.storyConfig?.mainStory || '';
+
+    // Check if LLM is available
+    if (typeof generateQuietPrompt !== 'function' || extensionSettings.llmEnabled === false) {
+        if (typeof toastr !== 'undefined') toastr.warning('LLM not available');
+        return;
+    }
+
+    // Build context
+    const respondent = getChatRespondent();
+    const recentChat = (currentMaze.chatHistory || []).slice(-8).map(entry =>
+        `${entry.speaker}: "${entry.message}"`
+    ).join('\n');
+
+    const recentNotes = currentMaze.sessionNotes
+        ? currentMaze.sessionNotes.slice(-300).split('\n').slice(-3).join('\n')
+        : '';
+
+    const prompt = `You are writing dialogue for ${playerName}, the player character in a ${theme} dungeon crawler.
+${mainStory ? `Story: ${mainStory}\n` : ''}
+${recentNotes ? `Recent events:\n${recentNotes}\n` : ''}
+${recentChat ? `Recent conversation:\n${recentChat}\n` : ''}
+The player is facing ${respondent.name} (${respondent.role || 'a creature'}).
+${seedText ? `The player wants to say something like: "${seedText}"\n` : ''}
+Write a short in-character message (1-2 sentences) as ${playerName} would say it. Be natural and fitting for the situation. Do not use quotation marks around the response.`;
+
+    try {
+        // Show generating state
+        if (impersonateBtn) impersonateBtn.classList.add('generating');
+        setChatInputEnabled(false);
+        input.placeholder = 'Generating...';
+
+        const maxTokens = currentMaze.profile?.llmMaxTokens || 250;
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            skipWI: true,
+            max_length: Math.min(maxTokens, 150),
+        });
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+            input.value = cleaned;
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Impersonation failed:', error);
+    } finally {
+        if (impersonateBtn) impersonateBtn.classList.remove('generating');
+        setChatInputEnabled(true);
+        updateChatPlaceholder();
+        input.focus();
+    }
+}
+
+/**
+ * Generate a response from the creature/narrator without player input
+ */
+async function generateNarratorResponse() {
+    if (!currentMaze?.isOpen) return;
+    if (!canChat()) return;
+
+    const responseBtn = document.getElementById('maze_chat_response');
+
+    // Check if LLM is available
+    if (typeof generateQuietPrompt !== 'function' || extensionSettings.llmEnabled === false) {
+        if (typeof toastr !== 'undefined') toastr.warning('LLM not available');
+        return;
+    }
+
+    const playerName = getCurrentPersonaName();
+    const profile = currentMaze.profile;
+    const theme = profile?.theme || 'Fantasy';
+    const mainStory = profile?.storyConfig?.mainStory || '';
+
+    // Get respondent
+    const respondent = getChatRespondent();
+    const displayName = applyMinionAlias(respondent.name);
+
+    // Build context
+    const recentChat = (currentMaze.chatHistory || []).slice(-8).map(entry =>
+        `${entry.speaker}: "${entry.message}"`
+    ).join('\n');
+
+    const recentNotes = currentMaze.sessionNotes
+        ? currentMaze.sessionNotes.slice(-300).split('\n').slice(-3).join('\n')
+        : '';
+
+    const prompt = `You are ${respondent.name}, ${respondent.role || 'a creature in a maze'}.
+Theme: ${theme}
+${mainStory ? `Story: ${mainStory}\n` : ''}${respondent.description ? `Your nature: ${respondent.description}\n` : ''}
+${recentNotes ? `Recent events:\n${recentNotes}\n` : ''}
+${recentChat ? `Recent conversation:\n${recentChat}\n` : ''}
+The player ${playerName} is present. Speak unprompted - make an observation, taunt, hint, or atmospheric comment. Be in character (2-4 sentences). Do not use quotation marks around your response.`;
+
+    try {
+        // Show generating state
+        if (responseBtn) responseBtn.classList.add('generating');
+        setChatInputEnabled(false);
+        showTypingIndicator(displayName);
+
+        const maxTokens = currentMaze.profile?.llmMaxTokens || 250;
+        const response = await generateQuietPrompt(prompt, {
+            quietToLoud: false,
+            skipWIAN: true,
+            skipWI: true,
+            max_length: maxTokens,
+        });
+
+        removeTypingIndicator();
+
+        if (response && response.trim()) {
+            let cleaned = response.trim();
+            cleaned = cleaned.replace(/^["']|["']$/g, '');
+            cleaned = cleaned.replace(/^["""''']|["""''']$/g, '');
+
+            addMazeMessage(displayName, cleaned, false, false, true);
+
+            // Add to chat history
+            currentMaze.chatHistory = currentMaze.chatHistory || [];
+            currentMaze.chatHistory.push({
+                speaker: respondent.name,
+                message: cleaned,
+                timestamp: Date.now(),
+                isPlayer: false
+            });
+
+            // Log to session notes
+            addSessionNote(`${displayName} said: "${cleaned}"`, 'Chat');
+            saveMazeProgress();
+        }
+    } catch (error) {
+        console.error('[MazeMaster] Narrator response failed:', error);
+        removeTypingIndicator();
+    } finally {
+        if (responseBtn) responseBtn.classList.remove('generating');
+        setChatInputEnabled(true);
+    }
+}
+
+/**
+ * Initialize chat input event handlers
+ * Call this after maze modal is rendered
+ */
+function initChatInput() {
+    const input = document.getElementById('maze_chat_input');
+    const sendBtn = document.getElementById('maze_chat_send');
+    const impersonateBtn = document.getElementById('maze_chat_impersonate');
+    const responseBtn = document.getElementById('maze_chat_response');
+
+    if (!input || !sendBtn) return;
+
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const message = input.value.trim();
+            if (message) {
+                sendChatMessage(message);
+                input.value = '';
+            }
+        }
+    });
+
+    // Handle send button click
+    sendBtn.addEventListener('click', () => {
+        const message = input.value.trim();
+        if (message) {
+            sendChatMessage(message);
+            input.value = '';
+        }
+    });
+
+    // Handle impersonate button click
+    if (impersonateBtn) {
+        impersonateBtn.addEventListener('click', () => {
+            generateImpersonation();
+        });
+    }
+
+    // Handle response button click
+    if (responseBtn) {
+        responseBtn.addEventListener('click', () => {
+            generateNarratorResponse();
+        });
+    }
+
+    // Update placeholder based on current respondent
+    updateChatPlaceholder();
+}
+
+// ============================================================================
+// END IN-GAME CHAT FUNCTIONS
+// ============================================================================
 
 function updateMazeHero() {
     const { currentMinion, isVictory, profile, messageLog } = currentMaze;
@@ -38915,20 +40427,25 @@ function updateMazeHero() {
         } else if (imgEl) {
             imgEl.style.display = 'none';
         }
-        if (nameEl) nameEl.textContent = currentMinion.name || '';
+        // v2.0.2: Apply minion alias to name display
+        const displayName = applyMinionAlias(currentMinion.name || '');
+        if (nameEl) nameEl.textContent = displayName;
         if (roleEl) roleEl.textContent = currentMinion.role || '';
 
         // Add message to log if it's new (avoid duplicating the same message)
         if (currentMinion.message) {
             const lastEntry = messageLog[messageLog.length - 1];
             if (!lastEntry || lastEntry.message !== currentMinion.message) {
-                addMazeMessage(currentMinion.name || 'Unknown', currentMinion.message);
+                addMazeMessage(displayName || 'Unknown', currentMinion.message);
             }
         }
     }
 
     // Render the message log (in case we're restoring state)
     renderMessageLog();
+
+    // v2.x: Update chat placeholder based on current minion
+    updateChatPlaceholder();
 }
 
 /**
@@ -38948,6 +40465,173 @@ function showGeneratingIndicator(show) {
     if (currentMaze?.isOpen) {
         renderMazeGrid();
     }
+}
+
+/**
+ * v2.0.2: Loading screen control functions
+ * v2.1.0: Added avatarGenEnabled parameter for avatar generation status
+ */
+function showLoadingScreen(llmEnabled = false, avatarGenEnabled = false) {
+    const loadingScreen = document.getElementById('maze_loading_screen');
+    if (!loadingScreen) return;
+
+    loadingScreen.classList.remove('hidden');
+
+    // Show/hide LLM-specific items based on whether LLM enhancement is enabled
+    const minionItem = document.getElementById('loading_item_minion');
+    const storyItem = document.getElementById('loading_item_story');
+    const roomItem = document.getElementById('loading_item_room');
+    const avatarItem = document.getElementById('loading_item_avatar');
+
+    if (minionItem) {
+        minionItem.style.display = '';
+        minionItem.querySelector('.loading-text').textContent = llmEnabled
+            ? 'LLM Enhancing...Main Minion Name'
+            : 'Initializing Maze...';
+        minionItem.className = 'maze-loading-item active';
+        minionItem.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-spinner"></i>';
+    }
+
+    if (storyItem) {
+        storyItem.style.display = llmEnabled ? '' : 'none';
+        storyItem.className = 'maze-loading-item';
+        storyItem.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-circle"></i>';
+    }
+
+    if (roomItem) {
+        roomItem.style.display = llmEnabled ? '' : 'none';
+        roomItem.className = 'maze-loading-item';
+        roomItem.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-circle"></i>';
+    }
+
+    // v2.1.0: Avatar generation status item
+    if (avatarItem) {
+        avatarItem.style.display = avatarGenEnabled ? '' : 'none';
+        avatarItem.className = 'maze-loading-item';
+        avatarItem.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-circle"></i>';
+        avatarItem.querySelector('.loading-text').textContent = 'Generating Avatar...';
+    }
+}
+
+function updateLoadingStatus(step, status = 'active') {
+    const itemId = {
+        // v2.0.3: Generation phase items
+        'profile': 'loading_item_profile',
+        'grid': 'loading_item_grid',
+        'tiles': 'loading_item_tiles',
+        'floors': 'loading_item_floors',
+        'systems': 'loading_item_systems',
+        // LLM phase items
+        'minion': 'loading_item_minion',
+        'story': 'loading_item_story',
+        'room': 'loading_item_room',
+        'avatar': 'loading_item_avatar', // v2.1.0
+    }[step];
+
+    const item = document.getElementById(itemId);
+    if (!item) return;
+
+    // v2.0.3: Ensure item is visible when updating status
+    if (status === 'active') {
+        item.style.display = '';
+        item.className = 'maze-loading-item active';
+        item.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-spinner"></i>';
+    } else if (status === 'complete') {
+        item.className = 'maze-loading-item complete';
+        item.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-check"></i>';
+    } else if (status === 'skip') {
+        item.className = 'maze-loading-item complete';
+        item.querySelector('.loading-icon').innerHTML = '<i class="fa-solid fa-forward"></i>';
+        item.querySelector('.loading-text').textContent += ' (Skipped)';
+    }
+}
+
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('maze_loading_screen');
+    if (!loadingScreen) return;
+
+    // v2.0.3: Remove loading-active class from container to show game UI
+    const container = loadingScreen.closest('.mazemaster-maze-container');
+    if (container) {
+        container.classList.remove('loading-active');
+    }
+
+    // Add hidden class which triggers fade-out transition
+    loadingScreen.classList.add('hidden');
+
+    // Remove from DOM after transition completes
+    setTimeout(() => {
+        if (loadingScreen.parentNode) {
+            loadingScreen.remove();
+        }
+    }, 500);
+}
+
+/**
+ * v2.0.3: Allow UI to repaint between synchronous generation steps
+ * Uses requestAnimationFrame for smoother updates
+ */
+function tick() {
+    return new Promise(resolve => requestAnimationFrame(resolve));
+}
+
+/**
+ * v2.0.3: Add a log line to the loading console
+ * @param {string} message - The message to log (without [MazeMaster] prefix)
+ * @param {string} status - 'current', 'success', or '' for default
+ */
+function addLoadingLog(message, status = 'current') {
+    const console = document.getElementById('maze_loading_console');
+    if (!console) return;
+
+    // Remove 'current' class from previous lines
+    const previousCurrent = console.querySelectorAll('.log-line.current');
+    previousCurrent.forEach(el => el.classList.remove('current'));
+
+    // Add new line
+    const line = document.createElement('div');
+    line.className = `log-line ${status}`;
+    line.textContent = message;
+    console.appendChild(line);
+
+    // Scroll to bottom
+    console.scrollTop = console.scrollHeight;
+}
+
+/**
+ * v2.0.3: Update loading percentage display
+ * @param {number} percent - Percentage (0-100)
+ */
+function updateLoadingPercent(percent) {
+    const percentEl = document.getElementById('maze_loading_percent');
+    if (percentEl) {
+        percentEl.textContent = `${Math.round(percent)}%`;
+    }
+}
+
+/**
+ * v2.0.3: Update loading item text dynamically
+ * @param {string} step - The step identifier
+ * @param {string} text - The new text to display
+ */
+function updateLoadingText(step, text) {
+    const itemId = {
+        'profile': 'loading_item_profile',
+        'grid': 'loading_item_grid',
+        'tiles': 'loading_item_tiles',
+        'floors': 'loading_item_floors',
+        'systems': 'loading_item_systems',
+        'minion': 'loading_item_minion',
+        'story': 'loading_item_story',
+        'room': 'loading_item_room',
+        'avatar': 'loading_item_avatar',
+    }[step];
+
+    const item = document.getElementById(itemId);
+    if (!item) return;
+
+    const textEl = item.querySelector('.loading-text');
+    if (textEl) textEl.textContent = text;
 }
 
 /**
@@ -39344,8 +41028,10 @@ async function handleExitReached() {
     if (!canWinMaze()) {
         // Show message that objectives need to be completed
         const mainMinion = profile.mainMinion ? getMinion(profile.mainMinion) : null;
+        // v2.0.2: Use alias for main minion name
+        const displayName = currentMaze.mainMinionAlias || mainMinion?.name || 'Exit';
         currentMaze.currentMinion = {
-            name: mainMinion?.name || 'Exit',
+            name: displayName,
             imagePath: mainMinion?.imagePath || '',
             message: "You haven't completed all required objectives yet! Explore the maze to find what you need.",
         };
@@ -39376,8 +41062,10 @@ async function handleExitReached() {
     currentMaze.isPaused = true;
 
     // Show main minion as final boss
+    // v2.0.2: Use alias for main minion name
+    const exitDisplayName = currentMaze.mainMinionAlias || mainMinion.name;
     currentMaze.currentMinion = {
-        name: mainMinion.name,
+        name: exitDisplayName,
         imagePath: mainMinion.imagePath,
         message: "You've reached the exit... but first, face me!",
     };
@@ -39723,10 +41411,12 @@ function resumeMaze() {
     if (profile.mainMinion) {
         const mainMinion = getMinion(profile.mainMinion);
         if (mainMinion) {
+            // v2.0.2: Use alias for main minion name
+            const displayName = currentMaze.mainMinionAlias || mainMinion.name;
             currentMaze.currentMinion = {
-                name: mainMinion.name,
+                name: displayName,
                 imagePath: mainMinion.imagePath,
-                message: 'Continue onward...',
+                message: '', // v2.1.0: Clear message between encounters
             };
             updateMazeHero();
             return;
@@ -40645,17 +42335,37 @@ function reduceEquipmentDurability(slot, amount = 1) {
 // =============================================================================
 
 /**
- * XP reward values for different activities
+ * Default XP reward values (fallback for profiles without xpConfig)
+ * v2.0.3: Now used as fallback - profiles can override via xpConfig
  */
 const XP_REWARDS = {
-    combatVictory: 25,       // Base XP for winning combat
-    combatDifficultyBonus: 5, // Additional XP per difficulty level
-    lockedChest: 20,          // Opening a locked chest
-    normalChest: 10,          // Opening a normal chest
-    exploration10: 20,        // Every 10% of map explored
-    objectiveComplete: 50,    // Completing an objective
-    bossDefeat: 75,           // Defeating a boss minion
+    combatVictory: 25,          // Base XP for winning combat
+    combatDifficultyBonus: 5,   // Additional XP per difficulty level
+    lockedChest: 20,            // Opening a locked chest
+    normalChest: 10,            // Opening a normal chest
+    exploration10: 20,          // Every 10% of map explored
+    objectiveComplete: 50,      // Completing an objective
+    bossDefeat: 75,             // Defeating a boss minion
+    puzzleSolved: 30,           // Solving a puzzle encounter
+    trapDisarmed: 15,           // Disarming a trap
+    questComplete: 100,         // Completing a quest
 };
+
+/**
+ * v2.0.3: Get XP reward for a specific activity type
+ * Checks the current profile's xpConfig first, then falls back to XP_REWARDS defaults
+ * @param {string} type - The XP reward type (e.g., 'combatVictory', 'lockedChest')
+ * @returns {number} XP amount for this activity
+ */
+function getXpReward(type) {
+    // Check current profile's xpConfig first
+    const profileXp = currentMaze?.profile?.xpConfig?.[type];
+    if (typeof profileXp === 'number') {
+        return profileXp;
+    }
+    // Fall back to global XP_REWARDS
+    return XP_REWARDS[type] || 0;
+}
 
 /**
  * Calculate XP required for a given level
@@ -40817,14 +42527,26 @@ function updatePlayerStatsDisplay() {
     $('#player_skill_points').text(character.skillPoints);
 
     // Equipment summary
+    // v2.0.3: Fix equipment display - item may be an object or string ID
     const equipSummaryHtml = ['weapon', 'armor', 'accessory'].map(slot => {
         const item = currentMaze.equipment[slot];
         const icons = { weapon: 'fa-sword', armor: 'fa-shield', accessory: 'fa-ring' };
+        let itemName = 'Empty';
+        if (item) {
+            // Item can be an object (with name property) or a string ID
+            if (typeof item === 'object' && item.name) {
+                itemName = item.name;
+            } else if (typeof item === 'string') {
+                itemName = getEquipment(item)?.name || item;
+            } else {
+                itemName = 'Unknown';
+            }
+        }
         return `
             <div class="equip-slot-row">
                 <span class="equip-slot-icon"><i class="fa-solid ${icons[slot]}"></i></span>
-                <span class="equip-slot-name">${slot}</span>
-                <span class="equip-slot-item${item ? '' : ' empty'}">${item ? getEquipment(item)?.name || item : 'Empty'}</span>
+                <span class="equip-slot-name">${slot.toUpperCase()}</span>
+                <span class="equip-slot-item${item ? '' : ' empty'}">${itemName}</span>
             </div>
         `;
     }).join('');
@@ -42213,7 +43935,7 @@ async function openNormalChest(x, y) {
     showChestLootMessage(loot, "Chest");
 
     // v1.5.0: Grant XP for opening chest
-    await grantXp(XP_REWARDS.normalChest, 'chest');
+    await grantXp(getXpReward('normalChest'), 'chest');
 
     // v1.5.0: Update fetch quest progress for chest and items
     await updateQuestProgress('fetch', 'chest', 1);
@@ -42268,7 +43990,7 @@ async function openLockedChest(x, y) {
     showChestLootMessage(loot, "Locked Chest");
 
     // v1.5.0: Grant XP for opening locked chest (higher reward)
-    await grantXp(XP_REWARDS.lockedChest, 'lockedChest');
+    await grantXp(getXpReward('lockedChest'), 'lockedChest');
 
     // v1.5.0: Update fetch quest progress for chest and items
     await updateQuestProgress('fetch', 'chest', 1);
@@ -42846,9 +44568,12 @@ async function maybeShowMainMinionMessage() {
     const baseMessage = getRandomFromArray(profile.mainMinionRandomMessages);
     if (!baseMessage) return;
 
+    // v2.0.2: Use alias for main minion name
+    const displayName = currentMaze.mainMinionAlias || mainMinion.name;
+
     // Show placeholder immediately
     currentMaze.currentMinion = {
-        name: mainMinion.name,
+        name: displayName,
         imagePath: mainMinion.imagePath,
         message: '...',
     };
@@ -42861,7 +44586,7 @@ async function maybeShowMainMinionMessage() {
     let message = baseMessage;
     try {
         message = await generateMinionMessage({
-            minionName: mainMinion.name,
+            minionName: displayName,
             minionDescription: mainMinion.description,
             baseMessage: baseMessage,
             mainStory: getMainStory(),
@@ -42903,8 +44628,10 @@ function checkStoryMilestones() {
 
             // Show milestone message
             const mainMinion = profile.mainMinion ? getMinion(profile.mainMinion) : null;
+            // v2.0.2: Use alias for main minion name
+            const displayName = currentMaze.mainMinionAlias || mainMinion?.name || 'Story';
             currentMaze.currentMinion = {
-                name: mainMinion?.name || 'Story',
+                name: displayName,
                 imagePath: mainMinion?.imagePath || '',
                 message: milestone.storyUpdate,
             };
@@ -42974,8 +44701,10 @@ function respawnPlayer() {
     if (profile.mainMinion) {
         const mainMinion = getMinion(profile.mainMinion);
         if (mainMinion) {
+            // v2.0.2: Use alias for main minion name
+            const displayName = currentMaze.mainMinionAlias || mainMinion.name;
             currentMaze.currentMinion = {
-                name: mainMinion.name,
+                name: displayName,
                 imagePath: mainMinion.imagePath,
                 message: 'Back to the beginning with you!',
             };
@@ -43124,6 +44853,16 @@ function getPanelHtml() {
                             <input type="checkbox" id="mazemaster_close_chat" ${extensionSettings.closeChatOnStart !== false ? 'checked' : ''}>
                             Close current chat before starting (prevents context bleed)
                         </label>
+                    </div>
+
+                    <!-- v2.1.0: Avatar Generation Settings -->
+                    <div class="mazemaster-section">
+                        <label class="mazemaster-label"><i class="fa-solid fa-image"></i> Avatar Generation</label>
+                        <label class="mazemaster-checkbox-label">
+                            <input type="checkbox" id="mazemaster_avatar_gen_enabled" ${extensionSettings.avatarGenerationEnabled === true ? 'checked' : ''}>
+                            Auto-generate minion avatars (requires SD/image extension)
+                        </label>
+                        <div class="mazemaster-help-small"><small>Generates portraits for minions without images during maze loading using the /imagine command.</small></div>
                     </div>
 
                     <!-- D-Pad Settings -->
@@ -44725,6 +46464,26 @@ function getPanelHtml() {
                             </div>
                         </div>
 
+                        <!-- v2.1.0 COLLAPSIBLE: Avatar Generation -->
+                        <div class="mazemaster-collapsible">
+                            <button class="mazemaster-collapsible-header" data-target="avatar_gen_section">
+                                <i class="fa-solid fa-chevron-right mazemaster-collapse-icon"></i>
+                                <span>Avatar Generation</span>
+                                <span class="mazemaster-collapse-hint">(auto-generate minion images)</span>
+                            </button>
+                            <div id="avatar_gen_section" class="mazemaster-collapsible-content" style="display: none;">
+                                <div class="mazemaster-section">
+                                    <div class="mazemaster-help-small"><small>Select minions to auto-generate avatars for during maze loading. Requires SD/image extension enabled in global settings.</small></div>
+                                    <div id="mazemaster_avatar_minion_list" class="mazemaster-avatar-minion-list">
+                                        <!-- Populated dynamically -->
+                                    </div>
+                                    <button id="mazemaster_avatar_gen_refresh" class="menu_button" style="margin-top: 8px;">
+                                        <i class="fa-solid fa-sync"></i> Refresh Minion List
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- COLLAPSIBLE: Encounters -->
                         <div class="mazemaster-collapsible expanded">
                             <button class="mazemaster-collapsible-header" data-target="encounters_section">
@@ -45130,6 +46889,11 @@ function getPanelHtml() {
                                             <span>Enhance Room Descriptions</span>
                                         </label>
                                         <small style="color: var(--SmartThemeEmColor); margin-left: 24px;">LLM generates unique descriptions on first entry</small>
+                                    </div>
+                                    <div class="mazemaster-row" style="margin-bottom: 4px;">
+                                        <label>Max Response Tokens</label>
+                                        <input type="number" id="mazemaster_llm_max_tokens" class="mazemaster-input-small" min="50" max="500" value="${currentMazeData.llmMaxTokens ?? 250}">
+                                        <small style="color: var(--SmartThemeEmColor); margin-left: 8px;">Max length for LLM chat responses</small>
                                     </div>
 
                                     <label style="font-size: 0.8em; color: var(--SmartThemeEmColor); margin-top: 12px;">Rest Mechanic</label>
@@ -49894,6 +51658,9 @@ function updateMazeSettings() {
     const llmEnhanceRooms = document.getElementById('mazemaster_llm_enhance_rooms');
     if (llmEnhanceRooms) llmEnhanceRooms.checked = profile.llmEnhanceRooms !== false;
 
+    const llmMaxTokens = document.getElementById('mazemaster_llm_max_tokens');
+    if (llmMaxTokens) llmMaxTokens.value = profile.llmMaxTokens ?? 250;
+
     // Rest settings
     const restEnabled = document.getElementById('mazemaster_rest_enabled');
     if (restEnabled) restEnabled.checked = profile.restEnabled !== false;
@@ -49934,6 +51701,8 @@ function updateMazeSettings() {
     renderMazeEncountersList(minionEncounters);
     renderMazeTrapEncountersList(trapEncounters);
     renderMazeQuestPoolList(questPool);
+    // v2.1.0: Render avatar generation minion list
+    renderAvatarMinionList(profileName);
 
     // Find Early settings (v1.3.2)
     const findEarly = profile.findEarly || {};
@@ -50154,6 +51923,93 @@ function renderMazeQuestPoolList(questPool) {
     });
 }
 
+/**
+ * v2.1.0: Render avatar generation minion list in maze profile editor
+ * Shows all minions used in the profile with checkboxes for avatar generation
+ */
+function renderAvatarMinionList(profileName) {
+    const list = document.getElementById('mazemaster_avatar_minion_list');
+    if (!list) return;
+
+    const profile = getMazeProfile(profileName);
+    if (!profile) {
+        list.innerHTML = '<div class="mazemaster-empty-state" style="font-size: 0.85em;">No profile selected.</div>';
+        return;
+    }
+
+    // Collect all minions used in this profile
+    const minionIds = new Set();
+
+    // Add main minion
+    if (profile.mainMinion) {
+        minionIds.add(profile.mainMinion);
+    }
+
+    // Add minions from encounters
+    if (profile.minionEncounters) {
+        profile.minionEncounters.forEach(enc => {
+            if (enc.minionId) minionIds.add(enc.minionId);
+        });
+    }
+
+    if (minionIds.size === 0) {
+        list.innerHTML = '<div class="mazemaster-empty-state" style="font-size: 0.85em;">No minions in this profile. Add a main minion or encounters first.</div>';
+        return;
+    }
+
+    // Get currently selected minions for avatar generation
+    const selectedMinions = profile.avatarGenerationMinions || [];
+
+    // Render minion list with checkboxes
+    list.innerHTML = Array.from(minionIds).map(minionId => {
+        const minion = getMinion(minionId);
+        if (!minion) return '';
+
+        const hasAvatar = !!minion.imagePath;
+        const isSelected = selectedMinions.includes(minionId);
+        const isMainMinion = minionId === profile.mainMinion;
+
+        return `
+            <div class="mazemaster-avatar-minion-row" data-minion-id="${escapeHtml(minionId)}">
+                <label class="mazemaster-checkbox-label" style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+                    <input type="checkbox" class="avatar-gen-checkbox" ${isSelected ? 'checked' : ''} ${hasAvatar ? 'disabled' : ''}>
+                    <span class="avatar-minion-name">${escapeHtml(minion.name)}${isMainMinion ? ' (Main)' : ''}</span>
+                    ${hasAvatar
+                        ? '<span class="avatar-status" style="color: var(--SmartThemeQuoteColor, #4caf50); font-size: 0.8em;"><i class="fa-solid fa-check-circle"></i> Has Avatar</span>'
+                        : '<span class="avatar-status" style="color: var(--SmartThemeEmColor, #999); font-size: 0.8em;"><i class="fa-regular fa-image"></i> No Avatar</span>'
+                    }
+                </label>
+            </div>
+        `;
+    }).join('');
+
+    // Add event handlers for checkboxes
+    list.querySelectorAll('.avatar-gen-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            // Selections will be saved when Save Profile is clicked
+        });
+    });
+}
+
+/**
+ * v2.1.0: Collect avatar generation minions from UI
+ */
+function collectAvatarMinionSelections() {
+    const list = document.getElementById('mazemaster_avatar_minion_list');
+    if (!list) return [];
+
+    const selected = [];
+    list.querySelectorAll('.mazemaster-avatar-minion-row').forEach(row => {
+        const checkbox = row.querySelector('.avatar-gen-checkbox');
+        const minionId = row.dataset.minionId;
+        if (checkbox && checkbox.checked && minionId) {
+            selected.push(minionId);
+        }
+    });
+
+    return selected;
+}
+
 function collectMazeDataFromUI() {
     const profileName = document.getElementById('mazemaster_maze_profile_select')?.value;
     const existingProfile = getMazeProfile(profileName) || {};
@@ -50292,6 +52148,7 @@ function collectMazeDataFromUI() {
         safeRoomUseLLM: document.getElementById('mazemaster_saferoom_llm')?.checked || false,
         // LLM Enhancement settings
         llmEnhanceRooms: document.getElementById('mazemaster_llm_enhance_rooms')?.checked !== false,
+        llmMaxTokens: parseInt(document.getElementById('mazemaster_llm_max_tokens')?.value) || 250,
         // Rest mechanic settings
         restEnabled: document.getElementById('mazemaster_rest_enabled')?.checked !== false,
         restHealPercent: parseInt(document.getElementById('mazemaster_rest_heal')?.value) ?? 20,
@@ -50330,6 +52187,8 @@ function collectMazeDataFromUI() {
         findEarly: collectFindEarlyFromUI(),
         // v1.8.0: Item Pool restrictions
         itemPool: collectItemPoolFromUI(),
+        // v2.1.0: Avatar generation minions
+        avatarGenerationMinions: collectAvatarMinionSelections(),
     };
 }
 
@@ -51547,6 +53406,8 @@ function saveMazeProgress() {
         }))),
         // v1.2.1: Persistent message log
         messageLog: currentMaze.messageLog || [],
+        // v2.x: In-game chat history
+        chatHistory: currentMaze.chatHistory || [],
         // v1.3.0: HP System
         hpEnabled: currentMaze.hpEnabled,
         hp: currentMaze.hp ? { ...currentMaze.hp } : null,
@@ -51557,6 +53418,9 @@ function saveMazeProgress() {
         fairness: currentMaze.fairness || {},
         // v1.4.8: LLM Enhanced Room Descriptions
         enhancedRooms: currentMaze.enhancedRooms || {},
+        // v2.0.2: LLM-enhanced main minion alias
+        mainMinionOriginalName: currentMaze.mainMinionOriginalName || null,
+        mainMinionAlias: currentMaze.mainMinionAlias || null,
         // v1.5.0: Equipment System
         equipment: currentMaze.equipment ? {
             weapon: currentMaze.equipment.weapon?.id || null,
@@ -51658,9 +53522,11 @@ function loadMazeProgress(profileName) {
     // Determine initial minion display
     let initialMinion = getDefaultMinion();
     const mainMinion = profile.mainMinion ? getMinion(profile.mainMinion) : null;
+    // v2.0.2: Restore alias from saved state
+    const savedAlias = saveState.mainMinionAlias || mainMinion?.name;
     if (mainMinion) {
         initialMinion = {
-            name: mainMinion.name,
+            name: savedAlias || mainMinion.name,
             imagePath: mainMinion.imagePath,
             message: 'Continuing your journey...',
         };
@@ -51700,6 +53566,9 @@ function loadMazeProgress(profileName) {
         voidWalkActive: false,
         // v1.2.1: Persistent message log
         messageLog: saveState.messageLog || [],
+        // v2.x: In-game chat history
+        chatHistory: saveState.chatHistory || [],
+        chatEnabled: true,
         // v1.3.0: HP System
         hpEnabled: saveState.hpEnabled ?? (profile.hpEnabled !== false),
         hp: saveState.hp ? {
@@ -51721,6 +53590,9 @@ function loadMazeProgress(profileName) {
         },
         // v1.4.8: LLM Enhanced Room Descriptions
         enhancedRooms: saveState.enhancedRooms || {},
+        // v2.0.2: LLM-enhanced main minion alias
+        mainMinionOriginalName: saveState.mainMinionOriginalName || mainMinion?.name || null,
+        mainMinionAlias: saveState.mainMinionAlias || mainMinion?.name || null,
         // v1.5.0: Equipment System
         equipment: {
             weapon: saveState.equipment?.weapon ? getEquipment(saveState.equipment.weapon) : null,
@@ -51784,6 +53656,7 @@ function loadMazeProgress(profileName) {
     updatePlayerPosition(false); // Set initial position without animation
     renderMessageLog();  // Render saved messages first
     updateMazeHero();
+    initChatInput();  // v2.x: Initialize in-game chat input
     updateInventoryDisplay();
     updateHPDisplay();  // v1.3.0: Restore HP display
     updateRestButton(); // v1.3.0: Restore rest button state
@@ -52659,6 +54532,16 @@ function setupEventHandlers() {
     if (closeChatCheckbox) {
         closeChatCheckbox.addEventListener('change', (e) => {
             extensionSettings.closeChatOnStart = e.target.checked;
+            saveSettingsDebounced();
+        });
+    }
+
+    // v2.1.0: AVATAR GENERATION SETTINGS
+    // =========================================================================
+    const avatarGenCheckbox = document.getElementById('mazemaster_avatar_gen_enabled');
+    if (avatarGenCheckbox) {
+        avatarGenCheckbox.addEventListener('change', (e) => {
+            extensionSettings.avatarGenerationEnabled = e.target.checked;
             saveSettingsDebounced();
         });
     }
@@ -55316,6 +57199,17 @@ function setupEventHandlers() {
             targetRow.style.display = select.value === 'explore' ? 'none' : 'flex';
         });
     });
+
+    // v2.1.0: Avatar generation refresh button
+    const avatarGenRefreshBtn = document.getElementById('mazemaster_avatar_gen_refresh');
+    if (avatarGenRefreshBtn) {
+        avatarGenRefreshBtn.addEventListener('click', () => {
+            const profileName = document.getElementById('mazemaster_maze_profile_select')?.value;
+            if (profileName) {
+                renderAvatarMinionList(profileName);
+            }
+        });
+    }
 
     // Add encounter button
     const addEncounterBtn = document.getElementById('mazemaster_add_encounter_btn');
