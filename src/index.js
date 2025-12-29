@@ -4,7 +4,7 @@ const MODULE_NAME = 'MazeMaster';
 
 // Factory defaults version - increment this when you update DEFAULT_* constants
 // and want all users to get the updated factory defaults
-const FACTORY_DEFAULTS_VERSION = 13;
+const FACTORY_DEFAULTS_VERSION = 14;
 
 // Dynamically detect the extension folder name from the script URL
 // This handles both 'MazeMaster' and 'SillyTavern-MazeMaster' folder names
@@ -20291,7 +20291,7 @@ function resetFactoryDefaults() {
     // Update the stored version
     extensionSettings.factoryDefaultsVersion = FACTORY_DEFAULTS_VERSION;
 
-    console.log('[MazeMaster] Factory defaults reset complete - all old profiles removed, v2.0.1 profiles installed');
+    console.log('[MazeMaster] Factory defaults reset complete - all old profiles removed, v2.0.4 profiles installed');
 }
 
 function loadSettings() {
@@ -45106,10 +45106,10 @@ function getPanelHtml() {
                     <!-- Reset Factory Defaults Button -->
                     <div class="mazemaster-section" style="background: #2a1a1a; border: 1px solid #ff6b6b; border-radius: 8px; padding: 10px; margin-bottom: 15px;">
                         <button id="mazemaster_reset_factory" class="menu_button" style="width: 100%; background: #8b0000; color: white;">
-                            <i class="fa-solid fa-rotate-left"></i> Reset Factory Defaults (v2.0.1)
+                            <i class="fa-solid fa-rotate-left"></i> Update to Latest Profiles (v2.0.4)
                         </button>
                         <div style="font-size: 11px; color: #ff9999; margin-top: 5px; text-align: center;">
-                            Clears all profiles and restores v2.0.1 factory defaults
+                            Clears all profiles and updates to v2.0.4 defaults
                         </div>
                     </div>
 
