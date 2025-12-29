@@ -1,5 +1,9 @@
 # MazeMaster
 
+<p align="center">
+  <img src="screenshots/loading-screen.png" alt="MazeMaster Loading Screen" width="800">
+</p>
+
 A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally generated dungeons, LLM-enhanced narration, 8 combat mini games, and full inventory management.
 
 **Author:** mechamarmot
