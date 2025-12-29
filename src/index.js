@@ -28491,6 +28491,17 @@ async function closeQTEModal() {
                 if (wasSuccess) {
                     // v1.4.0: Mark room as cleared for zone progression
                     await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+
+                    // v2.0.5: Grant XP for successful QTE encounter
+                    const qteXp = getXpReward('combatVictory');
+                    if (qteXp > 0) {
+                        const xpResult = await grantXp(qteXp, 'qte');
+                        if (xpResult.leveledUp) {
+                            addMazeLogMessage(`Level Up! Now level ${xpResult.newLevel}!`, 'success');
+                        }
+                        addMazeLogMessage(`QTE success! +${qteXp} XP`, 'info');
+                    }
+
                     // Heal player on successful QTE completion (skill reward)
                     if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
                         const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
@@ -29260,6 +29271,17 @@ async function closeDiceModal() {
                 if (wasSuccess) {
                     // v1.4.0: Mark room as cleared for zone progression
                     await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+
+                    // v2.0.5: Grant XP for successful dice encounter
+                    const diceXp = getXpReward('combatVictory');
+                    if (diceXp > 0) {
+                        const xpResult = await grantXp(diceXp, 'dice');
+                        if (xpResult.leveledUp) {
+                            addMazeLogMessage(`Level Up! Now level ${xpResult.newLevel}!`, 'success');
+                        }
+                        addMazeLogMessage(`Dice victory! +${diceXp} XP`, 'info');
+                    }
+
                     if (encounterType === 'exit_dice') {
                         currentMaze.exitEncounterDone = true;
                         currentMaze.isPaused = false;
@@ -29915,6 +29937,17 @@ async function closeStealthModal() {
                 if (wasSuccess) {
                     // v1.4.0: Mark room as cleared for zone progression
                     await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+
+                    // v2.0.5: Grant XP for successful stealth encounter
+                    const stealthXp = getXpReward('combatVictory'); // Use combat XP as base
+                    if (stealthXp > 0) {
+                        const xpResult = await grantXp(stealthXp, 'stealth');
+                        if (xpResult.leveledUp) {
+                            addMazeLogMessage(`Level Up! Now level ${xpResult.newLevel}!`, 'success');
+                        }
+                        addMazeLogMessage(`Stealth success! +${stealthXp} XP`, 'info');
+                    }
+
                     // Heal player on successful stealth completion (skill reward)
                     if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
                         const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
@@ -31401,6 +31434,17 @@ async function closeNegotiationModal() {
                 if (wasSuccess) {
                     // v1.4.0: Mark room as cleared for zone progression
                     await markRoomCleared(currentMaze.playerX, currentMaze.playerY);
+
+                    // v2.0.5: Grant XP for successful negotiation encounter
+                    const negotiateXp = getXpReward('combatVictory');
+                    if (negotiateXp > 0) {
+                        const xpResult = await grantXp(negotiateXp, 'negotiation');
+                        if (xpResult.leveledUp) {
+                            addMazeLogMessage(`Level Up! Now level ${xpResult.newLevel}!`, 'success');
+                        }
+                        addMazeLogMessage(`Negotiation success! +${negotiateXp} XP`, 'info');
+                    }
+
                     // Heal player on successful negotiation completion (skill reward)
                     if (currentMaze.hp && currentMaze.profile?.hpEnabled !== false) {
                         const healPercent = currentMaze.profile.skillEncounterHealPercent || 25;
@@ -35709,6 +35753,21 @@ async function startMaze(profileName) {
     addSessionNote(`Adventure begins: ${profileName}`);
     addSessionNote(`Floor 1/${profile.floors || 1} - ${size}x${size} ${profile.theme || 'fantasy'} ${profile.mapStyle || 'dungeon'}`);
 
+    // v2.0.5: Set initial facing direction based on available exits from starting room
+    const startCell = grid[0][0];
+    if (startCell) {
+        // Priority: south > east > north > west (prefer towards exit at bottom-right)
+        if (!startCell.walls.south) {
+            currentMaze.playerDirection = 'south';
+        } else if (!startCell.walls.east) {
+            currentMaze.playerDirection = 'east';
+        } else if (!startCell.walls.north) {
+            currentMaze.playerDirection = 'north';
+        } else if (!startCell.walls.west) {
+            currentMaze.playerDirection = 'west';
+        }
+    }
+
     // v2.0.3: PHASE 5 - Systems Initialization (65% - 80%)
     addLoadingLog('Initializing systems...', 'current');
     updateLoadingPercent(67);
@@ -39999,10 +40058,16 @@ function showSaveDialog() {
 
     // Button handlers
     document.getElementById('maze_save_yes').addEventListener('click', () => {
-        dialog.remove();
-        saveMazeProgress();
-        closeMaze();
-        renderSavedGamesList();
+        try {
+            dialog.remove();
+            saveMazeProgress();
+            console.log('[MazeMaster] Save complete, closing maze modal');
+            closeMaze();
+            renderSavedGamesList();
+        } catch (e) {
+            console.error('[MazeMaster] Error in save/close:', e);
+            closeMaze(); // Still try to close on error
+        }
     });
 
     document.getElementById('maze_save_no').addEventListener('click', () => {
@@ -40021,11 +40086,17 @@ function showSaveDialog() {
 }
 
 function closeMaze() {
+    console.log('[MazeMaster] closeMaze called');
     currentMaze.isOpen = false;
     document.removeEventListener('keydown', handleMazeKeydown, { capture: true });
 
     const modal = document.getElementById('mazemaster_maze_modal');
-    if (modal) modal.remove();
+    if (modal) {
+        console.log('[MazeMaster] Removing maze modal');
+        modal.remove();
+    } else {
+        console.warn('[MazeMaster] Modal not found when trying to close');
+    }
 }
 
 function renderMazeGrid() {
