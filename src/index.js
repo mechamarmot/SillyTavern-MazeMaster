@@ -4,7 +4,7 @@ const MODULE_NAME = 'MazeMaster';
 
 // Factory defaults version - increment this when you update DEFAULT_* constants
 // and want all users to get the updated factory defaults
-const FACTORY_DEFAULTS_VERSION = 14;
+const FACTORY_DEFAULTS_VERSION = 15;
 
 // Dynamically detect the extension folder name from the script URL
 // This handles both 'MazeMaster' and 'SillyTavern-MazeMaster' folder names
@@ -3437,6 +3437,8 @@ const MAZE_PROFILE_DEFAULTS = {
         trapDisarmed: 15,           // Disarming a trap
         questComplete: 100,         // Completing a quest
     },
+    // v2.0.5: Level-up skill point dice
+    skillPointDice: '1d3',          // Dice notation for skill points per level (e.g., 1d3, 2d2, 1d4)
 };
 
 /**
@@ -16155,7 +16157,7 @@ async function completeQuest(questId) {
 
     // Grant rewards
     if (quest.rewards?.xp) {
-        grantXp(quest.rewards.xp, `Quest: ${quest.name}`);
+        await grantXp(quest.rewards.xp, `Quest: ${quest.name}`);
     }
 
     if (quest.rewards?.items) {
@@ -40772,6 +40774,14 @@ function hideLoadingScreen() {
             window.mazeCenterOnPlayer(false); // Instant center, no animation
         }
     }, 100);
+
+    // v2.0.5: Check for any pending level-ups after maze loads
+    setTimeout(async () => {
+        const result = await checkForLevelUp();
+        if (result.levelsGained > 0) {
+            console.log(`[MazeMaster] Processed ${result.levelsGained} pending level-up(s) after maze load`);
+        }
+    }, 600);
 }
 
 /**
@@ -42631,7 +42641,12 @@ async function grantXp(amount, source = 'unknown') {
     while (character.xp >= character.xpToNextLevel) {
         character.xp -= character.xpToNextLevel;
         character.level++;
-        character.skillPoints++;
+
+        // v2.0.5: Roll dice for skill points (configurable)
+        const skillPointDice = profile.skillPointDice || '1d3';
+        const skillPointsGained = rollDice(skillPointDice);
+        character.skillPoints += skillPointsGained;
+
         character.xpToNextLevel = getXpForLevel(character.level + 1);
         levelsGained++;
 
@@ -42649,12 +42664,24 @@ async function grantXp(amount, source = 'unknown') {
             await fireHook(profile.onLevelUp, {
                 newLevel: character.level,
                 skillPointsAvailable: character.skillPoints,
+                skillPointsGained: skillPointsGained,
+                skillPointDice: skillPointDice,
                 stats: levelStats,
             });
         }
 
-        // Show level up message
-        addToMessageLog(`Level Up! You are now level ${character.level}!`, 'success');
+        // Show level up message in log
+        addToMessageLog(`Level Up! You are now level ${character.level}! Rolled ${skillPointDice}: +${skillPointsGained} skill points!`, 'success');
+
+        // v2.0.5: Show /echo notification for level-up with dice roll
+        try {
+            const echoMessage = `🎉 **LEVEL UP!** You are now **Level ${character.level}**!\n` +
+                `🎲 Rolled ${skillPointDice}: **+${skillPointsGained} Skill Points**\n` +
+                `📊 Total Skill Points: ${character.skillPoints}`;
+            await executeSlashCommandsWithOptions(`/echo ${echoMessage}`);
+        } catch (e) {
+            console.log('[MazeMaster] Could not show level-up echo:', e);
+        }
 
         // v1.6.0: Play level up sound and VFX
         playSound('level_up');
@@ -42670,6 +42697,93 @@ async function grantXp(amount, source = 'unknown') {
     return {
         xpGained: amount,
         leveledUp: levelsGained > 0,
+        levelsGained: levelsGained,
+        newLevel: character.level,
+    };
+}
+
+/**
+ * v2.0.5: Check for pending level-ups and process them
+ * Called on game load and when displaying stats to catch any missed level-ups
+ * @returns {Promise<object>} Result with levelsGained, newLevel
+ */
+async function checkForLevelUp() {
+    if (!currentMaze?.isOpen || !currentMaze.character) {
+        return { levelsGained: 0, newLevel: 1 };
+    }
+
+    const character = currentMaze.character;
+    const profile = extensionSettings.maze.profiles?.[currentMaze.profileName] || {};
+
+    // Ensure xpToNextLevel is set correctly
+    if (!character.xpToNextLevel || character.xpToNextLevel <= 0) {
+        character.xpToNextLevel = getXpForLevel(character.level + 1);
+    }
+
+    let levelsGained = 0;
+
+    // Process any pending level-ups
+    while (character.xp >= character.xpToNextLevel) {
+        character.xp -= character.xpToNextLevel;
+        character.level++;
+
+        // v2.0.5: Roll dice for skill points (configurable)
+        const skillPointDice = profile.skillPointDice || '1d3';
+        const skillPointsGained = rollDice(skillPointDice);
+        character.skillPoints += skillPointsGained;
+
+        character.xpToNextLevel = getXpForLevel(character.level + 1);
+        levelsGained++;
+
+        // Apply HP bonus from level up
+        const levelStats = getLevelStats(character.level);
+        if (currentMaze.hpEnabled && currentMaze.hp) {
+            const oldMax = currentMaze.hp.max;
+            currentMaze.hp.max = 100 + levelStats.maxHpBonus + (currentMaze.hp.maxBonus || 0);
+            currentMaze.hp.current = Math.min(currentMaze.hp.current + (currentMaze.hp.max - oldMax), currentMaze.hp.max);
+            updateHpDisplay();
+        }
+
+        // Fire level up hook
+        if (profile.onLevelUp) {
+            await fireHook(profile.onLevelUp, {
+                newLevel: character.level,
+                skillPointsAvailable: character.skillPoints,
+                skillPointsGained: skillPointsGained,
+                skillPointDice: skillPointDice,
+                stats: levelStats,
+            });
+        }
+
+        // Show level up message in log
+        addToMessageLog(`Level Up! You are now level ${character.level}! Rolled ${skillPointDice}: +${skillPointsGained} skill points!`, 'success');
+
+        // v2.0.5: Show /echo notification for level-up with dice roll
+        try {
+            const echoMessage = `🎉 **LEVEL UP!** You are now **Level ${character.level}**!\n` +
+                `🎲 Rolled ${skillPointDice}: **+${skillPointsGained} Skill Points**\n` +
+                `📊 Total Skill Points: ${character.skillPoints}`;
+            await executeSlashCommandsWithOptions(`/echo ${echoMessage}`);
+        } catch (e) {
+            console.log('[MazeMaster] Could not show level-up echo:', e);
+        }
+
+        // Play level up sound and VFX
+        playSound('level_up');
+        const mazeContainer = document.querySelector('.maze-container') || document.querySelector('#mazemaster_grid');
+        if (mazeContainer) {
+            triggerVFX('level_up', mazeContainer);
+        }
+
+        console.log(`[MazeMaster] Level up! Now level ${character.level}, gained ${skillPointsGained} skill points`);
+    }
+
+    if (levelsGained > 0) {
+        updatePlayerStatsDisplay();
+        console.log(`[MazeMaster] checkForLevelUp processed ${levelsGained} level(s)`);
+    }
+
+    return {
         levelsGained: levelsGained,
         newLevel: character.level,
     };
@@ -45124,10 +45238,10 @@ function getPanelHtml() {
                     <!-- Reset Factory Defaults Button -->
                     <div class="mazemaster-section" style="background: #2a1a1a; border: 1px solid #ff6b6b; border-radius: 8px; padding: 10px; margin-bottom: 15px;">
                         <button id="mazemaster_reset_factory" class="menu_button" style="width: 100%; background: #8b0000; color: white;">
-                            <i class="fa-solid fa-rotate-left"></i> Update to Latest Profiles (v2.0.4)
+                            <i class="fa-solid fa-rotate-left"></i> Update to Latest Profiles (v2.0.5)
                         </button>
                         <div style="font-size: 11px; color: #ff9999; margin-top: 5px; text-align: center;">
-                            Clears all profiles and updates to v2.0.4 defaults
+                            Clears all profiles and updates to v2.0.5 defaults
                         </div>
                     </div>
 
@@ -53874,6 +53988,14 @@ function loadMazeProgress(profileName) {
     updateDpadFloorButtons();
 
     document.addEventListener('keydown', handleMazeKeydown, { capture: true });
+
+    // v2.0.5: Check for any pending level-ups after loading save
+    setTimeout(async () => {
+        const result = await checkForLevelUp();
+        if (result.levelsGained > 0) {
+            console.log(`[MazeMaster] Processed ${result.levelsGained} pending level-up(s) after save load`);
+        }
+    }, 500);
 
     console.log(`[MazeMaster] Loaded saved maze "${profileName}" (floor ${currentFloor + 1}/${totalFloors})`);
     return true;
