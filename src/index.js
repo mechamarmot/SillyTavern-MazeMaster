@@ -4,7 +4,7 @@ const MODULE_NAME = 'MazeMaster';
 
 // Factory defaults version - increment this when you update DEFAULT_* constants
 // and want all users to get the updated factory defaults
-const FACTORY_DEFAULTS_VERSION = 12;
+const FACTORY_DEFAULTS_VERSION = 13;
 
 // Dynamically detect the extension folder name from the script URL
 // This handles both 'MazeMaster' and 'SillyTavern-MazeMaster' folder names
@@ -19764,10 +19764,25 @@ function resetFactoryDefaults() {
     }
     console.log('[MazeMaster] Reset', Object.keys(DEFAULT_TRAP_PROFILES).length, 'factory trap profiles');
 
+    // v2.0.1: Reset factory quest profiles (clear old, add new)
+    extensionSettings.questProfiles = {};
+    for (const [name, profile] of Object.entries(DEFAULT_QUEST_PROFILES)) {
+        extensionSettings.questProfiles[name] = JSON.parse(JSON.stringify(profile));
+    }
+    console.log('[MazeMaster] Reset', Object.keys(DEFAULT_QUEST_PROFILES).length, 'factory quest profiles');
+
+    // v2.0.1: Clear custom themes (defaults are accessed via DEFAULT_THEME_PROFILES)
+    extensionSettings.customThemes = {};
+    console.log('[MazeMaster] Cleared custom themes - factory defaults available via dropdown');
+
+    // v2.0.1: Clear custom styles (defaults are accessed via DEFAULT_STYLE_PROFILES)
+    extensionSettings.customStyles = {};
+    console.log('[MazeMaster] Cleared custom styles - factory defaults available via dropdown');
+
     // Update the stored version
     extensionSettings.factoryDefaultsVersion = FACTORY_DEFAULTS_VERSION;
 
-    console.log('[MazeMaster] Factory defaults reset complete - all old profiles removed, v2.0.0 profiles installed');
+    console.log('[MazeMaster] Factory defaults reset complete - all old profiles removed, v2.0.1 profiles installed');
 }
 
 function loadSettings() {
@@ -38535,9 +38550,13 @@ function showMazeModal() {
     }
 
     // Equipment slot click handler (opens modal for stats/repair/unequip)
-    modal.querySelectorAll('.equip-slot').forEach(slot => {
-        slot.addEventListener('click', () => {
+    const equipSlots = modal.querySelectorAll('.equip-slot');
+    console.log('[MazeMaster] Found', equipSlots.length, 'equipment slots to attach click handlers');
+    equipSlots.forEach(slot => {
+        slot.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
             const slotType = slot.dataset.slot;
+            console.log('[MazeMaster] Equipment slot clicked:', slotType, 'Has item:', !!currentMaze.equipment?.[slotType]);
             if (currentMaze.equipment?.[slotType]) {
                 showEquipmentModal(slotType);
             }
@@ -40118,8 +40137,8 @@ function getEquipmentModalStyles() {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 10300;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999999;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -40365,8 +40384,13 @@ function getEquipmentDurability(itemId, slot) {
  * @param {string} slot - The slot type ('weapon', 'armor', 'accessory')
  */
 function showEquipmentModal(slot) {
+    console.log('[MazeMaster] showEquipmentModal called for slot:', slot);
     const item = currentMaze.equipment?.[slot];
-    if (!item) return;
+    console.log('[MazeMaster] Item in slot:', item);
+    if (!item) {
+        console.log('[MazeMaster] No item found, returning');
+        return;
+    }
 
     // Remove existing modal
     const existing = document.getElementById('mazemaster_equip_modal');
@@ -40470,9 +40494,11 @@ function showEquipmentModal(slot) {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    console.log('[MazeMaster] Equipment modal HTML inserted');
 
     // Attach event handlers
     document.getElementById('equip_modal_close').addEventListener('click', closeEquipmentModal);
+    console.log('[MazeMaster] Equipment modal event handlers attached');
 
     document.getElementById('equip_modal_unequip').addEventListener('click', async () => {
         await unequipItem(slot);
@@ -43152,10 +43178,10 @@ function getPanelHtml() {
                     <!-- Reset Factory Defaults Button -->
                     <div class="mazemaster-section" style="background: #2a1a1a; border: 1px solid #ff6b6b; border-radius: 8px; padding: 10px; margin-bottom: 15px;">
                         <button id="mazemaster_reset_factory" class="menu_button" style="width: 100%; background: #8b0000; color: white;">
-                            <i class="fa-solid fa-rotate-left"></i> Reset Factory Defaults (v2.0.0)
+                            <i class="fa-solid fa-rotate-left"></i> Reset Factory Defaults (v2.0.1)
                         </button>
                         <div style="font-size: 11px; color: #ff9999; margin-top: 5px; text-align: center;">
-                            Clears all profiles and restores v2.0.0 themed defaults (248 profiles)
+                            Clears all profiles and restores v2.0.1 factory defaults
                         </div>
                     </div>
 
@@ -52699,7 +52725,7 @@ function setupEventHandlers() {
     if (resetFactoryBtn) {
         resetFactoryBtn.addEventListener('click', async () => {
             const confirmed = await callGenericPopup(
-                'This will DELETE all your custom profiles and restore v2.0.0 factory defaults (248 themed profiles).\n\nThis cannot be undone!',
+                'This will DELETE all your custom profiles (including themes/styles) and restore v2.0.1 factory defaults.\n\nThis cannot be undone!',
                 POPUP_TYPE.CONFIRM
             );
             if (confirmed) {
