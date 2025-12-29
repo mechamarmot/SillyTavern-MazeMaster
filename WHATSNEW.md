@@ -39,11 +39,25 @@
 
 ## v2.0.0
 
-### Equipment System Overhaul
+### Interactive Storytelling with LLM
+- **Chat with Characters** - Send messages directly to minions and NPCs during encounters
+- **Response Generation** - Generate creature/narrator replies using your LLM
+- **Impersonate Mode** - Generate messages as your character for roleplay
+- **Story Participation** - Engage in dynamic conversations that shape your adventure
+
+### LLM Enhancement System
+- **Unique Minion Names** - Each encounter generates a unique, themed character name
+- **Custom Starting Messages** - LLM creates immersive opening dialogue for every minion
+- **Room Descriptions** - Atmospheric, contextual room narration on first entry
+- **Session Memory** - Previous events influence future LLM generations
+- **Truly Unique Playthroughs** - No two adventures are the same
+
+### Equipment System
 - **Equipment Modal** - Dedicated UI for managing weapons, armor, accessories
-- **Durability System** - Equipment degrades with use, affects effectiveness
-- **Repair Kits** - New consumable item to restore equipment durability
-- **Iron Guard** - Starting accessory that auto-equips on maze start
+- **Durability & Charges** - Equipment degrades with use, charges deplete
+- **Repair System** - Repair kits restore equipment durability
+- **Equipment Breaking** - Damaged gear can break, requiring replacement
+- **Auto-equip** - Starting equipment automatically equips on maze start
 
 ### Dynamic Profile Settings
 - Vision settings now configurable per profile
@@ -51,32 +65,15 @@
 - Faction reputation systems per theme
 - Sound and VFX toggles per profile
 
-### Starting Equipment
-- Auto-equip starting equipment items on maze start
-- Custom items added to global item pool
-- Starting inventory properly handles weapons/armor/accessories
-
 ---
 
 ## v1.9.x Patch Notes
 
-### v1.9.9
-- Fixed combat victory freeze with improved error handling
-
-### v1.9.8
-- Fixed equipped armor properly absorbing trap/combat damage
-
-### v1.9.5 - v1.9.7
-- Iron Guard accessory improvements and auto-equip fixes
-
-### v1.9.3 - v1.9.4
+### v1.9.1 - v1.9.9
+- Improved maze generation with more pathway splits and zigzag corridors
 - Custom items now appear in item pools
-- Starting inventory fixes for equipment slots
-
-### v1.9.1 - v1.9.2
-- Improved maze generation with more pathway splits
-- Break up straight corridors with zigzag paths
-- Better dungeon layouts with increased variety
+- Equipment properly absorbs trap/combat damage
+- Combat victory freeze fixes
 
 ---
 

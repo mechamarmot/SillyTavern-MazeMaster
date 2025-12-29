@@ -4862,8 +4862,9 @@ function initMapPanZoom() {
     else tileWidth = 36;
 
     // Scale up larger mazes to match visual size of reference (64px tiles)
+    // v2.0.3: Increased base zoom from 1.5 to 2.0 for better visibility
     const referenceTileSize = 64;
-    const baseScale = 1.5;
+    const baseScale = 2.0;
     const initialScale = baseScale * (referenceTileSize / tileWidth);
 
     let scale = initialScale;
@@ -13048,7 +13049,9 @@ const DEFAULT_QUEST_PROFILES = {
         description: 'Gentle quests with optional zone unlocks',
         quests: [
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
-            { questId: 'quest_defeat_5', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_3', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_50', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'any',
         onQuestProfileLoad: '',
@@ -13058,8 +13061,10 @@ const DEFAULT_QUEST_PROFILES = {
         description: 'Standard dungeon crawl with quest progression',
         quests: [
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
+            { questId: 'quest_collect_keys', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_explore_75', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: false },
             { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
+            { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13070,7 +13075,9 @@ const DEFAULT_QUEST_PROFILES = {
         quests: [
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
+            { questId: 'quest_collect_5_keys', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_find_secret', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: false },
+            { questId: 'quest_open_5_chests', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13083,7 +13090,9 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_explore_75', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
+            { questId: 'quest_open_5_chests', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13097,6 +13106,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_explore_75', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'floor', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_full_clear', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
         ],
@@ -13108,8 +13119,10 @@ const DEFAULT_QUEST_PROFILES = {
         name: 'Horror - Easy',
         description: 'Light scares with optional objectives',
         quests: [
-            { questId: 'quest_explore_75', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
+            { questId: 'quest_explore_50', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
+            { questId: 'quest_survive_10_turns', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
+            { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'any',
         onQuestProfileLoad: '',
@@ -13121,6 +13134,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: false },
             { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_3', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13133,6 +13148,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: false },
             { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_open_5_chests', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_5_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13145,6 +13162,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_explore_75', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13158,6 +13177,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_explore_75', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'floor', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_full_clear', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
         ],
@@ -13170,7 +13191,9 @@ const DEFAULT_QUEST_PROFILES = {
         description: 'Basic station objectives',
         quests: [
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
-            { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_50', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_3', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'any',
         onQuestProfileLoad: '',
@@ -13182,6 +13205,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: false },
             { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
+            { questId: 'quest_open_5_chests', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13194,6 +13219,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: false },
             { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_survive_combat', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_5_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13206,6 +13233,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_survive_combat', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_90', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13219,6 +13248,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_survive_combat', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'floor', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_full_clear', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
         ],
@@ -13231,7 +13262,9 @@ const DEFAULT_QUEST_PROFILES = {
         description: 'Simple runs with optional paydata',
         quests: [
             { questId: 'quest_treasure_hunter', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
-            { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_50', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_3', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'any',
         onQuestProfileLoad: '',
@@ -13243,6 +13276,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_treasure_hunter', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: false },
             { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
+            { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13255,6 +13290,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_treasure_hunter', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: false },
             { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_open_5_chests', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13267,6 +13304,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_treasure_hunter', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_5_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13280,6 +13319,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_treasure_hunter', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'floor', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_full_clear', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
         ],
@@ -13292,7 +13333,9 @@ const DEFAULT_QUEST_PROFILES = {
         description: 'Easy trail with optional bounties',
         quests: [
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
-            { questId: 'quest_defeat_5', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_3', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_50', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'any',
         onQuestProfileLoad: '',
@@ -13304,6 +13347,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: false },
             { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
+            { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_survive_10_turns', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13316,6 +13361,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: false },
             { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13328,6 +13375,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13341,6 +13390,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'floor', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_full_clear', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
         ],
@@ -13352,8 +13403,10 @@ const DEFAULT_QUEST_PROFILES = {
         name: 'Action - Easy',
         description: 'Training mission with optional objectives',
         quests: [
-            { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
-            { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_defeat_3', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: false },
+            { questId: 'quest_explore_50', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_survive_10_turns', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_keys', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'any',
         onQuestProfileLoad: '',
@@ -13365,6 +13418,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: false },
             { questId: 'quest_explore_75', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_collect_keys', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_treasure_hunter', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
         ],
         gatingMode: 'sequential',
         onQuestProfileLoad: '',
@@ -13376,6 +13431,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_defeat_5', progressionType: 'zone', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: false },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_find_secret', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13389,6 +13446,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
+            { questId: 'quest_explore_90', progressionType: 'none', progressionTarget: null, autoAccept: false, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
         ],
         gatingMode: 'sequential',
@@ -13402,6 +13461,8 @@ const DEFAULT_QUEST_PROFILES = {
             { questId: 'quest_survive_combat', progressionType: 'zone', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_find_secret', progressionType: 'floor', progressionTarget: 1, autoAccept: true, required: true },
             { questId: 'quest_collect_keys', progressionType: 'zone', progressionTarget: 3, autoAccept: true, required: true },
+            { questId: 'quest_defeat_10', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
+            { questId: 'quest_find_3_secrets', progressionType: 'none', progressionTarget: null, autoAccept: true, required: false },
             { questId: 'quest_boss_slayer', progressionType: 'floor', progressionTarget: 2, autoAccept: true, required: true },
             { questId: 'quest_full_clear', progressionType: 'none', progressionTarget: null, autoAccept: true, required: true },
         ],
@@ -15773,6 +15834,127 @@ const DEFAULT_QUESTS = {
         },
         rewards: {
             xp: 200,
+            items: [],
+        },
+        useLLM: false,
+    },
+    // v2.0.3: Additional quests for variety
+    'quest_defeat_10': {
+        id: 'quest_defeat_10',
+        name: 'Exterminator',
+        type: 'defeat',
+        description: 'Eliminate a significant number of threats.',
+        objective: {
+            target: 'any',
+            count: 10,
+        },
+        rewards: {
+            xp: 120,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_explore_50': {
+        id: 'quest_explore_50',
+        name: 'Scout',
+        type: 'explore',
+        description: 'Survey half of the maze.',
+        objective: {
+            target: null,
+            count: 50,
+        },
+        rewards: {
+            xp: 50,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_open_5_chests': {
+        id: 'quest_open_5_chests',
+        name: 'Looter',
+        type: 'fetch',
+        description: 'Search the maze for valuable containers.',
+        objective: {
+            target: 'chest',
+            count: 5,
+        },
+        rewards: {
+            xp: 80,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_find_3_secrets': {
+        id: 'quest_find_3_secrets',
+        name: 'Secret Seeker',
+        type: 'secret',
+        description: 'Uncover multiple hidden passages.',
+        objective: {
+            target: 'hidden_room',
+            count: 3,
+        },
+        rewards: {
+            xp: 120,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_survive_10_turns': {
+        id: 'quest_survive_10_turns',
+        name: 'Survivor',
+        type: 'survive',
+        description: 'Endure through dangerous encounters.',
+        objective: {
+            target: 'turn',
+            count: 10,
+        },
+        rewards: {
+            xp: 40,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_collect_5_keys': {
+        id: 'quest_collect_5_keys',
+        name: 'Keymaster',
+        type: 'fetch',
+        description: 'Gather all the keys you can find.',
+        objective: {
+            target: 'key',
+            count: 5,
+        },
+        rewards: {
+            xp: 80,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_defeat_3': {
+        id: 'quest_defeat_3',
+        name: 'First Blood',
+        type: 'defeat',
+        description: 'Handle a few threats along the way.',
+        objective: {
+            target: 'any',
+            count: 3,
+        },
+        rewards: {
+            xp: 30,
+            items: [],
+        },
+        useLLM: false,
+    },
+    'quest_explore_90': {
+        id: 'quest_explore_90',
+        name: 'Thorough Explorer',
+        type: 'explore',
+        description: 'Map nearly the entire maze.',
+        objective: {
+            target: null,
+            count: 90,
+        },
+        rewards: {
+            xp: 150,
             items: [],
         },
         useLLM: false,
@@ -40565,6 +40747,13 @@ function hideLoadingScreen() {
             loadingScreen.remove();
         }
     }, 500);
+
+    // v2.0.3: Center camera on player after loading screen fades
+    setTimeout(() => {
+        if (typeof window.mazeCenterOnPlayer === 'function') {
+            window.mazeCenterOnPlayer(false); // Instant center, no animation
+        }
+    }, 100);
 }
 
 /**

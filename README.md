@@ -9,31 +9,34 @@ A **Roguelike RPG Adventure Toolkit** for SillyTavern featuring procedurally gen
 **Author:** mechamarmot
 
 <p align="center">
-  <img src="screenshots/llm-room-description.png" alt="MazeMaster - LLM Enhanced Room Descriptions" width="800">
+  <img src="screenshots/gameplay-llm.png" alt="MazeMaster Gameplay" width="800">
 </p>
-<p align="center"><em>LLM-generated room descriptions create immersive, contextual narration</em></p>
+<p align="center"><em>Isometric dungeon crawling with LLM-enhanced narration and character chat</em></p>
 
 ---
 
-## What's New (v1.5.0 - v2.0.3)
+## What's New (v1.9.0 - v2.0.x)
 
-### v2.0.x - Equipment System & Loading Progress
+### v2.0.x - Interactive Storytelling & Equipment
 
-**Equipment System Overhaul**
+**Interactive Storytelling with LLM**
+- **Chat with Characters** - Send messages to minions and NPCs during encounters
+- **Response Generation** - Generate creature/narrator replies using your LLM
+- **Impersonate Mode** - Generate messages as your character for roleplay
+- **Truly Unique Playthroughs** - LLM-generated minion names and starting messages
+
+**Equipment System**
 - **Equipment Modal** - Dedicated UI for weapons, armor, accessories
-- **Durability System** - Equipment degrades with use
-- **Repair Kits** - New consumable to restore equipment
-- **Iron Guard** - Starting accessory that auto-equips
+- **Durability & Charges** - Equipment degrades, charges deplete with use
+- **Repair & Breaking** - Repair kits restore gear; damaged items can break
 
 **Loading Screen Progress**
-- Real-time console showing generation steps
-- Fixed-position card at bottom of screen
-- Progress percentage during all phases
+- Real-time console showing all generation steps
+- Progress percentage during maze and LLM phases
 
 **Dynamic Profile Settings**
 - Vision, combat, faction settings per profile
 - Configurable XP rates per difficulty
-- Sound and VFX toggles
 
 ---
 
